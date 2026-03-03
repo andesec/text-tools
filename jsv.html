@@ -210,6 +210,17 @@
 
 			<div class="flex items-center gap-3">
 				<div class="flex items-center gap-1 border-r border-gray-200 dark:border-gray-700 pr-3 mr-1">
+					<div class="relative group">
+						<button class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition text-xs uppercase flex items-center gap-1">
+							<span id="instance-label">JSON 1</span>
+							<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+						</button>
+						<div class="absolute right-0 mt-1 w-32 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-xl hidden group-hover:block z-[100]">
+							<button onclick="switchInstance(0)" class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs instance-btn" data-instance="0">JSON 1</button>
+							<button onclick="switchInstance(1)" class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs instance-btn" data-instance="1">JSON 2</button>
+							<button onclick="switchInstance(2)" class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs instance-btn" data-instance="2">JSON 3</button>
+						</div>
+					</div>
 					<button id="source-view-btn" onclick="revertToSource()" title="Revert to Source" class="hidden p-1.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-md transition text-xs uppercase mr-2">Source</button>
 					<button onclick="prettify()" title="Prettify JSON" class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition text-xs uppercase">Format</button>
 					<div class="relative group">
@@ -296,6 +307,12 @@
 			let sourceJSON = null; // Store the original JSON when in resolved view
 			let viewMode = "editor"; // 'editor' or 'tree'
 			let lineWrap = true;
+			let currentInstance = 0;
+			let instances = [
+				{ content: "", fileName: "scratchpad-1.json" },
+				{ content: "", fileName: "scratchpad-2.json" },
+				{ content: "", fileName: "scratchpad-3.json" }
+			];
 
 			// Initialize CodeMirror
 			function initEditor(initialValue = "", language = "javascript", readOnly = false) {
@@ -344,7 +361,47 @@
 				}
 				if (editor) {
 					const currentDoc = editor.state.doc.toString();
+					instances[currentInstance].content = currentDoc;
 					initEditor(currentDoc, currentFileName?.endsWith(".json") ? "json" : "javascript");
+				}
+			};
+
+			window.switchInstance = function(index) {
+				if (index === currentInstance) return;
+				
+				// Save current instance content
+				if (editor) {
+					instances[currentInstance].content = editor.state.doc.toString();
+					instances[currentInstance].fileName = currentFileName;
+				}
+				
+				// Switch to new instance
+				currentInstance = index;
+				currentFileName = instances[index].fileName;
+				sourceJSON = null;
+				sourceBtn.classList.add("hidden");
+				
+				// Update UI
+				document.getElementById("instance-label").textContent = `JSON ${index + 1}`;
+				document.querySelectorAll(".instance-btn").forEach(btn => {
+					btn.classList.remove("bg-blue-100", "dark:bg-blue-900/30");
+					if (parseInt(btn.dataset.instance) === index) {
+						btn.classList.add("bg-blue-100", "dark:bg-blue-900/30");
+					}
+				});
+				
+				// Update file list selection
+				document.querySelectorAll(".file-item").forEach(el => el.classList.remove("active", "bg-blue-100", "dark:bg-blue-900/30"));
+				
+				// Load new instance content
+				emptyState.classList.add("hidden");
+				const isJson = currentFileName.toLowerCase().endsWith(".json");
+				initEditor(instances[index].content, isJson ? "json" : "javascript");
+				
+				if (isJson || instances[index].content.trim().startsWith("{") || instances[index].content.trim().startsWith("[")) {
+					buildTree(instances[index].content);
+				} else {
+					treeRoot.innerHTML = '<div class="text-gray-400 p-8 text-center italic">Not currently showing tree for non-JSON content.</div>';
 				}
 			};
 
@@ -378,6 +435,10 @@
 				currentFileName = name;
 				sourceJSON = null; // Reset sourceJSON when a new file is displayed
 				sourceBtn.classList.add("hidden"); // Hide source button
+				
+				// Save to current instance
+				instances[currentInstance].content = text;
+				instances[currentInstance].fileName = name;
 
 				document.querySelectorAll(".file-item").forEach((el) => el.classList.remove("active", "bg-blue-100", "dark:bg-blue-900/30"));
 				if (element) element.classList.add("active", "bg-blue-100", "dark:bg-blue-900/30");
@@ -539,6 +600,7 @@
 					editor.dispatch({
 						changes: { from: 0, to: editor.state.doc.length, insert: formatted }
 					});
+					instances[currentInstance].content = formatted;
 					buildTree(formatted);
 				} catch (e) {
 					alert("Only valid JSON (or almost valid JSON) can be prettified.");
@@ -603,6 +665,7 @@
 					editor.dispatch({
 						changes: { from: 0, to: editor.state.doc.length, insert: result }
 					});
+					instances[currentInstance].content = result;
 					if (type === "cleanJSON") buildTree(result || editor.state.doc.toString());
 				} catch (e) {
 					alert("Transformation failed: " + e.message);
@@ -659,7 +722,13 @@
 
 			openBtn.onclick = () => fileInput.click();
 			newBtn.onclick = () => {
-				currentFileName = "scratchpad.js";
+				// Save current content before creating new
+				if (editor) {
+					instances[currentInstance].content = editor.state.doc.toString();
+				}
+				currentFileName = "scratchpad.json";
+				instances[currentInstance].fileName = "scratchpad.json";
+				instances[currentInstance].content = "";
 				initEditor("", "javascript");
 				emptyState.classList.add("hidden");
 				document.querySelectorAll(".file-item").forEach((el) => el.classList.remove("active", "bg-blue-100", "dark:bg-blue-900/30"));
@@ -667,8 +736,8 @@
 			fileInput.onchange = (e) => handleFileSelect(e.target.files);
 
 			// Initialize with empty editor by default
-			currentFileName = "scratchpad.js";
-			initEditor("", "javascript");
+			currentFileName = instances[0].fileName;
+			initEditor(instances[0].content, "javascript");
 			emptyState.classList.add("hidden");
 		</script>
 	</body>
