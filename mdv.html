@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+		<title>Markdown Explorer</title>
+		<script src="https://cdn.tailwindcss.com"></script>
+		<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
+		<link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+		<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-markdown.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-javascript.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-python.min.js"></script>
+
+		<style>
+			:root {
+				--reader-font-size: 1rem;
+			}
+
+			/* Robust Typography System */
+			.prose {
+				max-width: 85ch;
+				color: #374151;
+				font-size: var(--reader-font-size);
+				line-height: 1.7;
+				word-wrap: break-word;
+			}
+
+			/* Spacing for block elements */
+			.prose p,
+			.prose ul,
+			.prose ol,
+			.prose blockquote,
+			.prose pre,
+			.prose table {
+				margin-top: 1.25em;
+				margin-bottom: 1.25em;
+			}
+
+			/* Headings */
+			.prose h1 {
+				font-size: 2.5em;
+				line-height: 1.2;
+				margin-top: 0;
+				margin-bottom: 0.8em;
+				border-bottom: 2px solid #e5e7eb;
+				padding-bottom: 0.3em;
+				color: #111827;
+			}
+
+			.prose h2 {
+				font-size: 1.8em;
+				line-height: 1.3;
+				margin-top: 2em;
+				margin-bottom: 1em;
+				border-bottom: 1px solid #f3f4f6;
+				padding-bottom: 0.2em;
+				color: #1f2937;
+			}
+
+			.prose h3 {
+				font-size: 1.4em;
+				margin-top: 1.6em;
+				margin-bottom: 0.6em;
+				color: #374151;
+			}
+
+			/* Lists */
+			.prose ul {
+				list-style-type: disc;
+				padding-left: 1.5em;
+			}
+
+			.prose ol {
+				list-style-type: decimal;
+				padding-left: 1.5em;
+			}
+
+			.prose li {
+				margin-top: 0.5em;
+				margin-bottom: 0.5em;
+				padding-left: 0.25em;
+			}
+
+			.prose li > p {
+				margin-top: 0.5em;
+				margin-bottom: 0.5em;
+			}
+
+			/* Blockquotes */
+			.prose blockquote {
+				border-left: 4px solid #e5e7eb;
+				padding-left: 1.25em;
+				font-style: italic;
+				color: #6b7280;
+			}
+
+			/* Code Handling */
+			.prose :not(pre) > code {
+				background-color: #f3f4f6;
+				padding: 0.2em 0.4em;
+				border-radius: 0.25rem;
+				font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+				font-size: 0.85em;
+				color: #ef4444;
+				/* Distinctive inline code color */
+			}
+
+			.prose pre {
+				background-color: #1f2937 !important;
+				padding: 1.25rem !important;
+				border-radius: 0.75rem;
+				overflow-x: auto;
+				box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+			}
+
+			.prose pre code {
+				background: transparent !important;
+				padding: 0 !important;
+				border-radius: 0 !important;
+				font-size: 0.85em !important;
+				line-height: 1.5 !important;
+				color: #f9fafb !important;
+				font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+			}
+
+			/* Tables */
+			.prose table {
+				width: 100%;
+				border-collapse: collapse;
+				font-size: 0.9em;
+			}
+
+			.prose th {
+				background-color: #f9fafb;
+				text-align: left;
+			}
+
+			.prose th,
+			.prose td {
+				border: 1px solid #e5e7eb;
+				padding: 0.75em;
+			}
+
+			@media (prefers-color-scheme: dark) {
+				body {
+					background-color: #020617;
+					color: #f1f5f9;
+				}
+
+				.sidebar {
+					background-color: #0f172a;
+					border-color: #1e293b;
+				}
+
+				.prose {
+					color: #cbd5e1;
+				}
+
+				.prose h1 {
+					color: #f8fafc;
+					border-color: #1e293b;
+				}
+
+				.prose h2 {
+					color: #f1f5f9;
+					border-color: #1e293b;
+				}
+
+				.prose h3 {
+					color: #e2e8f0;
+				}
+
+				.prose :not(pre) > code {
+					background-color: #1e293b;
+					color: #fb7185;
+				}
+
+				.prose blockquote {
+					border-color: #334155;
+					color: #94a3b8;
+				}
+
+				.prose th {
+					background-color: #1e293b;
+				}
+
+				.prose th,
+				.prose td {
+					border-color: #334155;
+				}
+
+				.file-item:hover {
+					background-color: #1e293b;
+				}
+			}
+
+			.file-item.active {
+				background-color: #2563eb !important;
+				color: white !important;
+			}
+
+			.mobile-sidebar-active #sidebar {
+				display: flex !important;
+				position: fixed;
+				inset: 0;
+				z-index: 60;
+				width: 100%;
+			}
+
+			/* Ensure editor fills container and scrolls correctly */
+			#editor-container {
+				min-height: 0;
+				display: flex;
+				flex-direction: column;
+			}
+
+			#editor {
+				flex: 1;
+				min-height: 0;
+			}
+
+			.cm-editor {
+				height: 100% !important;
+			}
+
+			.cm-scroller {
+				overflow: auto !important;
+			}
+		</style>
+	</head>
+
+	<body class="h-screen flex flex-col overflow-hidden transition-colors duration-200">
+		<header class="border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center justify-between shrink-0 bg-white dark:bg-slate-950 z-50 shadow-sm">
+			<div class="flex items-center gap-2">
+				<div class="bg-blue-600 p-1.5 rounded-lg hidden sm:block">
+					<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+					</svg>
+				</div>
+				<h1 class="text-sm font-bold uppercase tracking-tight sm:text-lg sm:normal-case">MD Explorer</h1>
+			</div>
+
+			<div class="flex items-center gap-3">
+				<div class="flex items-center border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden bg-white dark:bg-gray-900">
+					<button onclick="changeZoom(-0.1)" class="px-3 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 border-r border-gray-200 dark:border-gray-700">−</button>
+					<span id="zoom-level" class="px-2 text-xs font-mono min-w-[3rem] text-center">100%</span>
+					<button onclick="changeZoom(0.1)" class="px-3 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 border-l border-gray-200 dark:border-gray-700">+</button>
+					<button onclick="toggleWrap()" id="wrap-toggle-btn" title="Toggle Line Wrap" class="px-3 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 border-l border-gray-200 dark:border-gray-700 transition-colors">W</button>
+				</div>
+
+				<div id="edit-controls" class="hidden flex items-center gap-2">
+					<button id="toggle-edit-btn" class="bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-1.5 rounded-lg text-xs sm:text-sm transition flex items-center gap-2">
+						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+						</svg>
+						<span id="toggle-text">Edit</span>
+					</button>
+					<button id="download-btn" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs sm:text-sm transition flex items-center gap-2">
+						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+						</svg>
+						<span>Save</span>
+					</button>
+				</div>
+
+				<input type="file" id="file-input" multiple accept=".md,.markdown,text/markdown" class="hidden" />
+				<button id="open-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm transition flex items-center gap-2">
+					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+					</svg>
+					<span id="btn-text">Open</span>
+				</button>
+			</div>
+		</header>
+
+		<div class="flex-1 flex overflow-hidden">
+			<aside id="sidebar" class="w-72 border-r border-gray-200 dark:border-gray-800 flex flex-col shrink-0 sidebar hidden md:flex bg-white dark:bg-slate-900">
+				<div class="p-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
+					<h2 class="text-xs text-gray-400 uppercase tracking-widest">Documents</h2>
+					<button id="close-sidebar" class="md:hidden text-gray-500 p-1">
+						<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+						</svg>
+					</button>
+				</div>
+				<div id="file-list" class="flex-1 overflow-y-auto p-2 space-y-1">
+					<div class="text-gray-400 text-xs italic p-8 text-center">Open files to begin.</div>
+				</div>
+			</aside>
+
+			<main class="flex-1 overflow-y-auto bg-slate-50 dark:bg-black relative">
+				<div id="empty-state" class="absolute inset-0 flex flex-col items-center justify-center text-gray-400 p-8 text-center">
+					<p class="text-sm opacity-50">Select a document from the explorer</p>
+				</div>
+				<article id="content" class="prose dark:prose-invert mx-auto hidden bg-white dark:bg-gray-950 p-4 sm:p-8 md:p-16 min-h-full border-x border-transparent sm:border-gray-100 dark:sm:border-gray-900 shadow-sm"></article>
+				<div id="editor-container" class="hidden w-full h-full bg-white dark:bg-gray-950 px-4 sm:px-8 md:px-16 py-8">
+					<div id="editor" class="h-full border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden"></div>
+				</div>
+			</main>
+		</div>
+
+		<button id="mobile-menu" class="fixed bottom-6 right-6 md:hidden bg-blue-600 text-white p-4 rounded-full shadow-2xl z-50">
+			<svg id="menu-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+			</svg>
+		</button>
+
+		<script type="module">
+			// Using esm.sh to ensure all dependencies (like @codemirror/state) are correctly deduplicated
+			import { EditorView, basicSetup } from "https://esm.sh/codemirror@6.0.1";
+			import { markdown } from "https://esm.sh/@codemirror/lang-markdown@6.2.1";
+			import { oneDark } from "https://esm.sh/@codemirror/theme-one-dark@6.1.2";
+
+			const openBtn = document.getElementById("open-btn");
+			const fileInput = document.getElementById("file-input");
+			const fileListContainer = document.getElementById("file-list");
+			const contentArea = document.getElementById("content");
+			const editorContainer = document.getElementById("editor-container");
+			const editorEl = document.getElementById("editor");
+			const emptyState = document.getElementById("empty-state");
+			const sidebar = document.getElementById("sidebar");
+			const mobileMenu = document.getElementById("mobile-menu");
+			const closeSidebar = document.getElementById("close-sidebar");
+			const zoomLabel = document.getElementById("zoom-level");
+			const editControls = document.getElementById("edit-controls");
+			const toggleEditBtn = document.getElementById("toggle-edit-btn");
+			const toggleText = document.getElementById("toggle-text");
+			const downloadBtn = document.getElementById("download-btn");
+
+			let loadedFiles = new Map();
+			let currentZoom = 1.0;
+			let isEditing = false;
+			let currentFileName = null;
+			let editor = null;
+			let lineWrap = true;
+			const isFileSystemApiSupported = "showDirectoryPicker" in window;
+
+			// Initialize CodeMirror
+			function initEditor(initialValue = "") {
+				if (editor) {
+					editor.destroy();
+				}
+
+				const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+				const extensions = [
+					basicSetup,
+					markdown(),
+					isDark ? oneDark : [],
+					EditorView.theme({
+						"&": { height: "100%", fontSize: "var(--reader-font-size)" },
+						".cm-scroller": { overflow: "auto" }
+					})
+				];
+
+				if (lineWrap) {
+					extensions.push(EditorView.lineWrapping);
+				}
+
+				editor = new EditorView({
+					doc: initialValue,
+					extensions: extensions,
+					parent: editorEl
+				});
+			}
+
+			window.toggleWrap = function () {
+				lineWrap = !lineWrap;
+				const btn = document.getElementById("wrap-toggle-btn");
+				if (lineWrap) {
+					btn.classList.add("bg-blue-100", "dark:bg-blue-900/30", "text-blue-700", "dark:text-blue-300");
+				} else {
+					btn.classList.remove("bg-blue-100", "dark:bg-blue-900/30", "text-blue-700", "dark:text-blue-300");
+				}
+				if (editor) {
+					const currentDoc = editor.state.doc.toString();
+					initEditor(currentDoc);
+				}
+			};
+
+			// Initialize wrap button state
+			document.getElementById("wrap-toggle-btn").classList.add("bg-blue-100", "dark:bg-blue-900/30", "text-blue-700", "dark:text-blue-300");
+
+			const toggleSidebar = () => {
+				document.body.classList.toggle("mobile-sidebar-active");
+				const isActive = document.body.classList.contains("mobile-sidebar-active");
+				document.getElementById("menu-icon").innerHTML = isActive
+					? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>'
+					: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>';
+			};
+
+			mobileMenu.onclick = toggleSidebar;
+			closeSidebar.onclick = toggleSidebar;
+
+			if (isFileSystemApiSupported) {
+				document.getElementById("btn-text").textContent = "Directory";
+			}
+
+			marked.setOptions({
+				highlight: (code, lang) => {
+					if (Prism.languages[lang]) {
+						return Prism.highlight(code, Prism.languages[lang], lang);
+					}
+					return code;
+				},
+				breaks: true,
+				gfm: true
+			});
+
+			window.changeZoom = function (delta) {
+				currentZoom = Math.min(Math.max(0.5, currentZoom + delta), 2.5);
+				document.documentElement.style.setProperty("--reader-font-size", `${currentZoom}rem`);
+				zoomLabel.textContent = `${Math.round(currentZoom * 100)}%`;
+			};
+
+			async function handleFileSelect(files) {
+				fileListContainer.innerHTML = "";
+				loadedFiles.clear();
+				Array.from(files).forEach((file) => {
+					if (file.name.toLowerCase().endsWith(".md") || file.name.toLowerCase().endsWith(".markdown")) {
+						loadedFiles.set(file.name, file);
+						renderFileListItem(file.name);
+					}
+				});
+				if (loadedFiles.size === 0) {
+					fileListContainer.innerHTML = '<div class="p-4 text-center text-xs text-red-500">No Markdown files found.</div>';
+				}
+			}
+
+			function renderFileListItem(name) {
+				const btn = document.createElement("button");
+				btn.className = "file-item w-full text-left px-3 py-3 rounded-lg text-sm transition-all flex items-center gap-3 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800";
+				btn.innerHTML = `<svg class="w-4 h-4 shrink-0 opacity-40" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 012-2h4.586A1 1 0 0111.293 2.707l2 2A1 1 0 0113.586 6H16a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"></path></svg><span class="truncate">${name}</span>`;
+				btn.onclick = () => displayFile(name, btn);
+				fileListContainer.appendChild(btn);
+			}
+
+			async function displayFile(name, element) {
+				const file = loadedFiles.get(name);
+				const text = await (file.text ? file.text() : readFileAsText(file));
+				currentFileName = name;
+
+				document.querySelectorAll(".file-item").forEach((el) => el.classList.remove("active"));
+				if (element) element.classList.add("active");
+
+				contentArea.innerHTML = DOMPurify.sanitize(marked.parse(text));
+
+				// Show content area by default, hide editor
+				isEditing = false;
+				updateViewMode();
+
+				contentArea.classList.remove("hidden");
+				emptyState.classList.add("hidden");
+				editControls.classList.remove("hidden");
+
+				Prism.highlightAllUnder(contentArea);
+
+				if (window.innerWidth < 768 && document.body.classList.contains("mobile-sidebar-active")) toggleSidebar();
+				document.querySelector("main").scrollTop = 0;
+
+				// Initialize editor with current text
+				initEditor(text);
+			}
+
+			function updateViewMode() {
+				if (isEditing) {
+					contentArea.classList.add("hidden");
+					editorContainer.classList.remove("hidden");
+					toggleText.textContent = "View";
+					toggleEditBtn.classList.add("bg-blue-100", "dark:bg-blue-900/30", "text-blue-700", "dark:text-blue-300");
+				} else {
+					contentArea.classList.remove("hidden");
+					editorContainer.classList.add("hidden");
+					toggleText.textContent = "Edit";
+					toggleEditBtn.classList.remove("bg-blue-100", "dark:bg-blue-900/30", "text-blue-700", "dark:text-blue-300");
+
+					// If we were editing, update the preview
+					if (editor) {
+						const text = editor.state.doc.toString();
+						contentArea.innerHTML = DOMPurify.sanitize(marked.parse(text));
+						Prism.highlightAllUnder(contentArea);
+					}
+				}
+			}
+
+			toggleEditBtn.onclick = () => {
+				isEditing = !isEditing;
+				updateViewMode();
+			};
+
+			downloadBtn.onclick = () => {
+				if (!editor || !currentFileName) return;
+				const text = editor.state.doc.toString();
+				const blob = new Blob([text], { type: "text/markdown" });
+				const url = URL.createObjectURL(blob);
+				const a = document.createElement("a");
+				a.href = url;
+				a.download = currentFileName;
+				a.click();
+				URL.revokeObjectURL(url);
+			};
+
+			function readFileAsText(file) {
+				return new Promise((resolve) => {
+					const reader = new FileReader();
+					reader.onload = (e) => resolve(e.target.result);
+					reader.readAsText(file);
+				});
+			}
+
+			openBtn.onclick = async () => {
+				if (isFileSystemApiSupported) {
+					try {
+						const dirHandle = await window.showDirectoryPicker();
+						fileListContainer.innerHTML = "";
+						loadedFiles.clear();
+						for await (const entry of dirHandle.values()) {
+							if (entry.kind === "file" && (entry.name.toLowerCase().endsWith(".md") || entry.name.toLowerCase().endsWith(".markdown"))) {
+								const file = await entry.getFile();
+								loadedFiles.set(entry.name, file);
+								renderFileListItem(entry.name);
+							}
+						}
+					} catch (e) {
+						if (e.name !== "AbortError") console.error(e);
+					}
+				} else {
+					fileInput.click();
+				}
+			};
+
+			fileInput.onchange = (e) => handleFileSelect(e.target.files);
+		</script>
+	</body>
+</html>

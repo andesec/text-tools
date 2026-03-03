@@ -1,0 +1,675 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+		<title>JSON Viewer</title>
+		<script src="https://cdn.tailwindcss.com"></script>
+		<script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
+
+		<style>
+			:root {
+				--reader-font-size: 0.9rem;
+			}
+
+			body {
+				font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+			}
+
+			.json-tree {
+				font-family: inherit;
+				line-height: 1.5;
+			}
+
+			.json-node {
+				margin-left: 1.5rem;
+				position: relative;
+			}
+
+			.json-toggle {
+				position: absolute;
+				left: -1.2rem;
+				cursor: pointer;
+				user-select: none;
+				opacity: 0.5;
+				transition: opacity 0.2s;
+			}
+
+			.json-toggle:hover {
+				opacity: 1;
+			}
+
+			.json-key {
+				color: #7e22ce;
+				/* Purple */
+				font-weight: normal;
+			}
+
+			.json-value-string {
+				color: #15803d;
+				/* Green */
+				white-space: pre-wrap;
+				word-break: break-word;
+			}
+
+			.json-value-number {
+				color: #1d4ed8;
+				/* Blue */
+			}
+
+			.json-value-boolean {
+				color: #a16207;
+				/* Yellow/Brown */
+			}
+
+			.json-value-null {
+				color: #64748b;
+				/* Slate */
+			}
+
+			.json-meta {
+				color: #94a3b8;
+				font-size: 0.75rem;
+				margin-left: 0.5rem;
+				font-weight: normal;
+				opacity: 0.8;
+			}
+
+			.dark .json-key {
+				color: #c084fc;
+			}
+
+			.dark .json-value-string {
+				color: #4ade80;
+			}
+
+			.dark .json-value-number {
+				color: #60a5fa;
+			}
+
+			.dark .json-value-boolean {
+				color: #fbbf24;
+			}
+
+			.dark .json-value-null {
+				color: #94a3b8;
+			}
+
+			.dark .json-meta {
+				color: #475569;
+			}
+
+			.collapsed > .json-children {
+				display: none;
+			}
+
+			.collapsed > .json-toggle::before {
+				content: "▶";
+			}
+
+			.json-toggle::before {
+				content: "▼";
+				font-size: 0.7rem;
+			}
+
+			.expanded-only {
+				display: none;
+			}
+
+			.json-node:not(.collapsed) > .expanded-only {
+				display: block;
+			}
+
+			.json-node:not(.collapsed) > .json-node-content > .collapsed-only {
+				display: none;
+			}
+
+			.json-node.collapsed > .expanded-only {
+				display: none;
+			}
+
+			.json-node.collapsed > .json-node-content > .collapsed-only {
+				display: inline;
+			}
+
+			.json-node-content {
+				cursor: pointer;
+				padding: 1px 4px;
+				border-radius: 3px;
+				transition: background 0.2s;
+			}
+
+			.json-node-content:hover {
+				background: rgba(0, 0, 0, 0.05);
+			}
+
+			.dark .json-node-content:hover {
+				background: rgba(255, 255, 255, 0.1);
+			}
+
+			.copy-toast {
+				position: fixed;
+				bottom: 2rem;
+				left: 50%;
+				transform: translateX(-50%);
+				background: #333;
+				color: white;
+				padding: 0.5rem 1rem;
+				border-radius: 2rem;
+				font-size: 0.8rem;
+				z-index: 1000;
+				opacity: 0;
+				transition: opacity 0.3s;
+				pointer-events: none;
+			}
+
+			@media (prefers-color-scheme: dark) {
+				body {
+					background-color: #020617;
+					color: #f1f5f9;
+				}
+
+				.sidebar {
+					background-color: #0f172a;
+					border-color: #1e293b;
+				}
+			}
+
+			/* Ensure editor fills container and scrolls correctly */
+			#editor-container {
+				min-height: 0;
+				display: flex;
+				flex-direction: column;
+			}
+
+			#editor {
+				flex: 1;
+				min-height: 0;
+			}
+
+			.cm-editor {
+				height: 100% !important;
+			}
+
+			.cm-scroller {
+				overflow: auto !important;
+			}
+		</style>
+	</head>
+
+	<body class="h-screen flex flex-col overflow-hidden transition-colors duration-200">
+		<header class="border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center justify-between shrink-0 bg-white dark:bg-slate-950 z-50 shadow-sm">
+			<div class="flex items-center gap-2">
+				<div class="bg-yellow-500 p-1.5 rounded-lg hidden sm:block">
+					<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+					</svg>
+				</div>
+				<h1 class="text-sm uppercase tracking-tight sm:text-lg sm:normal-case">JS Explorer</h1>
+			</div>
+
+			<div class="flex items-center gap-3">
+				<div class="flex items-center gap-1 border-r border-gray-200 dark:border-gray-700 pr-3 mr-1">
+					<button id="source-view-btn" onclick="revertToSource()" title="Revert to Source" class="hidden p-1.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-md transition text-xs uppercase mr-2">Source</button>
+					<button onclick="prettify()" title="Prettify JSON" class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition text-xs uppercase">Format</button>
+					<div class="relative group">
+						<button class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition text-xs uppercase">Tools</button>
+						<div class="absolute right-0 mt-1 w-48 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-xl hidden group-hover:block z-[100]">
+							<button onclick="transform('encodeBase64')" class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs">Base64 Encode</button>
+							<button onclick="transform('decodeBase64')" class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs">Base64 Decode</button>
+							<button onclick="transform('encodeURI')" class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs">URI Encode</button>
+							<button onclick="transform('decodeURI')" class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs">URI Decode</button>
+							<button onclick="transform('cleanJSON')" class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs text-green-500">Fix/Clean JSON</button>
+							<button onclick="transform('escapeJSON')" class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs">Escape JSON String</button>
+							<button onclick="transform('unescapeJSON')" class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs">Unescape JSON String</button>
+							<button onclick="transform('resolveNewlines')" class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs text-blue-500">Resolve \n Newlines</button>
+						</div>
+					</div>
+				</div>
+
+				<button id="toggle-view-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs sm:text-sm transition flex items-center gap-2">
+					<span id="toggle-text">Editor</span>
+				</button>
+
+				<button onclick="toggleWrap()" id="wrap-toggle-btn" title="Toggle Line Wrap" class="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 px-3 py-1.5 rounded-lg text-xs transition">W</button>
+
+				<button id="download-btn" class="bg-green-600 hover:bg-green-700 text-white px-2 py-1.5 rounded-lg transition" title="Save File">
+					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+					</svg>
+				</button>
+
+				<button id="new-btn" title="New Scratchpad" class="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 px-3 py-1.5 rounded-lg text-xs transition">New</button>
+				<input type="file" id="file-input" multiple accept=".js,.json,.ts,.txt" class="hidden" />
+				<button id="open-btn" class="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 px-3 py-1.5 rounded-lg text-xs transition">Open</button>
+			</div>
+		</header>
+
+		<div class="flex-1 flex overflow-hidden">
+			<aside id="sidebar" class="w-64 border-r border-gray-200 dark:border-gray-800 flex flex-col shrink-0 sidebar hidden md:flex bg-white dark:bg-slate-900">
+				<div id="file-list" class="flex-1 overflow-y-auto p-2 space-y-1">
+					<div class="text-gray-400 text-xs italic p-8 text-center">Open files to begin.</div>
+				</div>
+			</aside>
+
+			<main class="flex-1 overflow-hidden bg-slate-50 dark:bg-black relative flex flex-col">
+				<div id="editor-container" class="flex-1 w-full bg-white dark:bg-gray-950">
+					<div id="editor" class="h-full"></div>
+				</div>
+				<div id="tree-container" class="hidden flex-1 w-full bg-white dark:bg-gray-950 overflow-auto p-6 font-mono text-sm">
+					<div id="json-tree-root" class="json-tree"></div>
+				</div>
+				<div id="empty-state" class="absolute inset-0 flex items-center justify-center text-gray-400 bg-slate-50 dark:bg-black pointer-events-none">
+					<p class="text-xs uppercase tracking-widest opacity-30">No file loaded</p>
+				</div>
+			</main>
+		</div>
+
+		<div id="copy-toast" class="copy-toast">Copied to clipboard!</div>
+
+		<script type="module">
+			import { EditorView, basicSetup } from "https://esm.sh/codemirror@6.0.1";
+			import { javascript } from "https://esm.sh/@codemirror/lang-javascript@6.2.1";
+			import { json } from "https://esm.sh/@codemirror/lang-json@6.0.1";
+			import { oneDark } from "https://esm.sh/@codemirror/theme-one-dark@6.1.2";
+			import { foldGutter, foldKeymap } from "https://esm.sh/@codemirror/language@6.0.0";
+			import { keymap } from "https://esm.sh/@codemirror/view@6.0.0";
+
+			const openBtn = document.getElementById("open-btn");
+			const newBtn = document.getElementById("new-btn");
+			const fileInput = document.getElementById("file-input");
+			const fileListContainer = document.getElementById("file-list");
+			const editorContainer = document.getElementById("editor-container");
+			const treeContainer = document.getElementById("tree-container");
+			const treeRoot = document.getElementById("json-tree-root");
+			const editorEl = document.getElementById("editor");
+			const emptyState = document.getElementById("empty-state");
+			const toggleViewBtn = document.getElementById("toggle-view-btn");
+			const toggleText = document.getElementById("toggle-text");
+			const downloadBtn = document.getElementById("download-btn");
+			const copyToast = document.getElementById("copy-toast");
+			const sourceBtn = document.getElementById("source-view-btn");
+
+			let loadedFiles = new Map();
+			let currentFileName = null;
+			let editor = null;
+			let sourceJSON = null; // Store the original JSON when in resolved view
+			let viewMode = "editor"; // 'editor' or 'tree'
+			let lineWrap = true;
+
+			// Initialize CodeMirror
+			function initEditor(initialValue = "", language = "javascript", readOnly = false) {
+				if (editor) editor.destroy();
+				const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+				const extensions = [
+					basicSetup,
+					language === "json" ? json() : javascript(),
+					isDark ? oneDark : [],
+					foldGutter(),
+					keymap.of(foldKeymap),
+					EditorView.editable.of(!readOnly),
+					EditorView.theme({
+						"&": { height: "100%", fontSize: "13px" },
+						".cm-scroller": { overflow: "auto" }
+					})
+				];
+
+				if (lineWrap) {
+					extensions.push(EditorView.lineWrapping);
+				}
+
+				editor = new EditorView({
+					doc: initialValue,
+					extensions: extensions,
+					parent: editorEl
+				});
+			}
+
+			window.revertToSource = function () {
+				if (sourceJSON !== null) {
+					initEditor(sourceJSON, currentFileName?.endsWith(".json") ? "json" : "javascript", false);
+					sourceJSON = null;
+					sourceBtn.classList.add("hidden");
+				}
+			};
+
+			window.toggleWrap = function () {
+				lineWrap = !lineWrap;
+				const btn = document.getElementById("wrap-toggle-btn");
+				if (lineWrap) {
+					btn.classList.add("bg-blue-100", "dark:bg-blue-900/30", "text-blue-700", "dark:text-blue-300");
+				} else {
+					btn.classList.remove("bg-blue-100", "dark:bg-blue-900/30", "text-blue-700", "dark:text-blue-300");
+				}
+				if (editor) {
+					const currentDoc = editor.state.doc.toString();
+					initEditor(currentDoc, currentFileName?.endsWith(".json") ? "json" : "javascript");
+				}
+			};
+
+			// Initialize wrap button state
+			document.getElementById("wrap-toggle-btn").classList.add("bg-blue-100", "dark:bg-blue-900/30", "text-blue-700", "dark:text-blue-300");
+
+			async function handleFileSelect(files) {
+				fileListContainer.innerHTML = "";
+				loadedFiles.clear();
+				Array.from(files).forEach((file) => {
+					loadedFiles.set(file.name, file);
+					renderFileListItem(file.name);
+				});
+				if (loadedFiles.size > 0) {
+					const first = Array.from(loadedFiles.keys())[0];
+					displayFile(first);
+				}
+			}
+
+			function renderFileListItem(name) {
+				const btn = document.createElement("button");
+				btn.className = "file-item w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all truncate text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800";
+				btn.textContent = name;
+				btn.onclick = () => displayFile(name, btn);
+				fileListContainer.appendChild(btn);
+			}
+
+			async function displayFile(name, element) {
+				const file = loadedFiles.get(name);
+				const text = await (file.text ? file.text() : readFileAsText(file));
+				currentFileName = name;
+				sourceJSON = null; // Reset sourceJSON when a new file is displayed
+				sourceBtn.classList.add("hidden"); // Hide source button
+
+				document.querySelectorAll(".file-item").forEach((el) => el.classList.remove("active", "bg-blue-100", "dark:bg-blue-900/30"));
+				if (element) element.classList.add("active", "bg-blue-100", "dark:bg-blue-900/30");
+
+				emptyState.classList.add("hidden");
+				const isJson = name.toLowerCase().endsWith(".json");
+				initEditor(text, isJson ? "json" : "javascript");
+
+				if (isJson || text.trim().startsWith("{") || text.trim().startsWith("[")) {
+					buildTree(text);
+				} else {
+					treeRoot.innerHTML = '<div class="text-gray-400 p-8 text-center italic">Not currently showing tree for non-JSON content.</div>';
+				}
+			}
+
+			function safeJsonParse(text) {
+				try {
+					return JSON.parse(text);
+				} catch (e) {
+					// If it fails, try to "fix" literal newlines which are common after 'Resolve Newlines'
+					try {
+						// This is a naive attempt to escape literal newlines in strings
+						// It replaces literal newlines with \n ONLY if they seem to be inside a JSON field
+						const fixed = text.replace(/:\s*"(.*?)"/gs, (match, p1) => {
+							return `: "${p1.replace(/\n/g, "\\n").replace(/\r/g, "\\r")}"`;
+						});
+						return JSON.parse(fixed);
+					} catch (e2) {
+						throw e; // throw original error if fix fails
+					}
+				}
+			}
+
+			function buildTree(text) {
+				treeRoot.innerHTML = "";
+				try {
+					const data = safeJsonParse(text);
+					treeRoot.appendChild(renderNode(null, data, true));
+				} catch (e) {
+					treeRoot.innerHTML = `<div class="text-red-500 p-4 border border-red-200 rounded-lg">
+                    <div class="mb-1">Invalid JSON for Tree View:</div>
+                    <div class="text-xs font-mono opacity-70">${e.message}</div>
+                    <button onclick="transform('cleanJSON')" class="mt-4 px-3 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded text-xs transition">Try to Auto-Fix JSON</button>
+                </div>`;
+				}
+			}
+
+			function renderNode(key, value, isLast = true, index = null) {
+				const node = document.createElement("div");
+				node.className = "json-node collapsed";
+
+				const content = document.createElement("span");
+				content.className = "json-node-content";
+
+				if (index !== null) {
+					const indexSpan = document.createElement("span");
+					indexSpan.className = "text-gray-400 mr-2 opacity-50";
+					indexSpan.textContent = `[${index}]`;
+					content.appendChild(indexSpan);
+				}
+
+				if (key !== null) {
+					const keySpan = document.createElement("span");
+					keySpan.className = "json-key";
+					keySpan.textContent = `"${key}": `;
+					content.appendChild(keySpan);
+				}
+
+				const isObject = value !== null && typeof value === "object";
+
+				if (isObject) {
+					const isArray = Array.isArray(value);
+					const openBracket = isArray ? "[" : "{";
+					const closeBracket = isArray ? "]" : "}";
+					const count = isArray ? value.length : Object.keys(value).length;
+
+					const label = document.createElement("span");
+					label.textContent = openBracket;
+					content.appendChild(label);
+
+					// Ellipsis for collapsed view
+					const ellipsis = document.createElement("span");
+					ellipsis.className = "collapsed-only text-gray-400 mx-1";
+					ellipsis.textContent = "...";
+					content.appendChild(ellipsis);
+
+					const closeLabel = document.createElement("span");
+					closeLabel.className = "collapsed-only";
+					closeLabel.textContent = closeBracket + (isLast ? "" : ",");
+					content.appendChild(closeLabel);
+
+					const meta = document.createElement("span");
+					meta.className = "json-meta";
+					meta.textContent = `${count} ${isArray ? "item" : "field"}${count !== 1 ? "s" : ""}`;
+					content.appendChild(meta);
+
+					const toggle = document.createElement("div");
+					toggle.className = "json-toggle";
+					toggle.onclick = (e) => {
+						e.stopPropagation();
+						node.classList.toggle("collapsed");
+					};
+					node.appendChild(toggle);
+
+					const children = document.createElement("div");
+					children.className = "json-children";
+
+					const keys = Object.keys(value);
+					keys.forEach((k, i) => {
+						children.appendChild(renderNode(isArray ? null : k, value[k], i === keys.length - 1, isArray ? i : null));
+					});
+					node.appendChild(content);
+					node.appendChild(children);
+
+					const footer = document.createElement("div");
+					footer.className = "expanded-only opacity-70";
+					footer.style.marginLeft = "0";
+					footer.textContent = closeBracket + (isLast ? "" : ",");
+					node.appendChild(footer);
+				} else {
+					const valSpan = document.createElement("span");
+					const type = value === null ? "null" : typeof value;
+					valSpan.className = `json-value-${type}`;
+					valSpan.textContent = type === "string" ? `"${value}"` : String(value);
+					content.appendChild(valSpan);
+
+					if (type === "string") {
+						const meta = document.createElement("span");
+						meta.className = "json-meta opacity-40";
+						meta.textContent = `${value.length} ch`;
+						content.appendChild(meta);
+					}
+
+					if (!isLast) content.appendChild(document.createTextNode(","));
+					node.appendChild(content);
+				}
+
+				content.onclick = (e) => {
+					e.stopPropagation();
+					copyToClipboard(isObject ? JSON.stringify(value, null, 2) : String(value));
+				};
+
+				return node;
+			}
+
+			function copyToClipboard(text) {
+				navigator.clipboard.writeText(text).then(() => {
+					copyToast.style.opacity = "1";
+					setTimeout(() => (copyToast.style.opacity = "0"), 2000);
+				});
+			}
+
+			window.prettify = () => {
+				if (!editor) return;
+				try {
+					const content = editor.state.doc.toString();
+					const parsed = safeJsonParse(content);
+					const formatted = JSON.stringify(parsed, null, 2);
+					editor.dispatch({
+						changes: { from: 0, to: editor.state.doc.length, insert: formatted }
+					});
+					buildTree(formatted);
+				} catch (e) {
+					alert("Only valid JSON (or almost valid JSON) can be prettified.");
+				}
+			};
+
+			window.transform = (type) => {
+				if (!editor) return;
+				const content = editor.state.doc.toString();
+				let result = "";
+				try {
+					if (type === "encodeBase64") result = btoa(content);
+					else if (type === "decodeBase64") result = atob(content);
+					else if (type === "encodeURI") result = encodeURIComponent(content);
+					else if (type === "decodeURI") result = decodeURIComponent(content);
+					else if (type === "escapeJSON") {
+						// If it's already wrapped in quotes and seems like a JSON string, don't double escape
+						if (content.startsWith('"') && content.endsWith('"') && !content.includes("\n")) {
+							result = content;
+						} else {
+							result = JSON.stringify(content);
+						}
+					} else if (type === "unescapeJSON") {
+						try {
+							// Attempt to parse as a full JSON string first
+							const parsed = JSON.parse(content);
+							result = typeof parsed === "string" ? parsed : content;
+						} catch (e) {
+							// If it's just the inner content of a string, try wrapping it
+							try {
+								result = JSON.parse(`"${content}"`);
+							} catch (e2) {
+								result = content;
+							}
+						}
+					} else if (type === "resolveNewlines") {
+						sourceJSON = content; // Save the original
+						result = content.replace(/\\n/g, "\n").replace(/\\r/g, "\r").replace(/\\t/g, "\t").replace(/\\"/g, '"');
+						initEditor(result, "javascript", true); // Show in editor, read-only
+						sourceBtn.classList.remove("hidden");
+						return;
+					} else if (type === "cleanJSON") {
+						// Sophisticated cleaning:
+						// ...
+						// (Same implementation as before)
+						try {
+							let cleaned = content;
+							if ((cleaned.startsWith('"') && cleaned.endsWith('"')) || cleaned.includes('\\"')) {
+								try {
+									const p = JSON.parse(cleaned.startsWith('"') ? cleaned : `"${cleaned}"`);
+									if (typeof p === "string") cleaned = p;
+								} catch (e) {}
+							}
+							cleaned = cleaned.replace(/,\s*([\]}])/g, "$1");
+							const parsed = JSON.parse(cleaned);
+							result = JSON.stringify(parsed, null, 2);
+						} catch (e) {
+							result = content.replace(/\\n/g, "\n").replace(/\\"/g, '"');
+						}
+					}
+
+					editor.dispatch({
+						changes: { from: 0, to: editor.state.doc.length, insert: result }
+					});
+					if (type === "cleanJSON") buildTree(result || editor.state.doc.toString());
+				} catch (e) {
+					alert("Transformation failed: " + e.message);
+				}
+			};
+
+			window.showPreview = (content) => {
+				// Legacy function, no longer used as we show in main editor
+			};
+
+			window.closePreview = () => {
+				// Legacy function
+			};
+
+			window.copyResolved = () => {
+				// Legacy function
+			};
+
+			toggleViewBtn.onclick = () => {
+				if (viewMode === "editor") {
+					viewMode = "tree";
+					editorContainer.classList.add("hidden");
+					treeContainer.classList.remove("hidden");
+					toggleText.textContent = "Tree";
+					const contentToParse = sourceJSON !== null ? sourceJSON : editor.state.doc.toString();
+					buildTree(contentToParse);
+				} else {
+					viewMode = "editor";
+					editorContainer.classList.remove("hidden");
+					treeContainer.classList.add("hidden");
+					toggleText.textContent = "Editor";
+				}
+			};
+
+			downloadBtn.onclick = () => {
+				if (!editor || !currentFileName) return;
+				const text = sourceJSON !== null ? sourceJSON : editor.state.doc.toString();
+				const blob = new Blob([text], { type: "application/javascript" });
+				const url = URL.createObjectURL(blob);
+				const a = document.createElement("a");
+				a.href = url;
+				a.download = currentFileName;
+				a.click();
+				URL.revokeObjectURL(url);
+			};
+
+			function readFileAsText(file) {
+				return new Promise((resolve) => {
+					const reader = new FileReader();
+					reader.onload = (e) => resolve(e.target.result);
+					reader.readAsText(file);
+				});
+			}
+
+			openBtn.onclick = () => fileInput.click();
+			newBtn.onclick = () => {
+				currentFileName = "scratchpad.js";
+				initEditor("", "javascript");
+				emptyState.classList.add("hidden");
+				document.querySelectorAll(".file-item").forEach((el) => el.classList.remove("active", "bg-blue-100", "dark:bg-blue-900/30"));
+			};
+			fileInput.onchange = (e) => handleFileSelect(e.target.files);
+
+			// Initialize with empty editor by default
+			currentFileName = "scratchpad.js";
+			initEditor("", "javascript");
+			emptyState.classList.add("hidden");
+		</script>
+	</body>
+</html>
