@@ -5,7 +5,23 @@
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 	<title>Markdown Explorer</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link
+		href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+		rel="stylesheet">
 	<script src="https://cdn.tailwindcss.com"></script>
+	<script>
+		tailwind.config = {
+			theme: {
+				extend: {
+					fontFamily: {
+						sans: ['Inter', 'sans-serif'],
+					},
+				}
+			}
+		}
+	</script>
 	<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
 	<link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
@@ -110,11 +126,11 @@
 		}
 
 		.prose pre {
-			background-color: #1f2937 !important;
+			background-color: rgb(31, 41, 55) !important;
 			padding: 1.25rem !important;
 			border-radius: 0.75rem;
 			overflow-x: auto;
-			box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+			box-shadow: inset 0 2px 4px 0 rgb(0, 0, 0);
 		}
 
 		.prose pre code {
@@ -258,47 +274,49 @@
 		.cm-scroller {
 			overflow: auto !important;
 		}
+
+		.no-scrollbar::-webkit-scrollbar {
+			display: none;
+		}
+
+		.no-scrollbar {
+			-ms-overflow-style: none;
+			scrollbar-width: none;
+		}
+
+		/* Transitions for smoother UX */
+		.transition-all {
+			transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+		}
 	</style>
 </head>
 
 <body class="h-screen flex flex-col overflow-hidden transition-colors duration-200">
-	<header
-		class="border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center justify-between shrink-0 bg-white dark:bg-slate-950 z-50 shadow-sm">
-		<div class="flex items-center gap-2">
-			<div class="bg-blue-600 p-1.5 rounded-lg hidden sm:block">
-				<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-						d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
-					</path>
-				</svg>
-			</div>
-			<h1 class="text-sm font-bold uppercase tracking-tight sm:text-lg sm:normal-case">MD Explorer</h1>
-		</div>
-
-		<div class="flex items-center gap-3">
-			<div
-				class="flex items-center border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden bg-white dark:bg-gray-900">
-				<button onclick="changeZoom(-0.1)"
-					class="px-3 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 border-r border-gray-200 dark:border-gray-700">−</button>
-				<span id="zoom-level" class="px-2 text-xs font-mono min-w-[3rem] text-center">100%</span>
-				<button onclick="changeZoom(0.1)"
-					class="px-3 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 border-l border-gray-200 dark:border-gray-700">+</button>
-				<button onclick="toggleWrap()" id="wrap-toggle-btn" title="Toggle Line Wrap"
-					class="px-3 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 border-l border-gray-200 dark:border-gray-700 transition-colors">W</button>
-			</div>
-
-			<div id="edit-controls" class="flex items-center gap-2">
-				<button id="toggle-edit-btn"
-					class="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-gray-300 dark:hover:bg-gray-700 px-3 py-1.5 rounded-lg text-xs sm:text-sm transition flex items-center gap-2">
-					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+	<header class="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-slate-950 z-50 shadow-sm shrink-0">
+		<!-- Top Row: Logo and Primary Actions -->
+		<div class="px-4 py-3 flex items-center justify-between">
+			<div class="flex items-center gap-2">
+				<div class="bg-gradient-to-br from-blue-600 to-indigo-700 p-1.5 rounded-lg shadow-sm">
+					<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-							d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+							d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
 						</path>
 					</svg>
-					<span id="toggle-text">View</span>
+				</div>
+				<h1 class="text-sm font-bold uppercase tracking-tight sm:text-lg sm:normal-case">MD Explorer</h1>
+			</div>
+
+			<div class="flex items-center gap-2">
+				<input type="file" id="file-input" multiple accept=".md,.markdown,text/markdown" class="hidden" />
+				<button id="open-btn"
+					class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all transform active:scale-95 flex items-center gap-2 shadow-sm hover:shadow-md">
+					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+					</svg>
+					<span id="btn-text">Open</span>
 				</button>
 				<button id="download-btn"
-					class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs sm:text-sm transition flex items-center gap-2">
+					class="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all transform active:scale-95 flex items-center gap-2 shadow-sm hover:shadow-md">
 					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
 							d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
@@ -306,15 +324,33 @@
 					<span>Save</span>
 				</button>
 			</div>
+		</div>
 
-			<input type="file" id="file-input" multiple accept=".md,.markdown,text/markdown" class="hidden" />
-			<button id="open-btn"
-				class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm transition flex items-center gap-2">
-				<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-				</svg>
-				<span id="btn-text">Open</span>
-			</button>
+		<!-- Bottom Row: Secondary Toolbar (Responsive) -->
+		<div
+			class="px-4 py-2 border-t border-gray-100 dark:border-gray-900 bg-gray-50/50 dark:bg-slate-900/50 flex items-center justify-between sm:justify-end gap-3 overflow-x-auto no-scrollbar">
+			<div
+				class="flex items-center border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden bg-white dark:bg-gray-900 shrink-0">
+				<button onclick="changeZoom(-0.1)"
+					class="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transition-colors">−</button>
+				<span id="zoom-level" class="px-2 text-[10px] font-mono min-w-[2.5rem] text-center">100%</span>
+				<button onclick="changeZoom(0.1)"
+					class="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 border-l border-gray-200 dark:border-gray-700 transition-colors">+</button>
+				<button onclick="toggleWrap()" id="wrap-toggle-btn" title="Toggle Line Wrap"
+					class="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 border-l border-gray-200 dark:border-gray-700 transition-colors text-[10px] font-bold">W</button>
+			</div>
+
+			<div id="edit-controls" class="flex items-center gap-2 shrink-0">
+				<button id="toggle-edit-btn"
+					class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 px-3 py-1.5 rounded-lg text-xs transition flex items-center gap-2">
+					<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+							d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+						</path>
+					</svg>
+					<span id="toggle-text">View</span>
+				</button>
+			</div>
 		</div>
 	</header>
 
@@ -428,9 +464,11 @@
 			lineWrap = !lineWrap;
 			const btn = document.getElementById("wrap-toggle-btn");
 			if (lineWrap) {
-				btn.classList.add("bg-blue-100", "dark:bg-blue-900/30", "text-blue-700", "dark:text-blue-300");
+				btn.classList.add("bg-blue-600", "text-white", "border-blue-600");
+				btn.classList.remove("hover:bg-gray-100", "dark:hover:bg-gray-800");
 			} else {
-				btn.classList.remove("bg-blue-100", "dark:bg-blue-900/30", "text-blue-700", "dark:text-blue-300");
+				btn.classList.remove("bg-blue-600", "text-white", "border-blue-600");
+				btn.classList.add("hover:bg-gray-100", "dark:hover:bg-gray-800");
 			}
 			if (editor) {
 				const currentDoc = editor.state.doc.toString();
@@ -439,7 +477,7 @@
 		};
 
 		// Initialize wrap button state
-		document.getElementById("wrap-toggle-btn").classList.add("bg-blue-100", "dark:bg-blue-900/30", "text-blue-700", "dark:text-blue-300");
+		document.getElementById("wrap-toggle-btn").classList.add("bg-blue-600", "text-white", "border-blue-600");
 
 		const toggleSidebar = () => {
 			document.body.classList.toggle("mobile-sidebar-active");
@@ -531,12 +569,14 @@
 					contentArea.classList.add("hidden");
 					editorContainer.classList.remove("hidden");
 					toggleText.textContent = "View";
-					toggleEditBtn.classList.add("bg-blue-100", "dark:bg-blue-900/30", "text-blue-700", "dark:text-blue-300");
+					toggleEditBtn.classList.add("bg-blue-600", "text-white", "border-blue-600");
+					toggleEditBtn.classList.remove("bg-white", "dark:bg-gray-900", "text-gray-700", "dark:text-gray-300");
 				} else {
 					contentArea.classList.remove("hidden");
 					editorContainer.classList.add("hidden");
 					toggleText.textContent = "Edit";
-					toggleEditBtn.classList.remove("bg-blue-100", "dark:bg-blue-900/30", "text-blue-700", "dark:text-blue-300");
+					toggleEditBtn.classList.remove("bg-blue-600", "text-white", "border-blue-600");
+					toggleEditBtn.classList.add("bg-white", "dark:bg-gray-900", "text-gray-700", "dark:text-gray-300");
 				}
 			}
 			updatePreview();
