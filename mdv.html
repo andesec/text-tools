@@ -235,6 +235,10 @@
 			transition: all 0.3s ease;
 		}
 
+		#editor-container.hidden {
+			display: none !important;
+		}
+
 		#content {
 			transition: all 0.3s ease;
 		}
@@ -413,7 +417,7 @@
 
 		let loadedFiles = new Map();
 		let currentZoom = 1.0;
-		let isEditing = true;
+		let isEditing = false;
 		let currentFileName = "Untitled.md";
 		let editor = null;
 		let lineWrap = true;
@@ -548,7 +552,7 @@
 			updatePreview();
 
 			if (window.innerWidth < 1024) {
-				isEditing = true;
+				isEditing = false;
 				updateViewMode();
 			}
 
