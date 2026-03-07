@@ -36,6 +36,12 @@
 			--reader-font-size: 1rem;
 		}
 
+		@media (max-width: 640px) {
+			:root {
+				--reader-font-size: 0.875rem;
+			}
+		}
+
 		/* Robust Typography System */
 		.prose {
 			max-width: none;
@@ -148,6 +154,9 @@
 			width: 100%;
 			border-collapse: collapse;
 			font-size: 0.9em;
+			display: block;
+			overflow-x: auto;
+			-webkit-overflow-scrolling: touch;
 		}
 
 		.prose th {
@@ -159,6 +168,15 @@
 		.prose td {
 			border: 1px solid #e5e7eb;
 			padding: 0.75em;
+		}
+
+		/* Responsive Media */
+		.prose img,
+		.prose video,
+		.prose iframe {
+			max-width: 100%;
+			height: auto;
+			border-radius: 0.5rem;
 		}
 
 		@media (prefers-color-scheme: dark) {
@@ -359,7 +377,7 @@
 				</div>
 			</div>
 			<article id="content"
-				class="prose dark:prose-invert hidden bg-white dark:bg-gray-950 p-4 sm:p-8 md:p-16 h-full border-x border-transparent sm:border-gray-100 dark:sm:border-gray-900 shadow-sm overflow-y-auto w-full">
+				class="prose dark:prose-invert hidden bg-white dark:bg-gray-950 p-4 sm:p-8 md:p-16 h-full border-x border-transparent sm:border-gray-100 dark:sm:border-gray-900 shadow-sm overflow-y-auto overflow-x-hidden w-full">
 			</article>
 		</main>
 	</div>
