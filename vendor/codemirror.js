@@ -1,0 +1,7 @@
+/**
+ * Bundled by jsDelivr using Rollup v2.79.2 and Terser v5.39.0.
+ * Original file: /npm/codemirror@6.0.1/dist/index.js
+ *
+ * Do NOT use SRI with dynamically generated files! More information: https://www.jsdelivr.com/using-sri-with-dynamic-files
+ */
+import{lineNumbers as o,highlightActiveLineGutter as r,highlightSpecialChars as m,drawSelection as e,dropCursor as i,rectangularSelection as p,crosshairCursor as t,highlightActiveLine as c,keymap as l}from"/npm/@codemirror/view@6.0.2/+esm";export{EditorView}from"/npm/@codemirror/view@6.0.2/+esm";import{EditorState as f}from"/npm/@codemirror/state@6.0.1/+esm";import{foldGutter as n,indentOnInput as s,syntaxHighlighting as a,defaultHighlightStyle as d,bracketMatching as u,foldKeymap as w}from"/npm/@codemirror/language@6.2.0/+esm";import{history as x,defaultKeymap as b,historyKeymap as g}from"/npm/@codemirror/commands@6.0.1/+esm";import{highlightSelectionMatches as k,searchKeymap as v}from"/npm/@codemirror/search@6.0.0/+esm";import{closeBrackets as h,autocompletion as E,closeBracketsKeymap as M,completionKeymap as S}from"/npm/@codemirror/autocomplete@6.0.2/+esm";import{lintKeymap as V}from"/npm/@codemirror/lint@6.0.0/+esm";const j=(()=>[o(),r(),m(),x(),n(),e(),i(),f.allowMultipleSelections.of(!0),s(),a(d,{fallback:!0}),u(),h(),E(),p(),t(),c(),k(),l.of([...M,...b,...v,...g,...w,...S,...V])])(),q=(()=>[m(),x(),e(),a(d,{fallback:!0}),l.of([...b,...g])])();export{j as basicSetup,q as minimalSetup};export default null;

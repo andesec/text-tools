@@ -22,14 +22,14 @@
 			}
 		}
 	</script>
-	<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
-	<link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
-	<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-markdown.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-javascript.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-python.min.js"></script>
+	<script src="vendor/marked.min.js"></script>
+	<script src="vendor/purify.min.js"></script>
+	<link href="vendor/prism-tomorrow.min.css" rel="stylesheet" />
+	<script src="vendor/prism.min.js"></script>
+	<script src="vendor/prism-markdown.min.js"></script>
+	<script src="vendor/prism-bash.min.js"></script>
+	<script src="vendor/prism-javascript.min.js"></script>
+	<script src="vendor/prism-python.min.js"></script>
 
 	<style>
 		:root {
@@ -38,7 +38,7 @@
 
 		/* Robust Typography System */
 		.prose {
-			max-width: 85ch;
+			max-width: none;
 			color: #374151;
 			font-size: var(--reader-font-size);
 			line-height: 1.7;
@@ -243,28 +243,6 @@
 			transition: all 0.3s ease;
 		}
 
-		@media (min-width: 1024px) {
-			.split-view main {
-				display: grid;
-				grid-template-columns: 1fr 1fr;
-			}
-
-			.split-view #editor-container,
-			.split-view #content {
-				display: flex !important;
-				height: 100%;
-				width: 100% !important;
-				max-width: none !important;
-				margin: 0 !important;
-				border-left: 1px solid #e5e7eb;
-				border-right: 1px solid #e5e7eb;
-			}
-
-			.dark.split-view #editor-container,
-			.dark.split-view #content {
-				border-color: #1e293b;
-			}
-		}
 
 		#editor {
 			flex: 1;
@@ -381,7 +359,7 @@
 				</div>
 			</div>
 			<article id="content"
-				class="prose dark:prose-invert mx-auto hidden bg-white dark:bg-gray-950 p-4 sm:p-8 md:p-16 h-full border-x border-transparent sm:border-gray-100 dark:sm:border-gray-900 shadow-sm overflow-y-auto">
+				class="prose dark:prose-invert hidden bg-white dark:bg-gray-950 p-4 sm:p-8 md:p-16 h-full border-x border-transparent sm:border-gray-100 dark:sm:border-gray-900 shadow-sm overflow-y-auto w-full">
 			</article>
 		</main>
 	</div>
@@ -393,11 +371,9 @@
 		</svg>
 	</button>
 
-	<script type="module">
-		// Using esm.sh to ensure all dependencies (like @codemirror/state) are correctly deduplicated
-		import { EditorView, basicSetup } from "https://esm.sh/codemirror@6.0.1";
-		import { markdown } from "https://esm.sh/@codemirror/lang-markdown@6.2.1";
-		import { oneDark } from "https://esm.sh/@codemirror/theme-one-dark@6.1.2";
+	<script src="vendor/cm-md-bundle.js"></script>
+	<script>
+		const { EditorView, basicSetup, markdown, oneDark } = window.CM_MD;
 
 		const openBtn = document.getElementById("open-btn");
 		const fileInput = document.getElementById("file-input");
@@ -561,27 +537,18 @@
 		}
 
 		function updateViewMode() {
-			const isLarge = window.innerWidth >= 1024;
-			if (isLarge) {
-				document.body.classList.add("split-view");
-				contentArea.classList.remove("hidden");
+			if (isEditing) {
+				contentArea.classList.add("hidden");
 				editorContainer.classList.remove("hidden");
-				toggleText.textContent = "Split";
+				toggleText.textContent = "View";
+				toggleEditBtn.classList.add("bg-blue-600", "text-white", "border-blue-600");
+				toggleEditBtn.classList.remove("bg-white", "dark:bg-gray-900", "text-gray-700", "dark:text-gray-300");
 			} else {
-				document.body.classList.remove("split-view");
-				if (isEditing) {
-					contentArea.classList.add("hidden");
-					editorContainer.classList.remove("hidden");
-					toggleText.textContent = "View";
-					toggleEditBtn.classList.add("bg-blue-600", "text-white", "border-blue-600");
-					toggleEditBtn.classList.remove("bg-white", "dark:bg-gray-900", "text-gray-700", "dark:text-gray-300");
-				} else {
-					contentArea.classList.remove("hidden");
-					editorContainer.classList.add("hidden");
-					toggleText.textContent = "Edit";
-					toggleEditBtn.classList.remove("bg-blue-600", "text-white", "border-blue-600");
-					toggleEditBtn.classList.add("bg-white", "dark:bg-gray-900", "text-gray-700", "dark:text-gray-300");
-				}
+				contentArea.classList.remove("hidden");
+				editorContainer.classList.add("hidden");
+				toggleText.textContent = "Edit";
+				toggleEditBtn.classList.remove("bg-blue-600", "text-white", "border-blue-600");
+				toggleEditBtn.classList.add("bg-white", "dark:bg-gray-900", "text-gray-700", "dark:text-gray-300");
 			}
 			updatePreview();
 		}
