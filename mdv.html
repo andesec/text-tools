@@ -296,6 +296,14 @@
 		<!-- Top Row: Logo and Primary Actions -->
 		<div class="px-4 py-3 flex items-center justify-between">
 			<div class="flex items-center gap-2">
+				<a href="index.html"
+					class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 mr-1" title="Home">
+					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+							d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
+						</path>
+					</svg>
+				</a>
 				<div class="bg-gradient-to-br from-blue-600 to-indigo-700 p-1.5 rounded-lg shadow-sm">
 					<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -357,17 +365,37 @@
 	<div class="flex-1 flex overflow-hidden">
 		<aside id="sidebar"
 			class="w-72 border-r border-gray-200 dark:border-gray-800 flex flex-col shrink-0 sidebar hidden md:flex bg-white dark:bg-slate-900">
-			<div class="p-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
-				<h2 class="text-xs text-gray-400 uppercase tracking-widest">Documents</h2>
-				<button id="close-sidebar" class="md:hidden text-gray-500 p-1">
-					<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
-						</path>
-					</svg>
-				</button>
+			<!-- Documents Panel -->
+			<div id="documents-panel" class="flex flex-col overflow-hidden h-[40%]">
+				<div
+					class="p-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-white dark:bg-slate-900 z-10">
+					<h2 class="text-xs text-gray-400 uppercase tracking-widest">Documents</h2>
+					<button id="close-sidebar" class="md:hidden text-gray-500 p-1">
+						<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+								d="M6 18L18 6M6 6l12 12">
+							</path>
+						</svg>
+					</button>
+				</div>
+				<div id="file-list" class="flex-1 overflow-y-auto p-2 space-y-1">
+					<div class="text-gray-400 text-xs italic p-8 text-center">Open files to begin.</div>
+				</div>
 			</div>
-			<div id="file-list" class="flex-1 overflow-y-auto p-2 space-y-1">
-				<div class="text-gray-400 text-xs italic p-8 text-center">Open files to begin.</div>
+
+			<!-- Divider -->
+			<div id="sidebar-resizer"
+				class="h-1.5 bg-gray-50 dark:bg-slate-800 cursor-ns-resize hover:bg-blue-500/50 transition-colors border-y border-gray-200 dark:border-gray-700 shrink-0">
+			</div>
+
+			<!-- Outline Panel -->
+			<div id="outline-panel" class="flex-1 flex flex-col overflow-hidden">
+				<div class="p-4 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-slate-900 z-10">
+					<h2 class="text-xs text-gray-400 uppercase tracking-widest">Outline</h2>
+				</div>
+				<div id="outline-list" class="flex-1 overflow-y-auto p-2 space-y-1 no-scrollbar">
+					<div class="text-gray-400 text-xs italic p-8 text-center">Select a document.</div>
+				</div>
 			</div>
 		</aside>
 
@@ -411,7 +439,7 @@
 
 		let loadedFiles = new Map();
 		let currentZoom = 1.0;
-		let isEditing = false;
+		let isEditing = true;
 		let currentFileName = "Untitled.md";
 		let editor = null;
 		let lineWrap = true;
@@ -454,9 +482,60 @@
 			if (editor) {
 				const text = editor.state.doc.toString();
 				contentArea.innerHTML = DOMPurify.sanitize(marked.parse(text));
+				updateOutline();
 				Prism.highlightAllUnder(contentArea);
 			}
 		}
+
+		function updateOutline() {
+			if (!editor) return;
+			const text = editor.state.doc.toString();
+			const outlineList = document.getElementById("outline-list");
+			const headings = [];
+
+			const lines = text.split("\n");
+			lines.forEach((line, index) => {
+				const match = line.match(/^(#{1,6})\s+(.+)$/);
+				if (match) {
+					headings.push({ level: match[1].length, text: match[2].trim(), line: index });
+				}
+			});
+
+			if (headings.length === 0) {
+				outlineList.innerHTML = '<div class="text-gray-400 text-xs italic p-8 text-center">No headings found.</div>';
+				return;
+			}
+
+			outlineList.innerHTML = headings.map(h => `
+				<button 
+					onclick="scrollToHeading(${h.line}, '${h.text.replace(/'/g, "\\'")}')"
+					class="w-full text-left px-3 py-1.5 rounded-md text-[11px] transition-all truncate hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+					style="padding-left: ${h.level * 0.75}rem"
+				>
+					${h.text}
+				</button>
+			`).join("");
+		}
+
+		window.scrollToHeading = (line, originalText) => {
+			if (isEditing && editor) {
+				const pos = editor.state.doc.line(line + 1).from;
+				editor.dispatch({
+					selection: { anchor: pos, head: pos },
+					scrollIntoView: true
+				});
+				editor.focus();
+			} else {
+				// Find heading in contentArea
+				const headers = contentArea.querySelectorAll("h1, h2, h3, h4, h5, h6");
+				for (const h of headers) {
+					if (h.textContent.trim() === originalText) {
+						h.scrollIntoView({ behavior: "smooth", block: "start" });
+						break;
+					}
+				}
+			}
+		};
 
 		window.toggleWrap = function () {
 			lineWrap = !lineWrap;
@@ -620,6 +699,39 @@
 		};
 
 		fileInput.onchange = (e) => handleFileSelect(e.target.files);
+
+		// Divider Resizing Logic
+		(function () {
+			const resizer = document.getElementById("sidebar-resizer");
+			const topPanel = document.getElementById("documents-panel");
+			const sidebar = document.getElementById("sidebar");
+			let isResizing = false;
+
+			resizer.addEventListener("mousedown", (e) => {
+				isResizing = true;
+				document.body.style.cursor = "ns-resize";
+				document.body.classList.add("select-none");
+			});
+
+			document.addEventListener("mousemove", (e) => {
+				if (!isResizing) return;
+				const sidebarRect = sidebar.getBoundingClientRect();
+				const offsetY = e.clientY - sidebarRect.top;
+				const percentage = (offsetY / sidebarRect.height) * 100;
+
+				if (percentage > 20 && percentage < 80) {
+					topPanel.style.height = `${percentage}%`;
+				}
+			});
+
+			document.addEventListener("mouseup", () => {
+				if (isResizing) {
+					isResizing = false;
+					document.body.style.cursor = "";
+					document.body.classList.remove("select-none");
+				}
+			});
+		})();
 
 		// Initial setup
 		initEditor("# Welcome to MD Explorer\n\nStart typing here...");

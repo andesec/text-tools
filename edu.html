@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encryption/Decryption Utility - Andesec Text Tools</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: #f1f5f9;
+        }
+
+        header {
+            padding: 1rem 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(10px);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .back-btn {
+            color: #4fc3f7;
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: color 0.2s;
+        }
+
+        .back-btn:hover {
+            color: #81d4fa;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            width: 100%;
+            padding: 0 1rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .form-row>.form-group {
+            flex: 1;
+        }
+
+        label {
+            font-size: 0.9rem;
+            color: #a0a0a0;
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        textarea,
+        select {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            color: #fff;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.9rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #4fc3f7;
+            box-shadow: 0 0 0 2px rgba(79, 195, 247, 0.2);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .btn {
+            background: #4fc3f7;
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            background: #29b6f6;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.5rem;
+            gap: 1rem;
+        }
+
+        .status {
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            display: none;
+        }
+
+        .status.error {
+            display: block;
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .status.success {
+            display: block;
+            background: rgba(34, 197, 94, 0.2);
+            color: #86efac;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .result-section {
+            margin-top: 1.5rem;
+            display: none;
+        }
+
+        .result-section.show {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            color: #a0a0a0;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
+
+        .checkbox-label input {
+            cursor: pointer;
+            width: 16px;
+            height: 16px;
+        }
+
+        .flex-2 {
+            flex: 2;
+        }
+
+        .flex-1 {
+            flex: 1;
+        }
+
+        .flex-row {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .actions-right {
+            justify-content: flex-end;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .flex-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .glass-panel {
+                padding: 1.25rem;
+            }
+
+            .form-row {
+                flex-direction: column;
+            }
+
+            .form-row>.form-group {
+                flex: none;
+            }
+
+            .actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            h1 {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="header-left">
+            <a href="index.html" class="back-btn" title="Home">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+            </a>
+            <h1>Encryption Utility</h1>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="glass-panel">
+            <div class="flex-row" style="align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+                <h2 style="font-size: 1.25rem; font-weight: 600;">AES-GCM Decryption</h2>
+            </div>
+            <div class="form-group">
+                <label for="payload">Encrypted Payload (Base64)</label>
+                <textarea id="payload" placeholder="e.g. U2FsdGVkX1+..."></textarea>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="iv-prepended" checked>
+                    IV is prepended to the payload (first 12 bytes)
+                </label>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group flex-2">
+                    <label for="key">Decryption Key</label>
+                    <input type="text" id="key" placeholder="Enter Key">
+                </div>
+                <div class="form-group flex-1">
+                    <label for="key-format">Key Format</label>
+                    <select id="key-format">
+                        <option value="main-app">Main App Context (UID/Name)</option>
+                        <option value="utf8">UTF-8 String (Raw)</option>
+                        <option value="hex">HEX</option>
+                        <option value="base64">Base64</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group hidden" id="iv-group">
+                <label for="iv">Initialization Vector (IV)</label>
+                <div class="flex-row">
+                    <input type="text" id="iv" placeholder="Enter IV" class="flex-2">
+                    <select id="iv-format" class="flex-1">
+                        <option value="hex">HEX</option>
+                        <option value="base64">Base64</option>
+                        <option value="utf8">UTF-8 String</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="status-message" class="status"></div>
+
+            <div class="actions">
+                <button class="btn" id="decrypt-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                    Decrypt Payload
+                </button>
+                <button class="btn btn-secondary" id="clear-btn">Clear</button>
+            </div>
+
+            <div class="result-section" id="result-section">
+                <div class="form-group">
+                    <label for="result">Decrypted Result (UTF-8)</label>
+                    <textarea id="result" readonly></textarea>
+                </div>
+                <div class="actions actions-right">
+                    <button class="btn btn-secondary" id="copy-btn">Copy to Clipboard</button>
+                    <button class="btn" id="jsv-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                        View in JSV
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel" style="margin-top: 2rem;">
+            <div class="flex-row" style="align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+                <h2 style="font-size: 1.25rem; font-weight: 600;">Hashing Utility</h2>
+            </div>
+            <div class="form-group">
+                <label for="hash-input">Input Text</label>
+                <textarea id="hash-input" placeholder="Enter text to hash..."></textarea>
+            </div>
+            <div class="form-row">
+                <div class="form-group flex-2">
+                    <label for="hash-algo">Algorithm</label>
+                    <select id="hash-algo">
+                        <option value="SHA-256">SHA-256</option>
+                        <option value="SHA-512">SHA-512</option>
+                        <option value="SHA-1">SHA-1</option>
+                    </select>
+                </div>
+                <div class="form-group flex-1">
+                    <label for="hash-output-format">Output Format</label>
+                    <select id="hash-output-format">
+                        <option value="hex">HEX</option>
+                        <option value="base64">Base64</option>
+                    </select>
+                </div>
+            </div>
+            <div id="hash-status" class="status"></div>
+            <div class="actions">
+                <button class="btn" id="hash-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                            d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41">
+                        </path>
+                    </svg>
+                    Generate Hash
+                </button>
+            </div>
+            <div class="result-section" id="hash-result-section">
+                <div class="form-group">
+                    <label for="hash-result">Hash Result</label>
+                    <div class="flex-row">
+                        <input type="text" id="hash-result" readonly>
+                        <button class="btn btn-secondary" id="hash-copy-btn"
+                            style="padding: 0.5rem 1rem; font-size: 0.8rem;">Copy</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Utility Functions
+        const fromBase64 = (str) => {
+            // Handle URL-safe and standard Base64
+            let standardized = str.replace(/-/g, '+').replace(/_/g, '/');
+            while (standardized.length % 4 !== 0) standardized += '=';
+
+            const binary_string = window.atob(standardized);
+            const len = binary_string.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binary_string.charCodeAt(i);
+            }
+            return bytes;
+        };
+
+        const fromHex = (hexString) => {
+            const result = [];
+            for (let i = 0; i < hexString.length; i += 2) {
+                result.push(parseInt(hexString.substr(i, 2), 16));
+            }
+            return new Uint8Array(result);
+        };
+
+        const fromUtf8 = (str) => new TextEncoder().encode(str);
+        const toUtf8 = (buffer) => new TextDecoder().decode(buffer);
+        const toHex = (buffer) => Array.from(new Uint8Array(buffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+        const toBase64 = (buffer) => window.btoa(String.fromCharCode(...new Uint8Array(buffer)));
+
+        // UI Elements
+        const ivPrependedCb = document.getElementById('iv-prepended');
+        const ivGroup = document.getElementById('iv-group');
+        const payloadInput = document.getElementById('payload');
+        const keyInput = document.getElementById('key');
+        const keyFormat = document.getElementById('key-format');
+        const ivInput = document.getElementById('iv');
+        const ivFormat = document.getElementById('iv-format');
+        const decryptBtn = document.getElementById('decrypt-btn');
+        const clearBtn = document.getElementById('clear-btn');
+        const statusMsg = document.getElementById('status-message');
+        const resultSection = document.getElementById('result-section');
+        const resultInput = document.getElementById('result');
+        const jsvBtn = document.getElementById('jsv-btn');
+        const copyBtn = document.getElementById('copy-btn');
+
+        // Toggle IV group visibility
+        ivPrependedCb.addEventListener('change', (e) => {
+            if (e.target.checked) ivGroup.classList.add('hidden');
+            else ivGroup.classList.remove('hidden');
+        });
+
+        const showStatus = (msg, type) => {
+            statusMsg.textContent = msg;
+            statusMsg.className = 'status ' + type;
+        };
+
+        // Decryption logic
+        decryptBtn.addEventListener('click', async () => {
+            statusMsg.classList.add('hidden');
+            resultSection.classList.remove('show');
+
+            // Strip extra quotes if they exist (common when copying from JSON/JS environments)
+            const payloadStr = payloadInput.value.trim().replace(/"/g, '');
+            const keyStr = keyInput.value.trim();
+
+            if (!payloadStr) return showStatus("Please enter encrypted payload", "error");
+            if (!keyStr) return showStatus("Please enter decryption key", "error");
+
+            try {
+                // Parse Payload (usually Base64)
+                let payloadBytes;
+                try {
+                    payloadBytes = fromBase64(payloadStr);
+                } catch (e) {
+                    return showStatus("Invalid Base64 payload", "error");
+                }
+
+                // Parse Key
+                let keyBytes;
+                if (keyFormat.value === 'main-app') {
+                    // Match main app logic: Text -> UTF8 -> SHA256 -> AES-256 Key
+                    const hash = await window.crypto.subtle.digest('SHA-256', fromUtf8(keyStr));
+                    keyBytes = new Uint8Array(hash);
+                } else if (keyFormat.value === 'utf8') {
+                    keyBytes = fromUtf8(keyStr);
+                } else if (keyFormat.value === 'hex') {
+                    keyBytes = fromHex(keyStr);
+                } else if (keyFormat.value === 'base64') {
+                    keyBytes = fromBase64(keyStr);
+                }
+
+                // For AES, keys must be 16, 24, or 32 bytes.
+                if (![16, 24, 32].includes(keyBytes.length)) {
+                    return showStatus(`Invalid key length: ${keyBytes.length} bytes. Needs to be 16, 24, or 32 bytes for raw AES.`, "error");
+                }
+
+                const cryptoKey = await window.crypto.subtle.importKey(
+                    'raw',
+                    keyBytes,
+                    { name: 'AES-GCM' },
+                    false,
+                    ['decrypt']
+                );
+
+                let ivBytes;
+                let ciphertext;
+
+                if (ivPrependedCb.checked) {
+                    if (payloadBytes.length < 12) return showStatus("Payload too short to contain a 12-byte IV", "error");
+                    ivBytes = payloadBytes.slice(0, 12); // Standard GCM IV is 12 bytes
+                    ciphertext = payloadBytes.slice(12);
+                } else {
+                    const ivStr = ivInput.value.trim();
+                    if (!ivStr) return showStatus("Please enter initialization vector (IV)", "error");
+
+                    if (ivFormat.value === 'utf8') ivBytes = fromUtf8(ivStr);
+                    else if (ivFormat.value === 'hex') ivBytes = fromHex(ivStr);
+                    else if (ivFormat.value === 'base64') ivBytes = fromBase64(ivStr);
+
+                    ciphertext = payloadBytes;
+                }
+
+                // Decrypt
+                const decryptedBuffer = await window.crypto.subtle.decrypt(
+                    { name: 'AES-GCM', iv: ivBytes },
+                    cryptoKey,
+                    ciphertext
+                );
+
+                const decryptedText = toUtf8(decryptedBuffer);
+                resultInput.value = decryptedText;
+                resultSection.classList.add('show');
+                showStatus("Decryption successful!", "success");
+
+            } catch (e) {
+                console.error(e);
+                showStatus("Decryption failed. Check key, IV, or payload format.", "error");
+            }
+        });
+
+        clearBtn.addEventListener('click', () => {
+            payloadInput.value = '';
+            keyInput.value = '';
+            ivInput.value = '';
+            statusMsg.classList.add('hidden');
+            resultSection.classList.remove('show');
+        });
+
+        copyBtn.addEventListener('click', () => {
+            resultInput.select();
+            document.execCommand('copy');
+            const originalText = copyBtn.innerText;
+            copyBtn.innerText = "Copied!";
+            setTimeout(() => { copyBtn.innerText = originalText; }, 2000);
+        });
+
+        jsvBtn.addEventListener('click', () => {
+            const data = resultInput.value;
+
+            // Create a form to submit via HTTP POST
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = 'jsv.html';
+            form.style.display = 'none';
+
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'content';
+            input.value = data;
+
+            form.appendChild(input);
+            document.body.appendChild(form);
+            form.submit();
+        });
+
+        // Hashing logic
+        const hashInput = document.getElementById('hash-input');
+        const hashAlgo = document.getElementById('hash-algo');
+        const hashOutputFormat = document.getElementById('hash-output-format');
+        const hashBtn = document.getElementById('hash-btn');
+        const hashResultSection = document.getElementById('hash-result-section');
+        const hashResult = document.getElementById('hash-result');
+        const hashCopyBtn = document.getElementById('hash-copy-btn');
+        const hashStatus = document.getElementById('hash-status');
+
+        hashBtn.addEventListener('click', async () => {
+            hashStatus.classList.add('hidden');
+            const text = hashInput.value;
+            if (!text) {
+                hashStatus.textContent = "Please enter text to hash";
+                hashStatus.className = 'status error';
+                hashStatus.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                const data = fromUtf8(text);
+                const hashBuffer = await window.crypto.subtle.digest(hashAlgo.value, data);
+
+                let result;
+                if (hashOutputFormat.value === 'hex') {
+                    result = toHex(hashBuffer);
+                } else {
+                    result = toBase64(hashBuffer);
+                }
+
+                hashResult.value = result;
+                hashResultSection.classList.add('show');
+            } catch (e) {
+                hashStatus.textContent = "Hashing failed: " + e.message;
+                hashStatus.className = 'status error';
+                hashStatus.classList.remove('hidden');
+            }
+        });
+
+        hashCopyBtn.addEventListener('click', () => {
+            hashResult.select();
+            document.execCommand('copy');
+            const originalText = hashCopyBtn.innerText;
+            hashCopyBtn.innerText = "Copied!";
+            setTimeout(() => { hashCopyBtn.innerText = originalText; }, 2000);
+        });
+
+    </script>
+</body>
+
+</html>

@@ -261,6 +261,14 @@
 	<header
 		class="border-b border-gray-200 dark:border-gray-800 px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between shrink-0 bg-white dark:bg-slate-950 z-50 shadow-sm">
 		<div class="flex items-center gap-2">
+			<a href="index.html" class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500"
+				title="Home">
+				<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+						d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
+					</path>
+				</svg>
+			</a>
 			<button onclick="toggleSidebar(true)"
 				class="md:hidden p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
 				<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -374,6 +382,8 @@
 				</svg>
 			</button>
 
+			<button id="new-btn"
+				class="bg-blue-600 hover:bg-blue-700 text-white px-2 sm:px-3 py-1.5 rounded-lg text-[10px] sm:text-xs transition shadow-sm">New</button>
 			<button id="open-btn"
 				class="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 px-2 sm:px-3 py-1.5 rounded-lg text-[10px] sm:text-xs transition">Open</button>
 			<input type="file" id="file-input" multiple accept=".js,.json,.ts,.txt" class="hidden" />
@@ -911,10 +921,11 @@
 		newBtn.onclick = createNewScratchpad;
 		fileInput.onchange = (e) => handleFileSelect(e.target.files);
 
-		// Initialize with empty editor by default
-		currentFileName = instances[0].fileName;
-		initEditor(instances[0].content, "javascript");
-		emptyState.classList.add("hidden");
+		// Initialize
+		(function init() {
+			// Default to a new scratchpad
+			createNewScratchpad();
+		})();
 	</script>
 </body>
 
