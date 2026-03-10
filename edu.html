@@ -348,6 +348,7 @@
                     <textarea id="result" readonly></textarea>
                 </div>
                 <div class="actions actions-right">
+                    <button class="btn btn-secondary" id="resolve-btn">Resolve Escapes</button>
                     <button class="btn btn-secondary" id="copy-btn">Copy to Clipboard</button>
                     <button class="btn" id="jsv-btn">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -457,6 +458,7 @@
         const resultInput = document.getElementById('result');
         const jsvBtn = document.getElementById('jsv-btn');
         const copyBtn = document.getElementById('copy-btn');
+        const resolveBtn = document.getElementById('resolve-btn');
 
         // Toggle IV group visibility
         ivPrependedCb.addEventListener('change', (e) => {
@@ -586,6 +588,20 @@
             form.appendChild(input);
             document.body.appendChild(form);
             form.submit();
+        });
+
+        resolveBtn.addEventListener('click', () => {
+            const text = resultInput.value;
+            if (!text) return;
+            const resolved = text.replace(/\\n/g, "\n")
+                .replace(/\\r/g, "\r")
+                .replace(/\\t/g, "\t")
+                .replace(/\\"/g, '"')
+                .replace(/\\u([0-9a-fA-F]{4})/g, (match, grp) => {
+                    return String.fromCharCode(parseInt(grp, 16));
+                });
+            resultInput.value = resolved;
+            showStatus("Escapes resolved!", "success");
         });
 
         // Hashing logic

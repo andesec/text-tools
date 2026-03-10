@@ -288,8 +288,8 @@
 
 		<div class="flex items-center gap-1.5 sm:gap-3">
 			<div class="flex items-center gap-1 border-r border-gray-200 dark:border-gray-700 pr-1.5 sm:pr-3">
-				<div class="relative group">
-					<button
+				<div class="relative" id="dropdown-instance">
+					<button id="instance-menu-btn"
 						class="p-1 px-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition text-[10px] sm:text-xs uppercase flex items-center gap-1">
 						<span id="instance-label">JSON 1</span>
 						<svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -297,8 +297,8 @@
 							</path>
 						</svg>
 					</button>
-					<div
-						class="absolute right-0 mt-1 w-32 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-xl hidden group-hover:block z-[100]">
+					<div id="instance-menu-dropdown"
+						class="absolute right-0 mt-1 w-32 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-xl hidden z-[100]">
 						<button onclick="switchInstance(0)"
 							class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs instance-btn"
 							data-instance="0">JSON 1</button>
@@ -318,8 +318,8 @@
 						class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition text-xs uppercase">Format</button>
 				</div>
 
-				<div class="relative group">
-					<button
+				<div class="relative" id="dropdown-tools">
+					<button id="tools-menu-btn"
 						class="p-1 px-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition text-[10px] sm:text-xs uppercase flex items-center gap-1">
 						<span>Tools</span>
 						<svg class="w-2.5 h-2.5 block sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -327,8 +327,8 @@
 							</path>
 						</svg>
 					</button>
-					<div
-						class="absolute right-0 mt-1 w-48 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-xl hidden group-hover:block z-[100]">
+					<div id="tools-menu-dropdown"
+						class="absolute right-0 mt-1 w-48 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-xl hidden z-[100]">
 						<button onclick="prettify()"
 							class="sm:hidden w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs">Prettify
 							Format</button>
@@ -337,18 +337,6 @@
 							Wrap</button>
 						<div class="h-px bg-gray-100 dark:bg-gray-800 my-1 sm:hidden"></div>
 
-						<button onclick="transform('encodeBase64')"
-							class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs">Base64
-							Encode</button>
-						<button onclick="transform('decodeBase64')"
-							class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs">Base64
-							Decode</button>
-						<button onclick="transform('encodeURI')"
-							class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs">URI
-							Encode</button>
-						<button onclick="transform('decodeURI')"
-							class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs">URI
-							Decode</button>
 						<button onclick="transform('cleanJSON')"
 							class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs text-green-500">Fix/Clean
 							JSON</button>
@@ -360,7 +348,7 @@
 							JSON String</button>
 						<button onclick="transform('resolveNewlines')"
 							class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs text-blue-500">Resolve
-							\n Newlines</button>
+							Escapes (\n, \u)</button>
 					</div>
 				</div>
 			</div>
@@ -487,6 +475,43 @@
 		let sourceJSON = null; // Store the original JSON when in resolved view
 		let viewMode = "editor"; // 'editor' or 'tree'
 		let lineWrap = true;
+
+		// Dropdown handling
+		const instanceDropdown = document.getElementById('instance-menu-dropdown');
+		const instanceBtn = document.getElementById('instance-menu-btn');
+		const toolsDropdown = document.getElementById('tools-menu-dropdown');
+		const toolsBtn = document.getElementById('tools-menu-btn');
+
+		instanceBtn.addEventListener('click', (e) => {
+			e.stopPropagation();
+			const isHidden = instanceDropdown.classList.contains('hidden');
+			toolsDropdown.classList.add('hidden'); // Close the other dropdown
+			if (isHidden) {
+				instanceDropdown.classList.remove('hidden');
+			} else {
+				instanceDropdown.classList.add('hidden');
+			}
+		});
+
+		toolsBtn.addEventListener('click', (e) => {
+			e.stopPropagation();
+			const isHidden = toolsDropdown.classList.contains('hidden');
+			instanceDropdown.classList.add('hidden'); // Close the other dropdown
+			if (isHidden) {
+				toolsDropdown.classList.remove('hidden');
+			} else {
+				toolsDropdown.classList.add('hidden');
+			}
+		});
+
+		window.addEventListener('click', (e) => {
+			if (!e.target.closest('#dropdown-instance')) {
+				instanceDropdown.classList.add('hidden');
+			}
+			if (!e.target.closest('#dropdown-tools')) {
+				toolsDropdown.classList.add('hidden');
+			}
+		});
 		let currentInstance = 0;
 		let instances = [
 			{ content: "", fileName: "scratchpad-1.json" },
@@ -794,11 +819,7 @@
 			const content = editor.state.doc.toString();
 			let result = "";
 			try {
-				if (type === "encodeBase64") result = btoa(content);
-				else if (type === "decodeBase64") result = atob(content);
-				else if (type === "encodeURI") result = encodeURIComponent(content);
-				else if (type === "decodeURI") result = decodeURIComponent(content);
-				else if (type === "escapeJSON") {
+				if (type === "escapeJSON") {
 					// If it's already wrapped in quotes and seems like a JSON string, don't double escape
 					if (content.startsWith('"') && content.endsWith('"') && !content.includes("\n")) {
 						result = content;
@@ -820,7 +841,13 @@
 					}
 				} else if (type === "resolveNewlines") {
 					sourceJSON = content; // Save the original
-					result = content.replace(/\\n/g, "\n").replace(/\\r/g, "\r").replace(/\\t/g, "\t").replace(/\\"/g, '"');
+					result = content.replace(/\\n/g, "\n")
+						.replace(/\\r/g, "\r")
+						.replace(/\\t/g, "\t")
+						.replace(/\\"/g, '"')
+						.replace(/\\u([0-9a-fA-F]{4})/g, (match, grp) => {
+							return String.fromCharCode(parseInt(grp, 16));
+						});
 					initEditor(result, "javascript", true); // Show in editor, read-only
 					sourceBtn.classList.remove("hidden");
 					return;
