@@ -276,13 +276,13 @@
 					</path>
 				</svg>
 			</button>
-			<div class="bg-yellow-500 p-1.5 rounded-lg hidden sm:block">
+			<div class="bg-yellow-500 p-1 rounded-lg hidden sm:block">
 				<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
 						d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
 				</svg>
 			</div>
-			<h1 class="text-xs font-bold uppercase tracking-widest sm:text-lg sm:normal-case sm:tracking-normal">JS
+			<h1 class="text-[10px] sm:text-xs font-bold uppercase tracking-widest sm:text-lg sm:normal-case sm:tracking-normal truncate max-w-[80px] sm:max-w-none">JS
 				Explorer</h1>
 		</div>
 
@@ -380,7 +380,7 @@
 
 	<div class="flex-1 flex overflow-hidden relative">
 		<aside id="sidebar"
-			class="w-64 border-r border-gray-200 dark:border-gray-800 flex flex-col shrink-0 sidebar bg-white dark:bg-slate-900 md:flex">
+			class="w-64 border-r border-gray-200 dark:border-gray-800 flex flex-col shrink-0 sidebar bg-white dark:bg-slate-900 hidden md:flex">
 			<div class="p-3 md:hidden flex items-center justify-between border-b border-gray-100 dark:border-gray-800">
 				<span class="text-xs font-bold uppercase tracking-wider opacity-50">Files</span>
 				<button onclick="toggleSidebar(false)" class="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded">
@@ -665,18 +665,42 @@
 			try {
 				return JSON.parse(text);
 			} catch (e) {
-				// If it fails, try to "fix" literal newlines which are common after 'Resolve Newlines'
+				// If it fails, try to "fix" common issues
 				try {
-					// This is a naive attempt to escape literal newlines in strings
-					// It replaces literal newlines with \n ONLY if they seem to be inside a JSON field
-					const fixed = text.replace(/:\s*"(.*?)"/gs, (match, p1) => {
-						return `: "${p1.replace(/\n/g, "\\n").replace(/\r/g, "\\r")}"`;
-					});
-					return JSON.parse(fixed);
+					const cleaned = performSophisticatedClean(text);
+					return JSON.parse(cleaned);
 				} catch (e2) {
 					throw e; // throw original error if fix fails
 				}
 			}
+		}
+
+		function performSophisticatedClean(text) {
+			let cleaned = text.trim();
+
+			// 1. Remove JavaScript-style comments
+			cleaned = cleaned.replace(/\/\*[\s\S]*?\*\/|([^:]|^)\/\/.*$/gm, '$1');
+
+			// 2. Normalize single quotes to double quotes, escaping existing double quotes
+			cleaned = cleaned.replace(/'([^'\\]*(?:\\.[^'\\]*)*)'/g, (match, p1) => {
+				return '"' + p1.replace(/"/g, '\\"') + '"';
+			});
+
+			// 3. Fix missing quotes on keys (simple version)
+			cleaned = cleaned.replace(/([{,]\s*)([a-zA-Z0-9_$]+)\s*:/g, '$1"$2":');
+
+			// 4. Handle escaped quotes that might be broken
+			cleaned = cleaned.replace(/\\'/g, "'");
+
+			// 5. Remove trailing commas
+			cleaned = cleaned.replace(/,\s*([\]}])/g, "$1");
+
+			// 6. Handle literal newlines in strings
+			cleaned = cleaned.replace(/:\s*"(.*?)"/gs, (match, p1) => {
+				return `: "${p1.replace(/\n/g, "\\n").replace(/\r/g, "\\r")}"`;
+			});
+
+			return cleaned;
 		}
 
 		function buildTree(text) {
@@ -852,21 +876,12 @@
 					sourceBtn.classList.remove("hidden");
 					return;
 				} else if (type === "cleanJSON") {
-					// Sophisticated cleaning:
-					// ...
-					// (Same implementation as before)
 					try {
-						let cleaned = content;
-						if ((cleaned.startsWith('"') && cleaned.endsWith('"')) || cleaned.includes('\\"')) {
-							try {
-								const p = JSON.parse(cleaned.startsWith('"') ? cleaned : `"${cleaned}"`);
-								if (typeof p === "string") cleaned = p;
-							} catch (e) { }
-						}
-						cleaned = cleaned.replace(/,\s*([\]}])/g, "$1");
+						const cleaned = performSophisticatedClean(content);
 						const parsed = JSON.parse(cleaned);
 						result = JSON.stringify(parsed, null, 2);
 					} catch (e) {
+						// Final fallback attempt if performSophisticatedClean + JSON.parse fails
 						result = content.replace(/\\n/g, "\n").replace(/\\"/g, '"');
 					}
 				}
