@@ -862,7 +862,7 @@
 						.replace(/\\u([0-9a-fA-F]{4})/g, (match, grp) => {
 							return String.fromCharCode(parseInt(grp, 16));
 						});
-					initEditor(result, "javascript", true); // Show in editor, read-only
+					initEditor(result, "javascript", false); // Show in editor, NOT read-only
 					sourceBtn.classList.remove("hidden");
 					return;
 				} else if (type === "cleanJSON") {
@@ -948,6 +948,8 @@
 			currentFileName = "scratchpad.json";
 			instances[currentInstance].fileName = "scratchpad.json";
 			instances[currentInstance].content = "{\n  \n}";
+			sourceJSON = null; // Clear source JSON
+			sourceBtn.classList.add("hidden"); // Hide source button
 			initEditor("{\n  \n}", "json");
 			if (window.innerWidth < 768 && document.body.classList.contains("mobile-sidebar-active")) toggleSidebar();
 		};
