@@ -217,6 +217,19 @@
 			flex-direction: column;
 		}
 
+		#editor {
+			flex: 1;
+			min-height: 0;
+		}
+
+		.cm-editor {
+			height: 100% !important;
+		}
+
+		.cm-scroller {
+			overflow: auto !important;
+		}
+
 		.file-item.active {
 			background-color: #2563eb !important;
 			color: white !important;
@@ -344,8 +357,8 @@
 					</div>
 				</div>
 				<button id="toggle-view-btn"
-					class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-all transform active:scale-95 flex items-center">
-					<span id="toggle-text">Viewing Tree</span>
+					class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 px-3 py-1.5 rounded-lg text-xs transition flex items-center">
+					<span id="toggle-text">Tree</span>
 				</button>
 			</div>
 		</div>
@@ -877,8 +890,8 @@
 				viewMode = "tree";
 				editorContainer.classList.add("hidden");
 				treeContainer.classList.remove("hidden");
-				toggleText.textContent = "Viewing Tree";
-				toggleViewBtn.classList.add("bg-blue-600", "text-white");
+				toggleText.textContent = "Editor";
+				toggleViewBtn.classList.add("bg-blue-600", "text-white", "border-blue-600");
 				toggleViewBtn.classList.remove("bg-white", "dark:bg-gray-900", "text-gray-700", "dark:text-gray-300");
 				const contentToParse = sourceJSON !== null ? sourceJSON : editor.state.doc.toString();
 				buildTree(contentToParse);
@@ -886,8 +899,8 @@
 				viewMode = "editor";
 				editorContainer.classList.remove("hidden");
 				treeContainer.classList.add("hidden");
-				toggleText.textContent = "Viewing Editor";
-				toggleViewBtn.classList.remove("bg-blue-600", "text-white");
+				toggleText.textContent = "Tree";
+				toggleViewBtn.classList.remove("bg-blue-600", "text-white", "border-blue-600");
 				toggleViewBtn.classList.add("bg-white", "dark:bg-gray-900", "text-gray-700", "dark:text-gray-300");
 			}
 		};
