@@ -5,7 +5,23 @@
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 	<title>JSON Viewer</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link
+		href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+		rel="stylesheet">
 	<script src="https://cdn.tailwindcss.com"></script>
+	<script>
+		tailwind.config = {
+			theme: {
+				extend: {
+					fontFamily: {
+						sans: ['Inter', 'sans-serif'],
+					},
+				}
+			}
+		}
+	</script>
 	<script src="vendor/purify.min.js"></script>
 
 	<style>
@@ -179,6 +195,21 @@
 			}
 		}
 
+		/* Mobile specific improvements */
+		@media (max-width: 640px) {
+			:root {
+				--reader-font-size: 0.85rem;
+			}
+		}
+
+		.mobile-sidebar-active #sidebar {
+			display: flex !important;
+			position: fixed;
+			inset: 0;
+			z-index: 60;
+			width: 100%;
+		}
+
 		/* Ensure editor fills container and scrolls correctly */
 		#editor-container {
 			min-height: 0;
@@ -186,61 +217,9 @@
 			flex-direction: column;
 		}
 
-		#editor {
-			flex: 1;
-			min-height: 0;
-		}
-
-		.cm-editor {
-			height: 100% !important;
-		}
-
-		.cm-scroller {
-			overflow: auto !important;
-		}
-
-		/* Mobile specific improvements */
-		@media (max-width: 640px) {
-			:root {
-				--reader-font-size: 0.85rem;
-			}
-
-			#sidebar {
-				position: fixed;
-				top: 0;
-				left: 0;
-				bottom: 0;
-				z-index: 100;
-				transform: translateX(-100%);
-				transition: transform 0.3s ease;
-				width: 80%;
-				max-width: 300px;
-				box-shadow: 20px 0 50px rgba(0, 0, 0, 0.2);
-			}
-
-			#sidebar.mobile-open {
-				transform: translateX(0);
-			}
-
-			#sidebar-backdrop {
-				display: none;
-				position: fixed;
-				inset: 0;
-				background: rgba(0, 0, 0, 0.5);
-				z-index: 90;
-			}
-
-			#sidebar-backdrop.show {
-				display: block;
-			}
-
-			#tree-container {
-				padding: 1rem;
-			}
-
-			.json-node {
-				margin-left: 1rem;
-			}
+		.file-item.active {
+			background-color: #2563eb !important;
+			color: white !important;
 		}
 
 		/* Hide scrollbars but allow scrolling */
@@ -256,41 +235,54 @@
 </head>
 
 <body class="h-screen flex flex-col overflow-hidden transition-colors duration-200">
-	<div id="sidebar-backdrop" onclick="toggleSidebar(false)"></div>
-
-	<header
-		class="border-b border-gray-200 dark:border-gray-800 px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between shrink-0 bg-white dark:bg-slate-950 z-50 shadow-sm">
-		<div class="flex items-center gap-2">
-			<a href="index.html" class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500"
-				title="Home">
-				<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-						d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
-					</path>
-				</svg>
-			</a>
-			<button onclick="toggleSidebar(true)"
-				class="md:hidden p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
-				<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16">
-					</path>
-				</svg>
-			</button>
-			<div class="bg-yellow-500 p-1 rounded-lg hidden sm:block">
-				<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-						d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
-				</svg>
+	<header class="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-slate-950 z-50 shadow-sm shrink-0">
+		<!-- Top Row: Logo and Primary Actions -->
+		<div class="px-4 py-3 flex items-center justify-between">
+			<div class="flex items-center gap-2">
+				<a href="index.html"
+					class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 mr-1" title="Home">
+					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+							d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
+						</path>
+					</svg>
+				</a>
+				<div class="bg-gradient-to-br from-yellow-500 to-orange-600 p-1.5 rounded-lg shadow-sm">
+					<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+							d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+					</svg>
+				</div>
+				<h1 class="text-sm font-bold uppercase tracking-tight sm:text-lg sm:normal-case">JS Explorer</h1>
 			</div>
-			<h1 class="text-[10px] sm:text-xs font-bold uppercase tracking-widest sm:text-lg sm:normal-case sm:tracking-normal truncate max-w-[80px] sm:max-w-none">JS
-				Explorer</h1>
+
+			<div class="flex items-center gap-2">
+				<input type="file" id="file-input" multiple accept=".js,.json,.ts,.txt" class="hidden" />
+				<button id="open-btn"
+					class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all transform active:scale-95 flex items-center gap-2 shadow-sm hover:shadow-md">
+					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+					</svg>
+					<span id="btn-text">Open</span>
+				</button>
+				<button id="download-btn"
+					class="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all transform active:scale-95 flex items-center gap-2 shadow-sm hover:shadow-md">
+					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+							d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+					</svg>
+					<span>Save</span>
+				</button>
+			</div>
 		</div>
 
-		<div class="flex items-center gap-1.5 sm:gap-3">
-			<div class="flex items-center gap-1 border-r border-gray-200 dark:border-gray-700 pr-1.5 sm:pr-3">
+		<!-- Bottom Row: Secondary Toolbar (Responsive) -->
+		<div
+			class="px-4 py-2 border-t border-gray-100 dark:border-gray-900 bg-gray-50/50 dark:bg-slate-900/50 flex items-center justify-between sm:justify-end gap-3 overflow-x-auto no-scrollbar">
+			<div class="flex items-center gap-2 shrink-0">
 				<div class="relative" id="dropdown-instance">
 					<button id="instance-menu-btn"
-						class="p-1 px-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition text-[10px] sm:text-xs uppercase flex items-center gap-1">
+						class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 px-3 py-1.5 rounded-lg text-xs transition flex items-center gap-2">
 						<span id="instance-label">JSON 1</span>
 						<svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
@@ -298,7 +290,7 @@
 						</svg>
 					</button>
 					<div id="instance-menu-dropdown"
-						class="absolute right-0 mt-1 w-32 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-xl hidden z-[100]">
+						class="absolute left-0 sm:right-0 sm:left-auto mt-1 w-32 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-xl hidden z-[100]">
 						<button onclick="switchInstance(0)"
 							class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs instance-btn"
 							data-instance="0">JSON 1</button>
@@ -311,163 +303,137 @@
 					</div>
 				</div>
 
-				<div class="hidden sm:flex items-center gap-1">
-					<button id="source-view-btn" onclick="revertToSource()" title="Revert to Source"
-						class="hidden p-1.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-md transition text-xs uppercase">Source</button>
-					<button onclick="prettify()" title="Prettify JSON"
-						class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition text-xs uppercase">Format</button>
-				</div>
+				<button onclick="prettify()"
+					class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 px-3 py-1.5 rounded-lg text-xs transition flex items-center">
+					Format
+				</button>
+				<button onclick="toggleWrap()" id="wrap-toggle-btn"
+					class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 px-3 py-1.5 rounded-lg text-xs transition flex items-center font-bold">
+					W
+				</button>
+			</div>
 
+			<div class="flex items-center gap-2 shrink-0">
+				<button id="source-view-btn" onclick="revertToSource()"
+					class="hidden bg-orange-100 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-800 text-orange-700 dark:text-orange-300 hover:bg-orange-200 px-3 py-1.5 rounded-lg text-xs transition flex items-center">
+					Source
+				</button>
 				<div class="relative" id="dropdown-tools">
 					<button id="tools-menu-btn"
-						class="p-1 px-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition text-[10px] sm:text-xs uppercase flex items-center gap-1">
+						class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 px-3 py-1.5 rounded-lg text-xs transition flex items-center gap-2">
 						<span>Tools</span>
-						<svg class="w-2.5 h-2.5 block sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
 							</path>
 						</svg>
 					</button>
 					<div id="tools-menu-dropdown"
 						class="absolute right-0 mt-1 w-48 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-xl hidden z-[100]">
-						<button onclick="prettify()"
-							class="sm:hidden w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs">Prettify
-							Format</button>
-						<button onclick="toggleWrap()"
-							class="sm:hidden w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs">Toggle
-							Wrap</button>
-						<div class="h-px bg-gray-100 dark:bg-gray-800 my-1 sm:hidden"></div>
-
 						<button onclick="transform('cleanJSON')"
 							class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs text-green-500">Fix/Clean
 							JSON</button>
 						<button onclick="transform('escapeJSON')"
-							class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs">Escape
+							class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs text-blue-500">Escape
 							JSON String</button>
 						<button onclick="transform('unescapeJSON')"
-							class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs">Unescape
+							class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs text-blue-500">Unescape
 							JSON String</button>
 						<button onclick="transform('resolveNewlines')"
-							class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs text-blue-500">Resolve
+							class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs text-purple-500">Resolve
 							Escapes (\n, \u)</button>
 					</div>
 				</div>
+				<button id="toggle-view-btn"
+					class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-all transform active:scale-95 flex items-center">
+					<span id="toggle-text">Viewing Tree</span>
+				</button>
 			</div>
-
-			<button id="toggle-view-btn"
-				class="bg-blue-600 hover:bg-blue-700 text-white px-2.5 sm:px-3 py-1.5 rounded-lg text-[10px] sm:text-sm transition flex items-center gap-1 sm:gap-2">
-				<span id="toggle-text">Editor</span>
-			</button>
-
-			<button onclick="toggleWrap()" id="wrap-toggle-btn" title="Toggle Line Wrap"
-				class="hidden sm:block bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 px-3 py-1.5 rounded-lg text-xs transition font-bold">W</button>
-
-			<button id="download-btn"
-				class="bg-green-600 hover:bg-green-700 text-white p-1.5 sm:px-2 rounded-lg transition"
-				title="Save File">
-				<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-						d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-				</svg>
-			</button>
-
-			<button id="new-btn"
-				class="bg-blue-600 hover:bg-blue-700 text-white px-2 sm:px-3 py-1.5 rounded-lg text-[10px] sm:text-xs transition shadow-sm">New</button>
-			<button id="open-btn"
-				class="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 px-2 sm:px-3 py-1.5 rounded-lg text-[10px] sm:text-xs transition">Open</button>
-			<input type="file" id="file-input" multiple accept=".js,.json,.ts,.txt" class="hidden" />
 		</div>
 	</header>
 
 	<div class="flex-1 flex overflow-hidden relative">
 		<aside id="sidebar"
-			class="w-64 border-r border-gray-200 dark:border-gray-800 flex flex-col shrink-0 sidebar bg-white dark:bg-slate-900 hidden md:flex">
-			<div class="p-3 md:hidden flex items-center justify-between border-b border-gray-100 dark:border-gray-800">
-				<span class="text-xs font-bold uppercase tracking-wider opacity-50">Files</span>
-				<button onclick="toggleSidebar(false)" class="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded">
-					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
-						</path>
-					</svg>
-				</button>
-			</div>
-			<div id="file-list" class="flex-1 overflow-y-auto p-2 space-y-1">
-				<div class="text-gray-400 text-xs italic p-8 text-center">Open files to begin.</div>
-			</div>
-			<div class="p-3 border-t border-gray-100 dark:border-gray-800">
-				<button id="new-btn-sidebar" onclick="createNewScratchpad()"
-					class="w-full flex items-center justify-center gap-2 py-2 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-xs font-medium transition-all">
-					<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-					</svg>
-					New Scratchpad
-				</button>
+			class="w-72 border-r border-gray-200 dark:border-gray-800 flex flex-col shrink-0 sidebar hidden md:flex bg-white dark:bg-slate-900">
+			<!-- Documents Panel -->
+			<div class="flex flex-col overflow-hidden h-full">
+				<div
+					class="p-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-white dark:bg-slate-900 z-10">
+					<h2 class="text-xs text-gray-400 uppercase tracking-widest">Files</h2>
+					<button id="close-sidebar" class="md:hidden text-gray-500 p-1">
+						<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+								d="M6 18L18 6M6 6l12 12">
+							</path>
+						</svg>
+					</button>
+				</div>
+				<div id="file-list" class="flex-1 overflow-y-auto p-2 space-y-1">
+					<div class="text-gray-400 text-xs italic p-8 text-center">Open files to begin.</div>
+				</div>
+				<div class="p-3 border-t border-gray-100 dark:border-gray-800">
+					<button id="new-btn-sidebar" onclick="createNewScratchpad()"
+						class="w-full flex items-center justify-center gap-2 py-2 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-xs font-medium transition-all">
+						<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+						</svg>
+						New Scratchpad
+					</button>
+				</div>
 			</div>
 		</aside>
 
 		<main class="flex-1 overflow-hidden bg-slate-50 dark:bg-black relative flex flex-col">
-			<div id="editor-container" class="flex-1 w-full bg-white dark:bg-gray-950">
-				<div id="editor" class="h-full"></div>
+			<div id="editor-container" class="flex-1 w-full bg-white dark:bg-gray-950 px-4 py-8">
+				<div id="editor" class="h-full border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden"></div>
 			</div>
 			<div id="tree-container"
-				class="hidden flex-1 w-full bg-white dark:bg-gray-950 overflow-auto p-4 sm:p-6 font-mono text-sm">
+				class="hidden flex-1 w-full bg-white dark:bg-gray-950 overflow-auto p-4 sm:p-8 md:p-16 font-mono text-sm border-x border-transparent sm:border-gray-100 dark:sm:border-gray-900 shadow-sm">
 				<div id="json-tree-root" class="json-tree"></div>
 			</div>
-			<div id="empty-state"
-				class="absolute inset-0 flex items-center justify-center text-gray-400 bg-slate-50 dark:bg-black pointer-events-none">
-				<div class="text-center">
-					<p class="text-[10px] sm:text-xs uppercase tracking-[0.2em] opacity-30 mb-2">No file loaded</p>
-					<button onclick="document.getElementById('file-input').click()"
-						class="pointer-events-auto text-xs text-blue-500 hover:underline">Open a file to start</button>
-				</div>
-			</div>
+			<!-- Empty State removal or adjustment if needed, but mdv.html doesn't have it clearly -->
 		</main>
 	</div>
+
+	<button id="mobile-menu"
+		class="fixed bottom-6 right-6 md:hidden bg-blue-600 text-white p-4 rounded-full shadow-2xl z-50">
+		<svg id="menu-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+			<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+		</svg>
+	</button>
 
 	<div id="copy-toast" class="copy-toast">Copied to clipboard!</div>
 
 	<script src="vendor/cm-js-bundle.js"></script>
 	<script>
 		const { EditorView, basicSetup, javascript, json, oneDark, foldGutter, foldKeymap, keymap } = window.CM_JS;
-
-		const openBtn = document.getElementById("open-btn");
-		const newBtn = document.getElementById("new-btn");
-		const fileInput = document.getElementById("file-input");
 		const fileListContainer = document.getElementById("file-list");
 		const editorContainer = document.getElementById("editor-container");
 		const treeContainer = document.getElementById("tree-container");
 		const treeRoot = document.getElementById("json-tree-root");
 		const editorEl = document.getElementById("editor");
-		const emptyState = document.getElementById("empty-state");
 		const toggleViewBtn = document.getElementById("toggle-view-btn");
 		const toggleText = document.getElementById("toggle-text");
 		const downloadBtn = document.getElementById("download-btn");
 		const copyToast = document.getElementById("copy-toast");
 		const sourceBtn = document.getElementById("source-view-btn");
 		const sidebar = document.getElementById("sidebar");
-		const backdrop = document.getElementById("sidebar-backdrop");
 
-		window.toggleSidebar = function (open) {
-			if (open) {
-				sidebar.classList.add("mobile-open");
-				sidebar.classList.remove("hidden");
-				backdrop.classList.add("show");
-			} else {
-				sidebar.classList.remove("mobile-open");
-				if (window.innerWidth < 768) sidebar.classList.add("hidden");
-				backdrop.classList.remove("show");
-			}
+		const openBtn = document.getElementById("open-btn");
+		const newBtn = document.getElementById("new-btn");
+		const fileInput = document.getElementById("file-input");
+		const mobileMenu = document.getElementById("mobile-menu");
+		const closeSidebar = document.getElementById("close-sidebar");
+
+		const toggleSidebar = () => {
+			document.body.classList.toggle("mobile-sidebar-active");
+			const isActive = document.body.classList.contains("mobile-sidebar-active");
+			document.getElementById("menu-icon").innerHTML = isActive
+				? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>'
+				: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>';
 		};
 
-		// Closely monitor resize to fix sidebar state
-		window.addEventListener("resize", () => {
-			if (window.innerWidth >= 768) {
-				sidebar.classList.remove("hidden");
-				sidebar.classList.remove("mobile-open");
-				backdrop.classList.remove("show");
-			} else if (!sidebar.classList.contains("mobile-open")) {
-				sidebar.classList.add("hidden");
-			}
-		});
+		mobileMenu.onclick = toggleSidebar;
+		closeSidebar.onclick = toggleSidebar;
 
 		let loadedFiles = new Map();
 		let currentFileName = null;
@@ -599,7 +565,6 @@
 			document.querySelectorAll(".file-item").forEach(el => el.classList.remove("active", "bg-blue-100", "dark:bg-blue-900/30"));
 
 			// Load new instance content
-			emptyState.classList.add("hidden");
 			const isJson = currentFileName.toLowerCase().endsWith(".json");
 			initEditor(instances[index].content, isJson ? "json" : "javascript");
 
@@ -648,9 +613,8 @@
 			document.querySelectorAll(".file-item").forEach((el) => el.classList.remove("active", "bg-blue-100", "dark:bg-blue-900/30"));
 			if (element) element.classList.add("active", "bg-blue-100", "dark:bg-blue-900/30");
 
-			if (window.innerWidth < 768) toggleSidebar(false);
+			if (window.innerWidth < 768 && document.body.classList.contains("mobile-sidebar-active")) toggleSidebar();
 
-			emptyState.classList.add("hidden");
 			const isJson = name.toLowerCase().endsWith(".json");
 			initEditor(text, isJson ? "json" : "javascript");
 
@@ -913,14 +877,18 @@
 				viewMode = "tree";
 				editorContainer.classList.add("hidden");
 				treeContainer.classList.remove("hidden");
-				toggleText.textContent = "Tree";
+				toggleText.textContent = "Viewing Tree";
+				toggleViewBtn.classList.add("bg-blue-600", "text-white");
+				toggleViewBtn.classList.remove("bg-white", "dark:bg-gray-900", "text-gray-700", "dark:text-gray-300");
 				const contentToParse = sourceJSON !== null ? sourceJSON : editor.state.doc.toString();
 				buildTree(contentToParse);
 			} else {
 				viewMode = "editor";
 				editorContainer.classList.remove("hidden");
 				treeContainer.classList.add("hidden");
-				toggleText.textContent = "Editor";
+				toggleText.textContent = "Viewing Editor";
+				toggleViewBtn.classList.remove("bg-blue-600", "text-white");
+				toggleViewBtn.classList.add("bg-white", "dark:bg-gray-900", "text-gray-700", "dark:text-gray-300");
 			}
 		};
 
@@ -955,9 +923,7 @@
 			instances[currentInstance].fileName = "scratchpad.json";
 			instances[currentInstance].content = "";
 			initEditor("", "javascript");
-			emptyState.classList.add("hidden");
-			document.querySelectorAll(".file-item").forEach((el) => el.classList.remove("active", "bg-blue-100", "dark:bg-blue-900/30"));
-			if (window.innerWidth < 768) toggleSidebar(false);
+			if (window.innerWidth < 768 && document.body.classList.contains("mobile-sidebar-active")) toggleSidebar();
 		};
 
 		newBtn.onclick = createNewScratchpad;
