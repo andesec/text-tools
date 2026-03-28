@@ -594,7 +594,7 @@
 			const isJson = currentFileName.toLowerCase().endsWith(".json");
 			initEditor(instances[index].content, isJson ? "json" : "javascript");
 
-			if (isJson || instances[index].content.trim().startsWith("{") || instances[index].content.trim().startsWith("[")) {
+			if (isJson || !instances[index].content.trim() || instances[index].content.trim().startsWith("{") || instances[index].content.trim().startsWith("[")) {
 				buildTree(instances[index].content);
 			} else {
 				treeRoot.innerHTML = '<div class="text-gray-400 p-8 text-center italic">Not currently showing tree for non-JSON content.</div>';
@@ -644,7 +644,7 @@
 			const isJson = name.toLowerCase().endsWith(".json");
 			initEditor(text, isJson ? "json" : "javascript");
 
-			if (isJson || text.trim().startsWith("{") || text.trim().startsWith("[")) {
+			if (isJson || !text.trim() || text.trim().startsWith("{") || text.trim().startsWith("[")) {
 				buildTree(text);
 			} else {
 				treeRoot.innerHTML = '<div class="text-gray-400 p-8 text-center italic">Not currently showing tree for non-JSON content.</div>';
@@ -695,6 +695,10 @@
 
 		function buildTree(text) {
 			treeRoot.innerHTML = "";
+			if (!text || text.trim() === "") {
+				treeRoot.innerHTML = '<div class="text-gray-400 p-8 text-center italic">Editor is empty. Paste or type JSON to see the tree view.</div>';
+				return;
+			}
 			try {
 				const data = safeJsonParse(text);
 				treeRoot.appendChild(renderNode(null, data, true));
@@ -947,10 +951,10 @@
 			}
 			currentFileName = "scratchpad.json";
 			instances[currentInstance].fileName = "scratchpad.json";
-			instances[currentInstance].content = "{\n  \n}";
+			instances[currentInstance].content = "";
 			sourceJSON = null; // Clear source JSON
 			sourceBtn.classList.add("hidden"); // Hide source button
-			initEditor("{\n  \n}", "json");
+			initEditor("", "json");
 			if (window.innerWidth < 768 && document.body.classList.contains("mobile-sidebar-active")) toggleSidebar();
 		};
 
