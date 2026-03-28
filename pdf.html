@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PDF Splitter - Andesec</title>
-    <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+    <script src="vendor/pdf-lib.min.js"></script>
+    <script src="vendor/pdf.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -41,7 +42,13 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            padding: 2rem;
+            padding: 2rem 1.5rem;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 1rem;
+            }
         }
 
         .container {
@@ -65,6 +72,7 @@
             text-decoration: none;
             font-weight: 500;
             transition: transform 0.2s;
+            padding: 0.5rem 0; /* Better touch area */
         }
 
         .back-link:hover {
@@ -278,11 +286,204 @@
             background: rgba(239, 68, 68, 0.1);
         }
 
-        /* Tooltips/Info */
-        .range-hint {
-            font-size: 0.8rem;
+        /* Preview Section */
+        .preview-section {
+            display: none;
+            margin-bottom: 2.5rem;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .preview-container {
+            width: 100%;
+            overflow-x: auto;
+            padding: 1.5rem 0.5rem;
+            display: flex;
+            gap: 1.5rem;
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary) transparent;
+            -webkit-overflow-scrolling: touch; /* Momentum scroll */
+        }
+
+        @media (max-width: 480px) {
+            .preview-container {
+                gap: 1rem;
+                padding: 1rem 0.25rem;
+            }
+        }
+
+        .preview-container::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .preview-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        .preview-container::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 10px;
+        }
+
+        .page-card {
+            flex: 0 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+            transition: transform 0.2s ease;
+        }
+
+        .page-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .page-thumbnail-wrapper {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            height: 220px;
+            aspect-ratio: 1 / 1.414; /* A4 aspect ratio */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @media (max-width: 480px) {
+            .page-thumbnail-wrapper {
+                height: 180px;
+            }
+        }
+
+        .page-thumbnail-wrapper canvas {
+            max-width: 100%;
+            max-height: 100%;
+            display: block;
+        }
+
+        .page-number-badge {
+            background: rgba(79, 195, 247, 0.15);
+            color: var(--primary);
+            padding: 0.35rem 0.85rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 1px solid rgba(79, 195, 247, 0.3);
+        }
+
+        .preview-loading {
+            width: 100%;
+            height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
             color: var(--text-muted);
-            margin-top: 0.5rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 16px;
+            border: 1px dashed var(--border);
+        }
+
+        .spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(79, 195, 247, 0.1);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            z-index: 1000;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            animation: fadeIn 0.3s ease;
+            padding: 1rem;
+            overflow-y: auto; /* Allow scrolling content */
+        }
+
+        .modal-content {
+            position: relative;
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            animation: slideUp 0.3s ease-out;
+            margin: auto;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1100;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border);
+            color: white;
+            font-size: 1.25rem;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: rgba(239, 68, 68, 0.8);
+            border-color: #ef4444;
+            color: white;
+        }
+
+        #modal-canvas-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #modal-canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            max-width: 100%;
+        }
+
+        .modal-page-info {
+            background: var(--primary);
+            color: #000;
+            padding: 0.5rem 1.25rem;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 15px rgba(79, 195, 247, 0.3);
         }
 
         /* Responsive */
@@ -330,6 +531,29 @@
             <div id="page-count" class="page-count">0 Pages</div>
         </div>
 
+        <div id="preview-section" class="preview-section">
+            <div class="section-header">
+                <h2>Page Preview</h2>
+                <div id="preview-status" class="page-count" style="background: transparent; color: var(--text-muted); padding: 0;">Loading previews...</div>
+            </div>
+            <div id="preview-container" class="preview-container">
+                <div class="preview-loading">
+                    <div class="spinner"></div>
+                    <p>Rendering pages...</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="large-preview-modal" class="modal-overlay">
+            <button id="modal-close" class="modal-close" title="Close">✕</button>
+            <div class="modal-content">
+                <div id="modal-canvas-container" style="background: white;">
+                    <canvas id="modal-canvas"></canvas>
+                </div>
+                <div id="modal-page-info" class="modal-page-info">Page 1</div>
+            </div>
+        </div>
+
         <div id="range-section" class="range-section">
             <div class="section-header">
                 <h2>Extraction Ranges</h2>
@@ -357,6 +581,18 @@
         const fileNameEl = document.getElementById('file-name');
         const fileSizeEl = document.getElementById('file-size');
         const pageCountEl = document.getElementById('page-count');
+        const previewSection = document.getElementById('preview-section');
+        const previewContainer = document.getElementById('preview-container');
+        const previewStatus = document.getElementById('preview-status');
+        const modal = document.getElementById('large-preview-modal');
+        const modalCanvas = document.getElementById('modal-canvas');
+        const modalPageInfo = document.getElementById('modal-page-info');
+        const modalClose = document.getElementById('modal-close');
+
+        // Configure PDF.js worker
+        if (typeof pdfjsLib !== 'undefined') {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'vendor/pdf.worker.min.js';
+        }
 
         let originalPdfDoc = null;
         let originalPdfBytes = null;
@@ -407,8 +643,12 @@
                 
                 // Show UI
                 fileInfo.style.display = 'flex';
+                previewSection.style.display = 'block';
                 rangeSection.style.display = 'block';
                 dropZone.style.display = 'none';
+
+                // Render Preview
+                renderPreview(originalPdfBytes);
 
                 // Clear previous ranges if any
                 rangeList.innerHTML = '';
@@ -537,6 +777,94 @@
             } catch (err) {
                 console.error(err);
                 alert('Error processing PDF extraction.');
+            }
+        }
+
+        async function renderPreview(pdfBytes) {
+            previewContainer.innerHTML = '';
+            previewStatus.textContent = 'Initializing...';
+            
+            try {
+                const loadingTask = pdfjsLib.getDocument({ data: pdfBytes });
+                const pdf = await loadingTask.promise;
+                const numPages = pdf.numPages;
+                
+                previewStatus.textContent = `Rendering 1 of ${numPages}...`;
+                
+                for (let i = 1; i <= numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const viewport = page.getViewport({ scale: 0.5 });
+                    
+                    const card = document.createElement('div');
+                    card.className = 'page-card';
+                    card.innerHTML = `
+                        <div class="page-thumbnail-wrapper">
+                            <canvas></canvas>
+                        </div>
+                        <div class="page-number-badge">Page ${i}</div>
+                    `;
+                    
+                    const canvas = card.querySelector('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+                    
+                    await page.render({
+                        canvasContext: context,
+                        viewport: viewport
+                    }).promise;
+                    
+                    card.onclick = () => showLargePreview(i);
+                    card.style.cursor = 'pointer';
+                    
+                    previewContainer.appendChild(card);
+                    previewStatus.textContent = `Rendering ${i} of ${numPages}...`;
+                }
+                
+                previewStatus.textContent = `${numPages} Pages Loaded`;
+            } catch (err) {
+                console.error('Error rendering preview:', err);
+                previewContainer.innerHTML = `<p style="color: #ef4444; width: 100%; text-align: center;">Failed to load preview cards.</p>`;
+                previewStatus.textContent = 'Preview error';
+            }
+        }
+
+        async function showLargePreview(pageIndex) {
+            try {
+                modal.style.display = 'flex';
+                modalPageInfo.textContent = `Page ${pageIndex}`;
+                
+                // Show loading indicator in modal? Or just wait for render
+                const loadingTask = pdfjsLib.getDocument({ data: originalPdfBytes });
+                const pdf = await loadingTask.promise;
+                const page = await pdf.getPage(pageIndex);
+                
+                // Scale 1.5 for larger but fast preview
+                const viewport = page.getViewport({ scale: 1.5 });
+                const context = modalCanvas.getContext('2d');
+                
+                modalCanvas.height = viewport.height;
+                modalCanvas.width = viewport.width;
+                
+                await page.render({
+                    canvasContext: context,
+                    viewport: viewport
+                }).promise;
+                
+            } catch (err) {
+                console.error('Error in large preview:', err);
+                alert('Could not load larger preview.');
+                modal.style.display = 'none';
+            }
+        }
+
+        modalClose.onclick = () => {
+            modal.style.display = 'none';
+        }
+
+        window.onclick = (event) => {
+            if (event.target == modal) {
+                modal.style.display = 'none';
             }
         }
     </script>
