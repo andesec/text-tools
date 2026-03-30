@@ -18,7 +18,9 @@
       --diff-add-char:  #9ddbb4;
       --diff-del-line:  #fce8e8;
       --diff-del-char:  #f5a0a0;
-      --diff-move-line: #fef3c7;
+      --diff-move-from: #f0eaff;
+      --diff-move-to:   #e8f0ff;
+      --diff-move-char: #c4b5fd;
       --diff-add-gutter:#22c55e;
       --diff-del-gutter:#ef4444;
     }
@@ -28,18 +30,22 @@
         --diff-add-char:  #1a5230;
         --diff-del-line:  #2a1313;
         --diff-del-char:  #521a1a;
-        --diff-move-line: #2a2010;
+        --diff-move-from: #1c1035;
+        --diff-move-to:   #0d1535;
+        --diff-move-char: #6d28d9;
         --diff-add-gutter:#4ade80;
         --diff-del-gutter:#f87171;
       }
     }
 
     /* ── Diff line / char marks (applied by StateField) ─── */
-    .diff-add-line  { background: var(--diff-add-line)  !important; display: block; }
-    .diff-del-line  { background: var(--diff-del-line)  !important; display: block; }
-    .diff-add-char  { background: var(--diff-add-char);  border-radius: 2px; }
-    .diff-del-char  { background: var(--diff-del-char);  border-radius: 2px; }
-    .diff-move-line { background: var(--diff-move-line) !important; display: block; }
+    .diff-add-line   { background: var(--diff-add-line)  !important; display: block; }
+    .diff-del-line   { background: var(--diff-del-line)  !important; display: block; }
+    .diff-add-char   { background: var(--diff-add-char);  border-radius: 2px; }
+    .diff-del-char   { background: var(--diff-del-char);  border-radius: 2px; }
+    .diff-move-from  { background: var(--diff-move-from) !important; display: block; }
+    .diff-move-to    { background: var(--diff-move-to)   !important; display: block; }
+    .diff-move-char  { background: var(--diff-move-char);  border-radius: 2px; }
 
     /* ── CM sizing ────────────────────────────────────────── */
     .cm-editor       { height: 100% !important; }
@@ -445,24 +451,77 @@ function norm(text) {
 
 // ── apply typography ────────────────────────────────────────
 // Converts plain/markdown punctuation to proper typographic equivalents.
-// Designed for use on the Modified (right) pane.
+// Returns { result, counts } where counts tallies each category changed.
 function applyTypography(text) {
-  return text
-    // Ellipsis (must be before single-dot rules)
-    .replace(/\.\.\.(?!\.)/g, '\u2026')
-    // Em-dash from triple or double hyphen
-    .replace(/---/g, '\u2014')
-    .replace(/--/g, '\u2014')
-    // Opening double quote: after line start, whitespace, or open bracket
-    .replace(/(^|[\s\(\[\{\u2014])"(?=[^\s])/gm, '$1\u201C')
+  let ellipses = 0, dashes = 0, dquotes = 0, squotes = 0;
+
+  let t = text
+    // Ellipsis: ... → …
+    .replace(/\.\.\.(?!\.)/g, (m) => { ellipses++; return '\u2026'; })
+    // Em-dash: --- or -- → —
+    .replace(/---/g, (m) => { dashes++; return '\u2014'; })
+    .replace(/--/g,  (m) => { dashes++; return '\u2014'; })
+    // Opening double quote: after start-of-line, whitespace, or open bracket
+    .replace(/(^|[\s\(\[\{\u2014])"(?=[^\s])/gm, (m, p1) => { dquotes++; return p1 + '\u201C'; })
     // Remaining " → closing double quote
-    .replace(/"/g, '\u201D')
+    .replace(/"/g, (m) => { dquotes++; return '\u201D'; })
     // Apostrophes in contractions (it's, don't, we're)
-    .replace(/(\w)'(\w)/g, '$1\u2019$2')
-    // Opening single quote: after line start, whitespace, open bracket
-    .replace(/(^|[\s\(\[\{\u2014])'(?=[^\s])/gm, '$1\u2018')
+    .replace(/(\w)'(\w)/g, (m, a, b) => { squotes++; return a + '\u2019' + b; })
+    // Opening single quote: after start-of-line, whitespace, open bracket
+    .replace(/(^|[\s\(\[\{\u2014])'(?=[^\s])/gm, (m, p1) => { squotes++; return p1 + '\u2018'; })
     // Remaining ' → closing single quote / apostrophe
-    .replace(/'/g, '\u2019');
+    .replace(/'/g, (m) => { squotes++; return '\u2019'; });
+
+  return { result: t, counts: { ellipses, dashes, dquotes, squotes } };
+}
+
+// ── line count helper ───────────────────────────────────────
+function lineCount(text) {
+  if (!text) return 0;
+  const p = text.split('\n');
+  return (p.length > 1 && p[p.length - 1] === '') ? p.length - 1 : p.length;
+}
+
+// ── move detection ───────────────────────────────────────────
+// Returns two Sets of 1-indexed line numbers tagged as moved.
+// movedFromLines → left-side lines that appear identically on the right.
+// movedToLines   → right-side lines that appear identically on the left.
+function detectMovedBlocks(lineDiffs) {
+  const delSegs = [], insSegs = [];
+  let lLine = 1, rLine = 1;
+
+  for (const [op, text] of lineDiffs) {
+    const cnt = lineCount(text);
+    const key = norm(text).trim();
+    if (op === -1) {
+      delSegs.push({ key, fromLine: lLine, toLine: lLine + cnt - 1 });
+      lLine += cnt;
+    } else if (op === 1) {
+      insSegs.push({ key, fromLine: rLine, toLine: rLine + cnt - 1 });
+      rLine += cnt;
+    } else {
+      lLine += cnt;
+      rLine += cnt;
+    }
+  }
+
+  const movedFromLines = new Set();
+  const movedToLines   = new Set();
+  const usedIns = new Set();
+
+  for (const del of delSegs) {
+    if (!del.key) continue;
+    for (let i = 0; i < insSegs.length; i++) {
+      if (!usedIns.has(i) && del.key === insSegs[i].key) {
+        for (let l = del.fromLine;      l <= del.toLine;      l++) movedFromLines.add(l);
+        for (let l = insSegs[i].fromLine; l <= insSegs[i].toLine; l++) movedToLines.add(l);
+        usedIns.add(i);
+        break;
+      }
+    }
+  }
+
+  return { movedFromLines, movedToLines };
 }
 
 // ── diff + decorations ──────────────────────────────────────
@@ -497,7 +556,7 @@ function buildDecos(view, lineRanges, charRanges) {
     }
   }
 
-  decos.sort((a, b) => a.from - b.from || (a.startSide ?? 0) - (b.startSide ?? 0));
+  decos.sort((a, b) => a.from - b.from || (a.value?.startSide ?? 0) - (b.value?.startSide ?? 0));
   return Decoration.set(decos, true);
 }
 
@@ -517,35 +576,40 @@ function runDiff() {
 
   const dmp = new diff_match_patch();
 
-  // Line-level diff — diff_charsToLines_ mutates lineDiffs in-place
+  // Line-level diff
   const encoded   = dmp.diff_linesToChars_(norm(leftText), norm(rightText));
   const lineDiffs = dmp.diff_main(encoded.chars1, encoded.chars2, false);
   dmp.diff_cleanupSemantic(lineDiffs);
-  dmp.diff_charsToLines_(lineDiffs, encoded.lineArray); // modifies lineDiffs in place
+  dmp.diff_charsToLines_(lineDiffs, encoded.lineArray);
 
-  let leftLine = 1, rightLine = 1;
+  // Detect moved blocks
+  const { movedFromLines, movedToLines } = detectMovedBlocks(lineDiffs);
+
+  // Build per-line decorations (one entry per line for clean override of move class)
   const leftLineDecos  = [];
   const rightLineDecos = [];
+  let leftLine = 1, rightLine = 1;
 
   for (const [op, text] of lineDiffs) {
-    const lc = text ? text.split('\n').length - (text.endsWith('\n') ? 1 : 0) : 0;
-    const count = Math.max(lc, 1);
+    const cnt = Math.max(lineCount(text), 1);
     if (op === -1) {
-      leftLineDecos.push({ from: leftLine, to: leftLine + count - 1, cls: 'diff-del-line' });
-      leftLine += count;
+      for (let l = leftLine; l < leftLine + cnt; l++)
+        leftLineDecos.push({ from: l, to: l, cls: movedFromLines.has(l) ? 'diff-move-from' : 'diff-del-line' });
+      leftLine += cnt;
     } else if (op === 1) {
-      rightLineDecos.push({ from: rightLine, to: rightLine + count - 1, cls: 'diff-add-line' });
-      rightLine += count;
+      for (let l = rightLine; l < rightLine + cnt; l++)
+        rightLineDecos.push({ from: l, to: l, cls: movedToLines.has(l) ? 'diff-move-to' : 'diff-add-line' });
+      rightLine += cnt;
     } else {
-      leftLine  += count;
-      rightLine += count;
+      leftLine  += cnt;
+      rightLine += cnt;
     }
   }
 
-  // Intra-line char highlighting
+  // Intra-line char highlighting (skip moved lines — no char diff for moves)
   const leftCharDecos  = [];
   const rightCharDecos = [];
-  addIntraLineDiffs(dmp, leftCharDecos, rightCharDecos);
+  addIntraLineDiffs(dmp, leftCharDecos, rightCharDecos, movedFromLines, movedToLines);
 
   editorL.dispatch({ effects: setDecosEffect.of(buildDecos(editorL, leftLineDecos,  leftCharDecos)) });
   editorR.dispatch({ effects: setDecosEffect.of(buildDecos(editorR, rightLineDecos, rightCharDecos)) });
@@ -553,18 +617,25 @@ function runDiff() {
   saveToStorage();
 }
 
-function addIntraLineDiffs(dmp, leftCharDecos, rightCharDecos) {
+function addIntraLineDiffs(dmp, leftCharDecos, rightCharDecos, movedLeft = new Set(), movedRight = new Set()) {
   const ldoc = editorL.state.doc;
   const rdoc = editorR.state.doc;
   const maxLines = Math.min(ldoc.lines, rdoc.lines);
+  const SIMILARITY_THRESHOLD = 0.3; // skip char highlights when lines share < 30% chars
 
   for (let i = 1; i <= maxLines; i++) {
+    if (movedLeft.has(i) || movedRight.has(i)) continue; // no char diffs for moved lines
     const ll = ldoc.line(i).text;
     const rl = rdoc.line(i).text;
     if (norm(ll) === norm(rl)) continue;
 
     const diffs = dmp.diff_main(norm(ll), norm(rl));
     dmp.diff_cleanupSemanticLossless(diffs);
+
+    // Skip char highlights when lines are too dissimilar (mostly different content)
+    const equalLen = diffs.reduce((s, [op, txt]) => s + (op === 0 ? txt.length : 0), 0);
+    const maxLen   = Math.max(norm(ll).length, norm(rl).length);
+    if (maxLen > 0 && equalLen / maxLen < SIMILARITY_THRESHOLD) continue;
 
     let lPos = ldoc.line(i).from;
     let rPos = rdoc.line(i).from;
@@ -609,24 +680,29 @@ function renderUnified(left, right) {
   const leftLines  = left.split('\n');
   const rightLines = right.split('\n');
 
-  // Use line-level diff on normalized text
+  // Line-level diff on normalized text
   const encoded   = dmp.diff_linesToChars_(norm(left), norm(right));
   const lineDiffs = dmp.diff_main(encoded.chars1, encoded.chars2, false);
   dmp.diff_cleanupSemantic(lineDiffs);
   dmp.diff_charsToLines_(lineDiffs, encoded.lineArray);
 
-  const el = document.getElementById('unified-content');
+  // Move detection
+  const { movedFromLines, movedToLines } = detectMovedBlocks(lineDiffs);
+
+  const el  = document.getElementById('unified-content');
   const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
-  // Render one line, optionally with character-level highlights.
-  // charDiffs = diff_main result on the two raw line strings.
-  // side: 'left'  → show only deletion  highlights
-  //       'right' → show only insertion highlights
-  function renderLine(op, text, charDiffs, side) {
-    const pfx = op === 1 ? '+' : op === -1 ? '-' : ' ';
-    const cls = op === 1 ? 'diff-add-line' : op === -1 ? 'diff-del-line' : '';
+  function renderLine(op, text, charDiffs, side, isMoved) {
+    let pfx, cls;
+    if (isMoved) {
+      pfx = '\u21D5'; // ⇕ double vertical arrow
+      cls = (op === -1) ? 'diff-move-from' : 'diff-move-to';
+    } else {
+      pfx = op === 1 ? '+' : op === -1 ? '-' : ' ';
+      cls = op === 1 ? 'diff-add-line' : op === -1 ? 'diff-del-line' : '';
+    }
     let inner;
-    if (!charDiffs) {
+    if (!charDiffs || isMoved) {
       inner = esc(text);
     } else {
       inner = '';
@@ -637,11 +713,12 @@ function renderUnified(left, right) {
         inner += cc ? `<span class="${cc}">${esc(ctxt)}</span>` : esc(ctxt);
       }
     }
-    return `<div class="px-3 py-px font-mono text-[12px] ${cls}"><span class="select-none text-gray-400 mr-2">${pfx}</span>${inner}</div>`;
+    return `<div class="px-3 py-px font-mono text-[12px] ${cls}"><span class="select-none mr-2 ${isMoved ? 'text-violet-400' : 'text-gray-400'}">${pfx}</span>${inner}</div>`;
   }
 
   let html = '';
   let li = 0, ri = 0;
+  let leftLineNum = 1, rightLineNum = 1;
   let idx = 0;
 
   while (idx < lineDiffs.length) {
@@ -650,34 +727,55 @@ function renderUnified(left, right) {
     if (segs.length > 1 && segs[segs.length - 1] === '') segs.pop();
 
     if (op === 0) {
-      for (const seg of segs) { html += renderLine(0, leftLines[li++] ?? seg, null, null); ri++; }
+      for (const seg of segs) { html += renderLine(0, leftLines[li++] ?? seg, null, null, false); ri++; leftLineNum++; rightLineNum++; }
       idx++;
     } else if (op === -1 && idx + 1 < lineDiffs.length && lineDiffs[idx + 1][0] === 1) {
-      // Adjacent delete→insert block: pair lines and add char highlights
+      // Adjacent delete→insert: pair for char highlights (unless either side is moved)
       const insText = lineDiffs[idx + 1][1];
       const insSegs = insText.split('\n');
       if (insSegs.length > 1 && insSegs[insSegs.length - 1] === '') insSegs.pop();
       const pairCount = Math.min(segs.length, insSegs.length);
-      const delLines  = segs.map(() => leftLines[li++] ?? '');
+      const delLines  = segs.map(() => leftLines[li++]    ?? '');
       const insLines  = insSegs.map(() => rightLines[ri++] ?? '');
-      // Pre-compute char diffs for each pair
+
+      // Pre-compute char diffs for non-moved pairs (only when lines are sufficiently similar)
+      const SIMILARITY_THRESHOLD = 0.3;
       const pairDiffs = Array.from({ length: pairCount }, (_, k) => {
+        if (movedFromLines.has(leftLineNum + k) || movedToLines.has(rightLineNum + k)) return null;
         const cd = dmp.diff_main(delLines[k], insLines[k]);
         dmp.diff_cleanupSemanticLossless(cd);
+        // Skip char highlights if lines are too dissimilar
+        const equalLen = cd.reduce((s, [op, txt]) => s + (op === 0 ? txt.length : 0), 0);
+        const maxLen   = Math.max(delLines[k].length, insLines[k].length);
+        if (maxLen > 0 && equalLen / maxLen < SIMILARITY_THRESHOLD) return null;
         return cd;
       });
+
       for (let k = 0; k < delLines.length; k++) {
-        html += renderLine(-1, delLines[k], pairDiffs[k] ?? null, 'left');
+        const moved = movedFromLines.has(leftLineNum + k);
+        html += renderLine(-1, delLines[k], pairDiffs[k] ?? null, 'left', moved);
       }
       for (let k = 0; k < insLines.length; k++) {
-        html += renderLine(1, insLines[k], pairDiffs[k] ?? null, 'right');
+        const moved = movedToLines.has(rightLineNum + k);
+        html += renderLine(1, insLines[k], pairDiffs[k] ?? null, 'right', moved);
       }
+
+      leftLineNum  += segs.length;
+      rightLineNum += insSegs.length;
       idx += 2;
     } else if (op === -1) {
-      for (const seg of segs) html += renderLine(-1, leftLines[li++] ?? seg, null, null);
+      for (let k = 0; k < segs.length; k++) {
+        const moved = movedFromLines.has(leftLineNum + k);
+        html += renderLine(-1, leftLines[li++] ?? segs[k], null, null, moved);
+      }
+      leftLineNum += segs.length;
       idx++;
     } else {
-      for (const seg of segs) html += renderLine(1, rightLines[ri++] ?? seg, null, null);
+      for (let k = 0; k < segs.length; k++) {
+        const moved = movedToLines.has(rightLineNum + k);
+        html += renderLine(1, rightLines[ri++] ?? segs[k], null, null, moved);
+      }
+      rightLineNum += segs.length;
       idx++;
     }
   }
@@ -749,6 +847,7 @@ window.setView = function(mode) {
   if (mode === 'split') {
     bs.classList.add('bg-violet-600','text-white');
     bu.classList.add('text-gray-600','dark:text-gray-400');
+    scheduleDiff(); // rebuild split decorations immediately
   } else {
     bu.classList.add('bg-violet-600','text-white');
     bs.classList.add('text-gray-600','dark:text-gray-400');
@@ -813,12 +912,26 @@ document.getElementById('opt-ws').onchange   = e => { opts.ignoreWS        = e.t
 document.getElementById('opt-ci').onchange   = e => { opts.caseInsensitive = e.target.checked; scheduleDiff(); };
 document.getElementById('opt-typo').onchange = e => { opts.normalizeTypo   = e.target.checked; scheduleDiff(); };
 document.getElementById('btn-typeset').onclick = () => {
-  if (!editorR) return;
-  const original = editorR.state.doc.toString();
-  const result   = applyTypography(original);
-  if (result === original) { showToast('No plain punctuation found to convert.'); return; }
-  editorR.dispatch({ changes: { from: 0, to: editorR.state.doc.length, insert: result } });
-  showToast('\u2713 Typography applied to Modified.');
+  if (!editorR) { showToast('Load a Modified file first.'); return; }
+  try {
+    const original = editorR.state.doc.toString();
+    const { result, counts } = applyTypography(original);
+    const total = counts.ellipses + counts.dashes + counts.dquotes + counts.squotes;
+    if (total === 0) {
+      showToast('Modified already uses typographic punctuation \u2014 nothing to convert.');
+      return;
+    }
+    editorR.dispatch({ changes: { from: 0, to: editorR.state.doc.length, insert: result } });
+    const parts = [];
+    if (counts.dquotes)  parts.push(`${counts.dquotes} \u201Cdouble quotes\u201D`);
+    if (counts.squotes)  parts.push(`${counts.squotes} \u2018single quotes\u2019`);
+    if (counts.dashes)   parts.push(`${counts.dashes} \u2014 dashes`);
+    if (counts.ellipses) parts.push(`${counts.ellipses} \u2026 ellipses`);
+    showToast('\u2713 Typeset: ' + parts.join(', '));
+  } catch (err) {
+    showToast('Typeset error: ' + err.message);
+    console.error('Typeset failed:', err);
+  }
 };
 document.getElementById('lang-select').onchange = e => {
   currentLang = e.target.value;

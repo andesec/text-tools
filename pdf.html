@@ -332,10 +332,21 @@
             align-items: center;
             gap: 0.75rem;
             transition: transform 0.2s ease;
+            background: none;
+            border: none;
+            padding: 0;
+            margin: 0;
+            color: inherit;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .page-card:hover {
             transform: translateY(-5px);
+        }
+
+        .page-card:active {
+            transform: scale(0.98);
         }
 
         .page-thumbnail-wrapper {
@@ -597,6 +608,7 @@
         let originalPdfDoc = null;
         let originalPdfBytes = null;
         let totalPages = 0;
+        let cachedPdfJsDoc = null;
 
         // --- File Handling ---
 
@@ -785,8 +797,11 @@
             previewStatus.textContent = 'Initializing...';
             
             try {
-                const loadingTask = pdfjsLib.getDocument({ data: pdfBytes });
-                const pdf = await loadingTask.promise;
+                if (!cachedPdfJsDoc || (pdfBytes !== originalPdfBytes)) {
+                    const loadingTask = pdfjsLib.getDocument({ data: pdfBytes });
+                    cachedPdfJsDoc = await loadingTask.promise;
+                }
+                const pdf = cachedPdfJsDoc;
                 const numPages = pdf.numPages;
                 
                 previewStatus.textContent = `Rendering 1 of ${numPages}...`;
@@ -795,8 +810,10 @@
                     const page = await pdf.getPage(i);
                     const viewport = page.getViewport({ scale: 0.5 });
                     
-                    const card = document.createElement('div');
+                    const card = document.createElement('button');
                     card.className = 'page-card';
+                    card.type = 'button';
+                    card.setAttribute('aria-label', `View page ${i}`);
                     card.innerHTML = `
                         <div class="page-thumbnail-wrapper">
                             <canvas></canvas>
@@ -814,8 +831,10 @@
                         viewport: viewport
                     }).promise;
                     
-                    card.onclick = () => showLargePreview(i);
-                    card.style.cursor = 'pointer';
+                    card.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        showLargePreview(i);
+                    });
                     
                     previewContainer.appendChild(card);
                     previewStatus.textContent = `Rendering ${i} of ${numPages}...`;
@@ -831,12 +850,11 @@
 
         async function showLargePreview(pageIndex) {
             try {
-                modal.style.display = 'flex';
+                modal.style.display = 'block';
                 modalPageInfo.textContent = `Page ${pageIndex}`;
                 
-                // Show loading indicator in modal? Or just wait for render
-                const loadingTask = pdfjsLib.getDocument({ data: originalPdfBytes });
-                const pdf = await loadingTask.promise;
+                if (!cachedPdfJsDoc) return;
+                const pdf = cachedPdfJsDoc;
                 const page = await pdf.getPage(pageIndex);
                 
                 // Scale 1.5 for larger but fast preview
@@ -851,6 +869,7 @@
                     viewport: viewport
                 }).promise;
                 
+                // Track state to prevent body scroll if desired (optional)
             } catch (err) {
                 console.error('Error in large preview:', err);
                 alert('Could not load larger preview.');
