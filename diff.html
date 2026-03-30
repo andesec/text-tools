@@ -88,30 +88,26 @@
 <header class="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-slate-950 z-50 shadow-sm shrink-0">
 
   <!-- Row 1 -->
-  <div class="px-4 py-3 flex items-center justify-between gap-2">
-    <div class="flex items-center gap-2 shrink-0">
-      <a href="index.html" class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 mr-1" title="Home">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-      </a>
-      <div class="bg-gradient-to-br from-violet-600 to-purple-700 p-1.5 rounded-lg shadow-sm">
-        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h8M8 12h4m-7 9l3-3m0 0l3 3m-3-3V3"/></svg>
-      </div>
-      <h1 class="text-sm font-bold uppercase tracking-tight sm:text-base sm:normal-case">Diff</h1>
-    </div>
+  <div class="px-3 py-2.5 flex items-center gap-2">
+    <a href="index.html" class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 shrink-0" title="Home">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+    </a>
+    <h1 class="text-sm font-bold tracking-tight shrink-0">Diff</h1>
 
     <!-- Stats -->
     <div id="diff-stats" class="hidden sm:flex items-center gap-2 text-xs font-medium flex-1 justify-center"></div>
+    <div class="flex-1 sm:hidden"></div>
 
     <!-- Actions -->
-    <div class="flex items-center gap-2 shrink-0">
+    <div class="flex items-center gap-1.5 shrink-0">
       <input type="file" id="file-input-left" class="hidden">
       <input type="file" id="file-input-right" class="hidden">
 
       <!-- Export dropdown -->
       <div class="relative" id="dd-export">
-        <button id="btn-export" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 shadow-sm transition-all">
+        <button id="btn-export" class="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 shadow-sm transition-all">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-          Export
+          <span class="hidden sm:inline">Export</span>
           <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </button>
         <div id="dd-export-menu" class="hidden absolute right-0 mt-1 w-48 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-xl z-[200]">
@@ -121,7 +117,7 @@
       </div>
 
       <button id="btn-clear" title="Clear workspace"
-        class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 hover:bg-red-50 hover:text-red-600 hover:border-red-200 dark:hover:bg-red-900/20 dark:hover:text-red-400 shadow-sm transition-all">
+        class="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 hover:bg-red-50 hover:text-red-600 hover:border-red-200 dark:hover:bg-red-900/20 dark:hover:text-red-400 shadow-sm transition-all">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
         <span class="hidden sm:inline">Clear</span>
       </button>
@@ -174,8 +170,19 @@
         <label class="flex items-center gap-2 px-2 py-1.5 rounded text-xs text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer">
           <input type="checkbox" id="opt-ci" class="rounded"> Case insensitive
         </label>
+        <label class="flex items-center gap-2 px-2 py-1.5 rounded text-xs text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer">
+          <input type="checkbox" id="opt-typo" class="rounded"> Ignore smart quotes &amp; dashes
+        </label>
       </div>
     </div>
+
+    <!-- Typeset button: convert plain punctuation → typographic -->
+    <button id="btn-typeset"
+      title="Convert plain punctuation in Modified pane to typographic characters: &quot; → &ldquo;&rdquo;, -- → &mdash;, ... → &hellip;"
+      class="px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-violet-50 hover:text-violet-600 hover:border-violet-200 dark:hover:bg-violet-900/20 flex items-center gap-1.5 transition-all shrink-0">
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>
+      <span class="hidden sm:inline">Typeset</span>
+    </button>
 
     <!-- Outline toggle (desktop) -->
     <button id="btn-outline" onclick="toggleOutline()"
@@ -238,8 +245,19 @@
 
     <!-- Unified view (hidden by default) -->
     <div id="view-unified" class="hidden flex-1 flex flex-col overflow-hidden">
-      <div class="px-3 py-1.5 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-slate-950 shrink-0">
+      <div class="px-3 py-1.5 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-slate-950 shrink-0 flex items-center gap-3">
         <span class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Unified diff</span>
+        <!-- File load buttons visible in unified/mobile mode -->
+        <div class="flex items-center gap-2 ml-auto">
+          <button id="btn-open-left-u" class="flex items-center gap-1 text-[10px] text-violet-500 hover:text-violet-700 font-medium px-2 py-1 rounded border border-violet-200 dark:border-violet-800 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-all">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+            Original
+          </button>
+          <button id="btn-open-right-u" class="flex items-center gap-1 text-[10px] text-violet-500 hover:text-violet-700 font-medium px-2 py-1 rounded border border-violet-200 dark:border-violet-800 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-all">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+            Modified
+          </button>
+        </div>
       </div>
       <div id="unified-content" class="flex-1 overflow-auto p-0 font-mono text-[12px]"></div>
     </div>
@@ -299,7 +317,7 @@ let outlineOpen = true;
 let diffTimer = null;
 let syncingScroll = false;
 let currentLang = 'auto';
-let opts = { ignoreWS: false, caseInsensitive: false };
+let opts = { ignoreWS: false, caseInsensitive: false, normalizeTypo: false };
 const STORAGE = 'difftool-v2';
 
 const isDark = () => window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -338,29 +356,9 @@ function langExt(name) {
   }
 }
 
-// ── editor factory ──────────────────────────────────────────
-function makeEditor(parent, initialDoc, langExtension, onUpdate) {
-  return new EditorView({
-    state: EditorState.create({
-      doc: initialDoc,
-      extensions: [
-        basicSetup,
-        themeL.of(theme()),   // reused compartment key is wrong — fixed below
-        langL.of(langExtension),
-        decoField,
-        EditorView.theme({
-          '&': { height: '100%', width: '100%' },
-          '.cm-scroller': { overflow: 'auto' },
-        }),
-        EditorView.updateListener.of(v => { if (v.docChanged) onUpdate(); }),
-      ],
-    }),
-    parent,
-  });
-}
+// ── initialization ──────────────────────────────────────────
 
-// Because we share compartments we need separate ones per editor.
-// Fix: editors are created below with their own compartments.
+// ── editor creation ──────────────────────────────────────────
 
 function createEditors(leftDoc = '', rightDoc = '') {
   // Destroy existing
@@ -428,9 +426,43 @@ function syncScrollFromRight() {
 
 // ── normalise ───────────────────────────────────────────────
 function norm(text) {
-  if (opts.ignoreWS) text = text.replace(/[ \t]+/g, ' ').replace(/[ \t]+$/gm, '');
+  if (opts.normalizeTypo) {
+    // Normalize typographic punctuation to plain ASCII equivalents
+    text = text
+      .replace(/[\u2018\u2019\u201A\u201B\u2032\u2035\u02BC]/g, "'")
+      .replace(/[\u201C\u201D\u201E\u201F\u2033\u2036]/g, '"')
+      .replace(/[\u2013\u2014\u2015\u2212]/g, '-')
+      .replace(/\u2026/g, '...')
+      .replace(/[\u00A0\u202F\u2009\u2008]/g, ' ');
+  }
+  if (opts.ignoreWS) {
+    // Trim leading/trailing whitespace per line and collapse internal whitespace
+    text = text.split('\n').map(l => l.trim().replace(/[ \t]+/g, ' ')).join('\n');
+  }
   if (opts.caseInsensitive) text = text.toLowerCase();
   return text;
+}
+
+// ── apply typography ────────────────────────────────────────
+// Converts plain/markdown punctuation to proper typographic equivalents.
+// Designed for use on the Modified (right) pane.
+function applyTypography(text) {
+  return text
+    // Ellipsis (must be before single-dot rules)
+    .replace(/\.\.\.(?!\.)/g, '\u2026')
+    // Em-dash from triple or double hyphen
+    .replace(/---/g, '\u2014')
+    .replace(/--/g, '\u2014')
+    // Opening double quote: after line start, whitespace, or open bracket
+    .replace(/(^|[\s\(\[\{\u2014])"(?=[^\s])/gm, '$1\u201C')
+    // Remaining " → closing double quote
+    .replace(/"/g, '\u201D')
+    // Apostrophes in contractions (it's, don't, we're)
+    .replace(/(\w)'(\w)/g, '$1\u2019$2')
+    // Opening single quote: after line start, whitespace, open bracket
+    .replace(/(^|[\s\(\[\{\u2014])'(?=[^\s])/gm, '$1\u2018')
+    // Remaining ' → closing single quote / apostrophe
+    .replace(/'/g, '\u2019');
 }
 
 // ── diff + decorations ──────────────────────────────────────
@@ -573,22 +605,83 @@ function updateStats(left, right) {
 
 // ── unified view ────────────────────────────────────────────
 function renderUnified(left, right) {
-  const dmp   = new diff_match_patch();
-  const diffs = dmp.diff_main(norm(left), norm(right));
-  dmp.diff_cleanupSemantic(diffs);
+  const dmp = new diff_match_patch();
+  const leftLines  = left.split('\n');
+  const rightLines = right.split('\n');
+
+  // Use line-level diff on normalized text
+  const encoded   = dmp.diff_linesToChars_(norm(left), norm(right));
+  const lineDiffs = dmp.diff_main(encoded.chars1, encoded.chars2, false);
+  dmp.diff_cleanupSemantic(lineDiffs);
+  dmp.diff_charsToLines_(lineDiffs, encoded.lineArray);
+
   const el = document.getElementById('unified-content');
-  let html = '';
-  for (const [op, text] of diffs) {
-    const escaped = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    const lines = escaped.split('\n');
-    lines.forEach((line, i) => {
-      if (i < lines.length - 1 || line) {
-        const pfx = op === 1 ? '+' : op === -1 ? '-' : ' ';
-        const cls = op === 1 ? 'diff-add-line' : op === -1 ? 'diff-del-line' : '';
-        html += `<div class="px-3 py-px whitespace-pre ${cls}">${pfx} ${line}</div>`;
+  const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  // Render one line, optionally with character-level highlights.
+  // charDiffs = diff_main result on the two raw line strings.
+  // side: 'left'  → show only deletion  highlights
+  //       'right' → show only insertion highlights
+  function renderLine(op, text, charDiffs, side) {
+    const pfx = op === 1 ? '+' : op === -1 ? '-' : ' ';
+    const cls = op === 1 ? 'diff-add-line' : op === -1 ? 'diff-del-line' : '';
+    let inner;
+    if (!charDiffs) {
+      inner = esc(text);
+    } else {
+      inner = '';
+      for (const [cop, ctxt] of charDiffs) {
+        if (side === 'left'  && cop === 1)  continue;
+        if (side === 'right' && cop === -1) continue;
+        const cc = cop === -1 ? 'diff-del-char' : cop === 1 ? 'diff-add-char' : '';
+        inner += cc ? `<span class="${cc}">${esc(ctxt)}</span>` : esc(ctxt);
       }
-    });
+    }
+    return `<div class="px-3 py-px font-mono text-[12px] ${cls}"><span class="select-none text-gray-400 mr-2">${pfx}</span>${inner}</div>`;
   }
+
+  let html = '';
+  let li = 0, ri = 0;
+  let idx = 0;
+
+  while (idx < lineDiffs.length) {
+    const [op, text] = lineDiffs[idx];
+    const segs = text.split('\n');
+    if (segs.length > 1 && segs[segs.length - 1] === '') segs.pop();
+
+    if (op === 0) {
+      for (const seg of segs) { html += renderLine(0, leftLines[li++] ?? seg, null, null); ri++; }
+      idx++;
+    } else if (op === -1 && idx + 1 < lineDiffs.length && lineDiffs[idx + 1][0] === 1) {
+      // Adjacent delete→insert block: pair lines and add char highlights
+      const insText = lineDiffs[idx + 1][1];
+      const insSegs = insText.split('\n');
+      if (insSegs.length > 1 && insSegs[insSegs.length - 1] === '') insSegs.pop();
+      const pairCount = Math.min(segs.length, insSegs.length);
+      const delLines  = segs.map(() => leftLines[li++] ?? '');
+      const insLines  = insSegs.map(() => rightLines[ri++] ?? '');
+      // Pre-compute char diffs for each pair
+      const pairDiffs = Array.from({ length: pairCount }, (_, k) => {
+        const cd = dmp.diff_main(delLines[k], insLines[k]);
+        dmp.diff_cleanupSemanticLossless(cd);
+        return cd;
+      });
+      for (let k = 0; k < delLines.length; k++) {
+        html += renderLine(-1, delLines[k], pairDiffs[k] ?? null, 'left');
+      }
+      for (let k = 0; k < insLines.length; k++) {
+        html += renderLine(1, insLines[k], pairDiffs[k] ?? null, 'right');
+      }
+      idx += 2;
+    } else if (op === -1) {
+      for (const seg of segs) html += renderLine(-1, leftLines[li++] ?? seg, null, null);
+      idx++;
+    } else {
+      for (const seg of segs) html += renderLine(1, rightLines[ri++] ?? seg, null, null);
+      idx++;
+    }
+  }
+
   el.innerHTML = html || '<div class="p-4 text-gray-400 text-center italic">No differences found.</div>';
 }
 
@@ -676,6 +769,8 @@ window.toggleOutline = function() {
     sidebar.classList.add('outline-closed');
     btn.classList.remove('bg-violet-600','text-white','border-violet-600');
   }
+  // Force relayout after sidebar toggle
+  window.dispatchEvent(new Event('resize'));
 };
 
 // ── file loading ─────────────────────────────────────────────
@@ -706,14 +801,25 @@ document.addEventListener('drop', async e => {
   if (files[1]) await loadRight(files[1]);
 });
 
-document.getElementById('btn-open-left').onclick  = () => document.getElementById('file-input-left').click();
-document.getElementById('btn-open-right').onclick = () => document.getElementById('file-input-right').click();
+document.getElementById('btn-open-left').onclick   = () => document.getElementById('file-input-left').click();
+document.getElementById('btn-open-right').onclick  = () => document.getElementById('file-input-right').click();
+document.getElementById('btn-open-left-u').onclick  = () => document.getElementById('file-input-left').click();
+document.getElementById('btn-open-right-u').onclick = () => document.getElementById('file-input-right').click();
 document.getElementById('file-input-left').onchange  = e => e.target.files[0] && loadLeft(e.target.files[0]);
 document.getElementById('file-input-right').onchange = e => e.target.files[0] && loadRight(e.target.files[0]);
 
 // ── options ──────────────────────────────────────────────────
-document.getElementById('opt-ws').onchange = e => { opts.ignoreWS = e.target.checked; scheduleDiff(); };
-document.getElementById('opt-ci').onchange = e => { opts.caseInsensitive = e.target.checked; scheduleDiff(); };
+document.getElementById('opt-ws').onchange   = e => { opts.ignoreWS        = e.target.checked; scheduleDiff(); };
+document.getElementById('opt-ci').onchange   = e => { opts.caseInsensitive = e.target.checked; scheduleDiff(); };
+document.getElementById('opt-typo').onchange = e => { opts.normalizeTypo   = e.target.checked; scheduleDiff(); };
+document.getElementById('btn-typeset').onclick = () => {
+  if (!editorR) return;
+  const original = editorR.state.doc.toString();
+  const result   = applyTypography(original);
+  if (result === original) { showToast('No plain punctuation found to convert.'); return; }
+  editorR.dispatch({ changes: { from: 0, to: editorR.state.doc.length, insert: result } });
+  showToast('\u2713 Typography applied to Modified.');
+};
 document.getElementById('lang-select').onchange = e => {
   currentLang = e.target.value;
   const lname = document.getElementById('lbl-left').textContent;
@@ -796,8 +902,9 @@ function loadFromStorage() {
     if (s.lang) { currentLang = s.lang; document.getElementById('lang-select').value = s.lang; }
     if (s.leftName)  document.getElementById('lbl-left').textContent  = s.leftName;
     if (s.rightName) document.getElementById('lbl-right').textContent = s.rightName;
-    document.getElementById('opt-ws').checked = opts.ignoreWS;
-    document.getElementById('opt-ci').checked = opts.caseInsensitive;
+    document.getElementById('opt-ws').checked   = opts.ignoreWS;
+    document.getElementById('opt-ci').checked   = opts.caseInsensitive;
+    document.getElementById('opt-typo').checked = opts.normalizeTypo ?? false;
     if (s.left || s.right) {
       createEditors(s.left || '', s.right || '');
       if (s.viewMode) setView(s.viewMode);
