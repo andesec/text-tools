@@ -1,0 +1,830 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Diff Tool — Text Tools</title>
+  <meta name="description" content="Compare two files or text snippets side-by-side with character-level highlighting and a live symbol outline. Runs entirely in your browser." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter','sans-serif'] } } } }</script>
+
+  <style>
+    /* ── Diff colour tokens ───────────────────────────────── */
+    :root {
+      --diff-add-line:  #e6f4ec;
+      --diff-add-char:  #9ddbb4;
+      --diff-del-line:  #fce8e8;
+      --diff-del-char:  #f5a0a0;
+      --diff-move-line: #fef3c7;
+      --diff-add-gutter:#22c55e;
+      --diff-del-gutter:#ef4444;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --diff-add-line:  #132a1e;
+        --diff-add-char:  #1a5230;
+        --diff-del-line:  #2a1313;
+        --diff-del-char:  #521a1a;
+        --diff-move-line: #2a2010;
+        --diff-add-gutter:#4ade80;
+        --diff-del-gutter:#f87171;
+      }
+    }
+
+    /* ── Diff line / char marks (applied by StateField) ─── */
+    .diff-add-line  { background: var(--diff-add-line)  !important; display: block; }
+    .diff-del-line  { background: var(--diff-del-line)  !important; display: block; }
+    .diff-add-char  { background: var(--diff-add-char);  border-radius: 2px; }
+    .diff-del-char  { background: var(--diff-del-char);  border-radius: 2px; }
+    .diff-move-line { background: var(--diff-move-line) !important; display: block; }
+
+    /* ── CM sizing ────────────────────────────────────────── */
+    .cm-editor       { height: 100% !important; }
+    .cm-scroller     { overflow: auto !important; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 13px; }
+    .editor-wrap     { flex: 1; min-width: 0; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+    .editor-wrap > .cm-editor { flex: 1; min-height: 0; }
+
+    /* ── Outline sidebar force-hide override ─────────────── */
+    #outline-sidebar.outline-closed { display: none !important; }
+
+    /* ── Mobile sidebar overlay ───────────────────────────── */
+    .mobile-sidebar-active #outline-sidebar {
+      display: flex !important;
+      position: fixed; inset: 0; z-index: 60; width: 100%;
+    }
+
+    /* ── Scrollbar de-emphasis ────────────────────────────── */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* ── Outline flash animation ──────────────────────────── */
+    @keyframes flash-bg {
+      0%   { background: hsl(225 80% 60% / 0.25); }
+      100% { background: transparent; }
+    }
+    .outline-flash { animation: flash-bg 700ms ease-out; }
+
+    /* ── Drag-over highlight ──────────────────────────────── */
+    .drop-active { outline: 2px dashed #7c3aed; outline-offset: -2px; }
+
+    /* ── Stat badges ──────────────────────────────────────── */
+    .stat-add { background: #dcfce7; color: #166534; }
+    .stat-del { background: #fee2e2; color: #991b1b; }
+    @media (prefers-color-scheme: dark) {
+      .stat-add { background: #14532d; color: #86efac; }
+      .stat-del { background: #450a0a; color: #fca5a5; }
+      body { background: #020617; color: #f1f5f9; }
+      .sidebar { background: #0f172a; border-color: #1e293b; }
+    }
+  </style>
+</head>
+
+<body class="h-screen flex flex-col overflow-hidden font-sans">
+
+<!-- ══ HEADER ═══════════════════════════════════════════════ -->
+<header class="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-slate-950 z-50 shadow-sm shrink-0">
+
+  <!-- Row 1 -->
+  <div class="px-4 py-3 flex items-center justify-between gap-2">
+    <div class="flex items-center gap-2 shrink-0">
+      <a href="index.html" class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 mr-1" title="Home">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      </a>
+      <div class="bg-gradient-to-br from-violet-600 to-purple-700 p-1.5 rounded-lg shadow-sm">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h8M8 12h4m-7 9l3-3m0 0l3 3m-3-3V3"/></svg>
+      </div>
+      <h1 class="text-sm font-bold uppercase tracking-tight sm:text-base sm:normal-case">Diff</h1>
+    </div>
+
+    <!-- Stats -->
+    <div id="diff-stats" class="hidden sm:flex items-center gap-2 text-xs font-medium flex-1 justify-center"></div>
+
+    <!-- Actions -->
+    <div class="flex items-center gap-2 shrink-0">
+      <input type="file" id="file-input-left" class="hidden">
+      <input type="file" id="file-input-right" class="hidden">
+
+      <!-- Export dropdown -->
+      <div class="relative" id="dd-export">
+        <button id="btn-export" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 shadow-sm transition-all">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          Export
+          <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <div id="dd-export-menu" class="hidden absolute right-0 mt-1 w-48 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-xl z-[200]">
+          <button id="btn-copy-patch" class="w-full text-left px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800 text-xs text-blue-600 dark:text-blue-400 rounded-t-lg">Copy Unified Patch</button>
+          <button id="btn-save-html"  class="w-full text-left px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800 text-xs text-green-600 dark:text-green-400 rounded-b-lg">Save HTML Report</button>
+        </div>
+      </div>
+
+      <button id="btn-clear" title="Clear workspace"
+        class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 hover:bg-red-50 hover:text-red-600 hover:border-red-200 dark:hover:bg-red-900/20 dark:hover:text-red-400 shadow-sm transition-all">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        <span class="hidden sm:inline">Clear</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Row 2: secondary toolbar -->
+  <div class="px-4 py-2 border-t border-gray-100 dark:border-gray-900 bg-gray-50/50 dark:bg-slate-900/50 flex items-center gap-3 flex-wrap">
+
+    <!-- View toggle -->
+    <div class="flex items-center rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden shadow-sm shrink-0">
+      <button id="btn-view-split" onclick="setView('split')"
+        class="px-3 py-1.5 text-xs font-medium flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7"/></svg>
+        Split
+      </button>
+      <button id="btn-view-unified" onclick="setView('unified')"
+        class="px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 border-l border-gray-200 dark:border-gray-700">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+        Unified
+      </button>
+    </div>
+
+    <!-- Language -->
+    <div class="flex items-center gap-1.5 shrink-0">
+      <span class="text-xs text-gray-400">Lang:</span>
+      <select id="lang-select" class="text-xs px-2 py-1 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300">
+        <option value="auto">Auto-detect</option>
+        <option value="javascript">JavaScript / TS</option>
+        <option value="json">JSON</option>
+        <option value="python">Python</option>
+        <option value="html">HTML</option>
+        <option value="css">CSS</option>
+        <option value="sql">SQL</option>
+        <option value="xml">XML</option>
+        <option value="markdown">Markdown</option>
+        <option value="text">Plain Text</option>
+      </select>
+    </div>
+
+    <!-- Options dropdown -->
+    <div class="relative" id="dd-options">
+      <button id="btn-options" class="px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-1.5 transition-all">
+        Options <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+      </button>
+      <div id="dd-options-menu" class="hidden absolute left-0 mt-1 w-56 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-xl z-[200] p-2 space-y-0.5">
+        <label class="flex items-center gap-2 px-2 py-1.5 rounded text-xs text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer">
+          <input type="checkbox" id="opt-ws" class="rounded"> Ignore whitespace
+        </label>
+        <label class="flex items-center gap-2 px-2 py-1.5 rounded text-xs text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer">
+          <input type="checkbox" id="opt-ci" class="rounded"> Case insensitive
+        </label>
+      </div>
+    </div>
+
+    <!-- Outline toggle (desktop) -->
+    <button id="btn-outline" onclick="toggleOutline()"
+      class="hidden md:flex px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 items-center gap-1.5 transition-all ml-auto shrink-0">
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8M4 18h12"/></svg>
+      Outline
+    </button>
+  </div>
+</header>
+
+<!-- ══ WORKSPACE ═══════════════════════════════════════════ -->
+<div class="flex-1 flex overflow-hidden">
+
+  <!-- Outline sidebar -->
+  <aside id="outline-sidebar"
+    class="w-64 border-r border-gray-200 dark:border-gray-800 flex-col shrink-0 sidebar hidden md:flex bg-white dark:bg-slate-900 z-10">
+    <div class="px-3 py-2.5 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center shrink-0">
+      <span class="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Outline</span>
+      <button id="btn-close-outline" class="md:hidden p-1 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div id="outline-list" class="flex-1 overflow-y-auto p-2 space-y-0.5 no-scrollbar text-xs">
+      <div class="text-gray-400 italic p-4 text-center">No content yet.</div>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <div class="flex-1 flex flex-col overflow-hidden min-w-0">
+
+    <!-- Split view -->
+    <div id="view-split" class="flex-1 flex overflow-hidden">
+
+      <!-- Left pane (Original) -->
+      <div class="flex-1 flex flex-col overflow-hidden min-w-0 border-r border-gray-200 dark:border-gray-800">
+        <div class="flex items-center gap-2 px-3 py-1.5 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-slate-950 shrink-0">
+          <span class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Original</span>
+          <span id="lbl-left" class="text-[10px] text-gray-400 truncate"></span>
+          <button id="btn-open-left" class="ml-auto flex items-center gap-1 text-[10px] text-violet-500 hover:text-violet-700 font-medium">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+            Open
+          </button>
+        </div>
+        <div id="editor-left" class="editor-wrap flex-1 min-h-0"></div>
+      </div>
+
+      <!-- Right pane (Modified) -->
+      <div class="flex-1 flex flex-col overflow-hidden min-w-0">
+        <div class="flex items-center gap-2 px-3 py-1.5 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-slate-950 shrink-0">
+          <span class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Modified</span>
+          <span id="lbl-right" class="text-[10px] text-gray-400 truncate"></span>
+          <button id="btn-open-right" class="ml-auto flex items-center gap-1 text-[10px] text-violet-500 hover:text-violet-700 font-medium">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+            Open
+          </button>
+        </div>
+        <div id="editor-right" class="editor-wrap flex-1 min-h-0"></div>
+      </div>
+    </div>
+
+    <!-- Unified view (hidden by default) -->
+    <div id="view-unified" class="hidden flex-1 flex flex-col overflow-hidden">
+      <div class="px-3 py-1.5 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-slate-950 shrink-0">
+        <span class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Unified diff</span>
+      </div>
+      <div id="unified-content" class="flex-1 overflow-auto p-0 font-mono text-[12px]"></div>
+    </div>
+
+    <!-- Empty state -->
+    <div id="empty-state" class="hidden absolute inset-0 flex items-center justify-center pointer-events-none z-10" style="top: 96px">
+      <div class="text-center">
+        <div class="text-6xl mb-4">⚡</div>
+        <p class="text-base font-semibold text-gray-400 dark:text-gray-500 mb-1">Compare two files or pastes</p>
+        <p class="text-sm text-gray-300 dark:text-gray-600">Drop two files anywhere · Use the Open buttons · Or just start typing</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Mobile FAB -->
+<button id="btn-mobile-menu" class="fixed bottom-6 right-6 md:hidden bg-violet-600 text-white p-4 rounded-full shadow-2xl z-50">
+  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8M4 18h16"/></svg>
+</button>
+
+<!-- Toast -->
+<div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-4 py-2 rounded-full text-sm shadow-xl z-[300] pointer-events-none transition-opacity duration-300" style="opacity:0"></div>
+
+<!-- ══ SCRIPTS ═══════════════════════════════════════════════ -->
+<script src="vendor/cm-diff-bundle.js"></script>
+<script>
+'use strict';
+
+const {
+  EditorView, EditorState, basicSetup, Compartment,
+  oneDark,
+  javascript, json, python, markdown, css, html, sql, xml,
+  diff_match_patch,
+  Decoration, ViewPlugin, StateEffect, StateField,
+} = window.CM_DIFF;
+
+// ── decoration setup ────────────────────────────────────────
+const setDecosEffect = StateEffect.define();
+const decoField = StateField.define({
+  create: () => Decoration.none,
+  update(decos, tr) {
+    decos = decos.map(tr.changes);
+    for (const e of tr.effects) if (e.is(setDecosEffect)) decos = e.value;
+    return decos;
+  },
+  provide: f => EditorView.decorations.from(f),
+});
+
+// ── compartments ────────────────────────────────────────────
+const themeL = new Compartment(), themeR = new Compartment();
+const langL  = new Compartment(), langR  = new Compartment();
+
+// ── state ───────────────────────────────────────────────────
+let editorL = null, editorR = null;
+let viewMode = window.innerWidth < 768 ? 'unified' : 'split';
+let outlineOpen = true;
+let diffTimer = null;
+let syncingScroll = false;
+let currentLang = 'auto';
+let opts = { ignoreWS: false, caseInsensitive: false };
+const STORAGE = 'difftool-v2';
+
+const isDark = () => window.matchMedia('(prefers-color-scheme: dark)').matches;
+const theme  = () => isDark() ? oneDark : [];
+
+// ── language detection ──────────────────────────────────────
+const EXT_MAP = {
+  js:'javascript', jsx:'javascript', mjs:'javascript', cjs:'javascript',
+  ts:'javascript', tsx:'javascript',
+  json:'json', jsonc:'json',
+  py:'python',
+  html:'html', htm:'html',
+  css:'css', scss:'css',
+  sql:'sql',
+  xml:'xml', svg:'xml',
+  md:'markdown', mdx:'markdown',
+};
+
+function langForName(name) {
+  if (!name) return null;
+  return EXT_MAP[name.split('.').pop().toLowerCase()] || null;
+}
+
+function langExt(name) {
+  const k = currentLang === 'auto' ? langForName(name) : currentLang;
+  switch (k) {
+    case 'javascript': return javascript({ typescript: true });
+    case 'json':       return json();
+    case 'python':     return python();
+    case 'html':       return html();
+    case 'css':        return css();
+    case 'sql':        return sql();
+    case 'xml':        return xml();
+    case 'markdown':   return markdown();
+    default:           return [];
+  }
+}
+
+// ── editor factory ──────────────────────────────────────────
+function makeEditor(parent, initialDoc, langExtension, onUpdate) {
+  return new EditorView({
+    state: EditorState.create({
+      doc: initialDoc,
+      extensions: [
+        basicSetup,
+        themeL.of(theme()),   // reused compartment key is wrong — fixed below
+        langL.of(langExtension),
+        decoField,
+        EditorView.theme({
+          '&': { height: '100%', width: '100%' },
+          '.cm-scroller': { overflow: 'auto' },
+        }),
+        EditorView.updateListener.of(v => { if (v.docChanged) onUpdate(); }),
+      ],
+    }),
+    parent,
+  });
+}
+
+// Because we share compartments we need separate ones per editor.
+// Fix: editors are created below with their own compartments.
+
+function createEditors(leftDoc = '', rightDoc = '') {
+  // Destroy existing
+  if (editorL) { editorL.destroy(); editorL = null; }
+  if (editorR) { editorR.destroy(); editorR = null; }
+
+  const leftName  = document.getElementById('lbl-left').textContent;
+  const rightName = document.getElementById('lbl-right').textContent;
+
+  editorL = new EditorView({
+    state: EditorState.create({
+      doc: leftDoc,
+      extensions: [
+        basicSetup,
+        themeL.of(theme()),
+        langL.of(langExt(leftName || rightName)),
+        decoField,
+        EditorView.theme({ '&':{ height:'100%', width:'100%' }, '.cm-scroller':{ overflow:'auto' } }),
+        EditorView.updateListener.of(v => { if (v.docChanged) scheduleDiff(); }),
+        EditorView.domEventHandlers({ scroll: syncScrollFromLeft }),
+      ],
+    }),
+    parent: document.getElementById('editor-left'),
+  });
+
+  editorR = new EditorView({
+    state: EditorState.create({
+      doc: rightDoc,
+      extensions: [
+        basicSetup,
+        themeR.of(theme()),
+        langR.of(langExt(rightName || leftName)),
+        decoField,
+        EditorView.theme({ '&':{ height:'100%', width:'100%' }, '.cm-scroller':{ overflow:'auto' } }),
+        EditorView.updateListener.of(v => { if (v.docChanged) scheduleDiff(); }),
+        EditorView.domEventHandlers({ scroll: syncScrollFromRight }),
+      ],
+    }),
+    parent: document.getElementById('editor-right'),
+  });
+
+  updateEmptyState();
+  scheduleDiff();
+}
+
+// ── scroll sync ─────────────────────────────────────────────
+function syncScrollFromLeft() {
+  if (syncingScroll) return;
+  syncingScroll = true;
+  requestAnimationFrame(() => {
+    const sl = editorL?.scrollDOM, sr = editorR?.scrollDOM;
+    if (sl && sr) sr.scrollTop = sl.scrollTop;
+    syncingScroll = false;
+  });
+}
+function syncScrollFromRight() {
+  if (syncingScroll) return;
+  syncingScroll = true;
+  requestAnimationFrame(() => {
+    const sl = editorL?.scrollDOM, sr = editorR?.scrollDOM;
+    if (sl && sr) sl.scrollTop = sr.scrollTop;
+    syncingScroll = false;
+  });
+}
+
+// ── normalise ───────────────────────────────────────────────
+function norm(text) {
+  if (opts.ignoreWS) text = text.replace(/[ \t]+/g, ' ').replace(/[ \t]+$/gm, '');
+  if (opts.caseInsensitive) text = text.toLowerCase();
+  return text;
+}
+
+// ── diff + decorations ──────────────────────────────────────
+function scheduleDiff() {
+  clearTimeout(diffTimer);
+  diffTimer = setTimeout(runDiff, 200);
+}
+
+const lineMark = (cls) => Decoration.line({ class: cls });
+const charMark = (cls) => Decoration.mark({ class: cls });
+
+function buildDecos(view, lineRanges, charRanges) {
+  const { RangeSetBuilder } = view.state.constructor ?? {};
+  // Use Decoration.set with sorted array instead
+  const decos = [];
+  const doc = view.state.doc;
+
+  for (const { from, to, cls } of lineRanges) {
+    const lineFrom = Math.max(0, from);
+    const lineTo   = Math.min(doc.lines, to);
+    for (let l = lineFrom; l <= lineTo; l++) {
+      try {
+        const line = doc.line(l);
+        decos.push(Decoration.line({ class: cls }).range(line.from));
+      } catch (_) {}
+    }
+  }
+
+  for (const { from, to, cls } of charRanges) {
+    if (from < to && to <= doc.length) {
+      decos.push(Decoration.mark({ class: cls }).range(from, to));
+    }
+  }
+
+  decos.sort((a, b) => a.from - b.from || (a.startSide ?? 0) - (b.startSide ?? 0));
+  return Decoration.set(decos, true);
+}
+
+function runDiff() {
+  if (!editorL || !editorR) return;
+  const leftText  = editorL.state.doc.toString();
+  const rightText = editorR.state.doc.toString();
+
+  updateEmptyState();
+  updateStats(leftText, rightText);
+  updateOutline(leftText);
+
+  if (viewMode === 'unified') {
+    renderUnified(leftText, rightText);
+    return;
+  }
+
+  const dmp = new diff_match_patch();
+
+  // Line-level diff — diff_charsToLines_ mutates lineDiffs in-place
+  const encoded   = dmp.diff_linesToChars_(norm(leftText), norm(rightText));
+  const lineDiffs = dmp.diff_main(encoded.chars1, encoded.chars2, false);
+  dmp.diff_cleanupSemantic(lineDiffs);
+  dmp.diff_charsToLines_(lineDiffs, encoded.lineArray); // modifies lineDiffs in place
+
+  let leftLine = 1, rightLine = 1;
+  const leftLineDecos  = [];
+  const rightLineDecos = [];
+
+  for (const [op, text] of lineDiffs) {
+    const lc = text ? text.split('\n').length - (text.endsWith('\n') ? 1 : 0) : 0;
+    const count = Math.max(lc, 1);
+    if (op === -1) {
+      leftLineDecos.push({ from: leftLine, to: leftLine + count - 1, cls: 'diff-del-line' });
+      leftLine += count;
+    } else if (op === 1) {
+      rightLineDecos.push({ from: rightLine, to: rightLine + count - 1, cls: 'diff-add-line' });
+      rightLine += count;
+    } else {
+      leftLine  += count;
+      rightLine += count;
+    }
+  }
+
+  // Intra-line char highlighting
+  const leftCharDecos  = [];
+  const rightCharDecos = [];
+  addIntraLineDiffs(dmp, leftCharDecos, rightCharDecos);
+
+  editorL.dispatch({ effects: setDecosEffect.of(buildDecos(editorL, leftLineDecos,  leftCharDecos)) });
+  editorR.dispatch({ effects: setDecosEffect.of(buildDecos(editorR, rightLineDecos, rightCharDecos)) });
+
+  saveToStorage();
+}
+
+function addIntraLineDiffs(dmp, leftCharDecos, rightCharDecos) {
+  const ldoc = editorL.state.doc;
+  const rdoc = editorR.state.doc;
+  const maxLines = Math.min(ldoc.lines, rdoc.lines);
+
+  for (let i = 1; i <= maxLines; i++) {
+    const ll = ldoc.line(i).text;
+    const rl = rdoc.line(i).text;
+    if (norm(ll) === norm(rl)) continue;
+
+    const diffs = dmp.diff_main(norm(ll), norm(rl));
+    dmp.diff_cleanupSemanticLossless(diffs);
+
+    let lPos = ldoc.line(i).from;
+    let rPos = rdoc.line(i).from;
+
+    for (const [op, txt] of diffs) {
+      const len = txt.length;
+      if (op === -1) {
+        if (lPos + len <= ldoc.line(i).to + 1)
+          leftCharDecos.push({ from: lPos, to: lPos + len, cls: 'diff-del-char' });
+        lPos += len;
+      } else if (op === 1) {
+        if (rPos + len <= rdoc.line(i).to + 1)
+          rightCharDecos.push({ from: rPos, to: rPos + len, cls: 'diff-add-char' });
+        rPos += len;
+      } else {
+        lPos += len;
+        rPos += len;
+      }
+    }
+  }
+}
+
+// ── stats ───────────────────────────────────────────────────
+function updateStats(left, right) {
+  const dmp   = new diff_match_patch();
+  const diffs = dmp.diff_main(norm(left), norm(right));
+  dmp.diff_cleanupSemantic(diffs);
+  let added = 0, removed = 0;
+  diffs.forEach(([op]) => { if (op === 1) added++; else if (op === -1) removed++; });
+  const el = document.getElementById('diff-stats');
+  el.innerHTML = `
+    <span class="stat-add inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold">+${added}</span>
+    <span class="stat-del inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold">−${removed}</span>
+    <span class="text-gray-400 text-[11px]">${(left||'').split('\n').length}↔${(right||'').split('\n').length} lines</span>`;
+  el.classList.remove('hidden');
+  el.classList.add('flex');
+}
+
+// ── unified view ────────────────────────────────────────────
+function renderUnified(left, right) {
+  const dmp   = new diff_match_patch();
+  const diffs = dmp.diff_main(norm(left), norm(right));
+  dmp.diff_cleanupSemantic(diffs);
+  const el = document.getElementById('unified-content');
+  let html = '';
+  for (const [op, text] of diffs) {
+    const escaped = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const lines = escaped.split('\n');
+    lines.forEach((line, i) => {
+      if (i < lines.length - 1 || line) {
+        const pfx = op === 1 ? '+' : op === -1 ? '-' : ' ';
+        const cls = op === 1 ? 'diff-add-line' : op === -1 ? 'diff-del-line' : '';
+        html += `<div class="px-3 py-px whitespace-pre ${cls}">${pfx} ${line}</div>`;
+      }
+    });
+  }
+  el.innerHTML = html || '<div class="p-4 text-gray-400 text-center italic">No differences found.</div>';
+}
+
+// ── empty state ─────────────────────────────────────────────
+function updateEmptyState() {
+  const hasContent = (editorL?.state.doc.length ?? 0) + (editorR?.state.doc.length ?? 0) > 0;
+  document.getElementById('empty-state').classList.toggle('hidden', hasContent);
+}
+
+// ── outline ─────────────────────────────────────────────────
+function updateOutline(content) {
+  const el = document.getElementById('outline-list');
+  if (!content?.trim()) { el.innerHTML = '<div class="text-gray-400 italic p-4 text-center">No content yet.</div>'; return; }
+
+  const symbols = [];
+  content.split('\n').forEach((line, i) => {
+    const md  = line.match(/^(#{1,6})\s+(.+)/);
+    const fn  = line.match(/^(?:export\s+)?(?:async\s+)?function[\s*]+(\w+)/);
+    const cls = line.match(/^(?:export\s+)?(?:abstract\s+)?class\s+(\w+)/);
+    const arr = line.match(/^(?:export\s+)?(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s*)?\(?.*?\)?\s*=>/);
+    const pyd = line.match(/^(?:\s*)def\s+(\w+)/);
+    const pyc = line.match(/^class\s+(\w+)/);
+    if (md)  symbols.push({ level: md[1].length,  text: md[2],          line: i, icon: '§' });
+    else if (fn)  symbols.push({ level: 1, text: fn[1]+'()',  line: i, icon: 'ƒ' });
+    else if (cls) symbols.push({ level: 1, text: cls[1],       line: i, icon: '⊡' });
+    else if (arr) symbols.push({ level: 2, text: arr[1]+' →', line: i, icon: 'ƒ' });
+    else if (pyd) symbols.push({ level: 2, text: 'def '+pyd[1]+'()', line: i, icon: 'ƒ' });
+    else if (pyc) symbols.push({ level: 1, text: 'class '+pyc[1], line: i, icon: '⊡' });
+  });
+
+  if (!symbols.length) { el.innerHTML = '<div class="text-gray-400 italic p-4 text-center">No symbols found.</div>'; return; }
+
+  el.innerHTML = symbols.map(s => `
+    <button onclick="jumpToLine(${s.line})"
+      class="flex w-full items-center gap-1.5 rounded px-2 py-1 text-left text-[11px] text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-violet-600 dark:hover:text-violet-400 transition-colors truncate"
+      style="padding-left:${(s.level-1)*10+8}px" title="Line ${s.line+1}: ${s.text}">
+      <span class="opacity-40 font-mono shrink-0">${s.icon}</span>
+      <span class="truncate">${s.text.replace(/</g,'&lt;')}</span>
+    </button>`).join('');
+}
+
+window.jumpToLine = function(lineIdx) {
+  [editorL, editorR].forEach(ed => {
+    if (!ed) return;
+    const doc = ed.state.doc;
+    const l   = Math.min(lineIdx + 1, doc.lines);
+    const pos = doc.line(l).from;
+    ed.dispatch({ selection: { anchor: pos }, effects: EditorView.scrollIntoView(pos, { y: 'center' }) });
+    // Flash
+    ed.dom.classList.add('outline-flash');
+    setTimeout(() => ed.dom.classList.remove('outline-flash'), 700);
+  });
+};
+
+// ── view mode ────────────────────────────────────────────────
+window.setView = function(mode) {
+  viewMode = mode;
+  document.getElementById('view-split').classList.toggle('hidden', mode !== 'split');
+  document.getElementById('view-unified').classList.toggle('hidden', mode !== 'unified');
+
+  const bs = document.getElementById('btn-view-split');
+  const bu = document.getElementById('btn-view-unified');
+  bs.className = bs.className.replace(/bg-violet-600 text-white|text-gray-600 dark:text-gray-400/g,'').trim();
+  bu.className = bu.className.replace(/bg-violet-600 text-white|text-gray-600 dark:text-gray-400/g,'').trim();
+  if (mode === 'split') {
+    bs.classList.add('bg-violet-600','text-white');
+    bu.classList.add('text-gray-600','dark:text-gray-400');
+  } else {
+    bu.classList.add('bg-violet-600','text-white');
+    bs.classList.add('text-gray-600','dark:text-gray-400');
+    renderUnified(editorL?.state.doc.toString()||'', editorR?.state.doc.toString()||'');
+  }
+  saveToStorage();
+};
+
+// ── outline toggle ────────────────────────────────────────────
+window.toggleOutline = function() {
+  outlineOpen = !outlineOpen;
+  const sidebar = document.getElementById('outline-sidebar');
+  const btn     = document.getElementById('btn-outline');
+  if (outlineOpen) {
+    sidebar.classList.remove('outline-closed');
+    btn.classList.add('bg-violet-600','text-white','border-violet-600');
+  } else {
+    sidebar.classList.add('outline-closed');
+    btn.classList.remove('bg-violet-600','text-white','border-violet-600');
+  }
+};
+
+// ── file loading ─────────────────────────────────────────────
+function readFile(file) {
+  return new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result); r.readAsText(file); });
+}
+
+async function loadLeft(file) {
+  const text = await readFile(file);
+  document.getElementById('lbl-left').textContent = file.name;
+  editorL.dispatch({ changes: { from: 0, to: editorL.state.doc.length, insert: text } });
+}
+async function loadRight(file) {
+  const text = await readFile(file);
+  document.getElementById('lbl-right').textContent = file.name;
+  editorR.dispatch({ changes: { from: 0, to: editorR.state.doc.length, insert: text } });
+}
+
+const isText = f => f.type.startsWith('text') || /\.(js|ts|jsx|tsx|json|py|md|html?|css|sql|xml|txt|ya?ml|sh|rb|go|rs|c|cpp|h|java|php|swift)$/i.test(f.name);
+
+document.addEventListener('dragover',  e => { e.preventDefault(); document.getElementById('empty-state').classList.add('drop-active'); });
+document.addEventListener('dragleave', e => { document.getElementById('empty-state').classList.remove('drop-active'); });
+document.addEventListener('drop', async e => {
+  e.preventDefault();
+  document.getElementById('empty-state').classList.remove('drop-active');
+  const files = Array.from(e.dataTransfer.files).filter(isText);
+  if (files[0]) await loadLeft(files[0]);
+  if (files[1]) await loadRight(files[1]);
+});
+
+document.getElementById('btn-open-left').onclick  = () => document.getElementById('file-input-left').click();
+document.getElementById('btn-open-right').onclick = () => document.getElementById('file-input-right').click();
+document.getElementById('file-input-left').onchange  = e => e.target.files[0] && loadLeft(e.target.files[0]);
+document.getElementById('file-input-right').onchange = e => e.target.files[0] && loadRight(e.target.files[0]);
+
+// ── options ──────────────────────────────────────────────────
+document.getElementById('opt-ws').onchange = e => { opts.ignoreWS = e.target.checked; scheduleDiff(); };
+document.getElementById('opt-ci').onchange = e => { opts.caseInsensitive = e.target.checked; scheduleDiff(); };
+document.getElementById('lang-select').onchange = e => {
+  currentLang = e.target.value;
+  const lname = document.getElementById('lbl-left').textContent;
+  const rname = document.getElementById('lbl-right').textContent;
+  editorL.dispatch({ effects: langL.reconfigure(langExt(lname)) });
+  editorR.dispatch({ effects: langR.reconfigure(langExt(rname)) });
+};
+
+// ── export ───────────────────────────────────────────────────
+document.getElementById('btn-copy-patch').onclick = () => {
+  const dmp = new diff_match_patch();
+  const patches = dmp.patch_make(editorL.state.doc.toString(), editorR.state.doc.toString());
+  navigator.clipboard.writeText(dmp.patch_toText(patches));
+  showToast('Patch copied!');
+  document.getElementById('dd-export-menu').classList.add('hidden');
+};
+document.getElementById('btn-save-html').onclick = () => {
+  const e = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  const blob = new Blob([`<!doctype html><html><head><meta charset="UTF-8"><title>Diff Report</title>
+<style>body{display:flex;gap:1rem;padding:1rem;font-family:monospace;font-size:12px}pre{flex:1;border:1px solid #ddd;padding:1rem;border-radius:6px;overflow:auto}</style>
+</head><body><pre><b>Original</b>\n\n${e(editorL.state.doc.toString())}</pre><pre><b>Modified</b>\n\n${e(editorR.state.doc.toString())}</pre></body></html>`], { type:'text/html' });
+  const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download:'diff-report.html' });
+  a.click(); URL.revokeObjectURL(a.href);
+  document.getElementById('dd-export-menu').classList.add('hidden');
+};
+
+// ── clear ────────────────────────────────────────────────────
+document.getElementById('btn-clear').onclick = () => {
+  if (!confirm('Clear workspace? This erases all content and saved data.')) return;
+  localStorage.removeItem(STORAGE);
+  document.getElementById('lbl-left').textContent = '';
+  document.getElementById('lbl-right').textContent = '';
+  createEditors('', '');
+  document.getElementById('diff-stats').classList.add('hidden');
+  document.getElementById('diff-stats').classList.remove('flex');
+  showToast('Workspace cleared.');
+};
+
+// ── dropdowns ────────────────────────────────────────────────
+[['btn-export','dd-export-menu'], ['btn-options','dd-options-menu']].forEach(([btnId, menuId]) => {
+  const btn  = document.getElementById(btnId);
+  const menu = document.getElementById(menuId);
+  btn.addEventListener('click', e => { e.stopPropagation(); menu.classList.toggle('hidden'); });
+  document.addEventListener('click', () => menu.classList.add('hidden'));
+});
+
+// ── mobile ───────────────────────────────────────────────────
+document.getElementById('btn-mobile-menu').onclick = () => document.body.classList.toggle('mobile-sidebar-active');
+document.getElementById('btn-close-outline').onclick = () => document.body.classList.remove('mobile-sidebar-active');
+
+// ── toast ────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.opacity = '1';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.style.opacity = '0', 2500);
+}
+
+// ── localStorage ─────────────────────────────────────────────
+function saveToStorage() {
+  if (!editorL) return;
+  try {
+    localStorage.setItem(STORAGE, JSON.stringify({
+      left: editorL.state.doc.toString(),
+      right: editorR.state.doc.toString(),
+      leftName:  document.getElementById('lbl-left').textContent,
+      rightName: document.getElementById('lbl-right').textContent,
+      viewMode, opts, lang: currentLang,
+    }));
+  } catch (_) {}
+}
+
+function loadFromStorage() {
+  try {
+    const s = JSON.parse(localStorage.getItem(STORAGE));
+    if (!s) return false;
+    if (s.opts) opts = { ...opts, ...s.opts };
+    if (s.lang) { currentLang = s.lang; document.getElementById('lang-select').value = s.lang; }
+    if (s.leftName)  document.getElementById('lbl-left').textContent  = s.leftName;
+    if (s.rightName) document.getElementById('lbl-right').textContent = s.rightName;
+    document.getElementById('opt-ws').checked = opts.ignoreWS;
+    document.getElementById('opt-ci').checked = opts.caseInsensitive;
+    if (s.left || s.right) {
+      createEditors(s.left || '', s.right || '');
+      if (s.viewMode) setView(s.viewMode);
+      return true;
+    }
+  } catch (_) {}
+  return false;
+}
+
+// ── responsive ───────────────────────────────────────────────
+window.addEventListener('resize', () => {
+  if (window.innerWidth < 768 && viewMode === 'split') setView('unified');
+});
+
+// ── theme watch ──────────────────────────────────────────────
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+  editorL?.dispatch({ effects: themeL.reconfigure(theme()) });
+  editorR?.dispatch({ effects: themeR.reconfigure(theme()) });
+});
+
+// ── boot ─────────────────────────────────────────────────────
+(function boot() {
+  setView(viewMode);
+  // Mark outline btn active by default
+  document.getElementById('btn-outline').classList.add('bg-violet-600','text-white','border-violet-600');
+  if (!loadFromStorage()) createEditors('', '');
+})();
+</script>
+</body>
+</html>
