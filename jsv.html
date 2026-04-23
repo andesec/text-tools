@@ -464,6 +464,14 @@
 		let viewMode = "editor"; // 'editor' or 'tree'
 		let lineWrap = true;
 
+		let buildTreeTimer = null;
+		function debouncedBuildTree(text) {
+			if (buildTreeTimer) clearTimeout(buildTreeTimer);
+			buildTreeTimer = setTimeout(() => {
+				buildTree(text);
+			}, 300);
+		}
+
 		// Dropdown handling
 		const instanceDropdown = document.getElementById('instance-menu-dropdown');
 		const instanceBtn = document.getElementById('instance-menu-btn');
@@ -522,6 +530,13 @@
 				EditorView.theme({
 					"&": { height: "100%", fontSize: "13px" },
 					".cm-scroller": { overflow: "auto" }
+				}),
+				EditorView.updateListener.of((update) => {
+					if (update.docChanged) {
+						const content = update.state.doc.toString();
+						instances[currentInstance].content = content;
+						debouncedBuildTree(content);
+					}
 				})
 			];
 
@@ -558,7 +573,6 @@
 			}
 			if (editor) {
 				const currentDoc = editor.state.doc.toString();
-				instances[currentInstance].content = currentDoc;
 				initEditor(currentDoc, currentFileName?.endsWith(".json") ? "json" : "javascript");
 			}
 		};
@@ -568,7 +582,6 @@
 
 			// Save current instance content
 			if (editor) {
-				instances[currentInstance].content = editor.state.doc.toString();
 				instances[currentInstance].fileName = currentFileName;
 			}
 
@@ -825,8 +838,6 @@
 				editor.dispatch({
 					changes: { from: 0, to: editor.state.doc.length, insert: formatted }
 				});
-				instances[currentInstance].content = formatted;
-				buildTree(formatted);
 			} catch (e) {
 				alert("Only valid JSON (or almost valid JSON) can be prettified.");
 			}
@@ -883,8 +894,7 @@
 				editor.dispatch({
 					changes: { from: 0, to: editor.state.doc.length, insert: result }
 				});
-				instances[currentInstance].content = result;
-				if (type === "cleanJSON") buildTree(result || editor.state.doc.toString());
+				// Removed manual buildTree call as updateListener handles it
 			} catch (e) {
 				alert("Transformation failed: " + e.message);
 			}
@@ -910,8 +920,7 @@
 				toggleText.textContent = "Editor";
 				toggleViewBtn.classList.add("bg-blue-600", "text-white", "border-blue-600");
 				toggleViewBtn.classList.remove("bg-white", "dark:bg-gray-900", "text-gray-700", "dark:text-gray-300");
-				const contentToParse = sourceJSON !== null ? sourceJSON : editor.state.doc.toString();
-				buildTree(contentToParse);
+				// tree view is now kept in sync by updateListener
 			} else {
 				viewMode = "editor";
 				editorContainer.classList.remove("hidden");
@@ -946,9 +955,7 @@
 
 		window.createNewScratchpad = function () {
 			// Save current content before creating new
-			if (editor) {
-				instances[currentInstance].content = editor.state.doc.toString();
-			}
+			// State is automatically saved via updateListener
 			currentFileName = "scratchpad.json";
 			instances[currentInstance].fileName = "scratchpad.json";
 			instances[currentInstance].content = "";
