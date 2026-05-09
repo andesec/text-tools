@@ -194,13 +194,13 @@
 
 		@media (prefers-color-scheme: dark) {
 			body {
-				background-color: #020617;
-				color: #f1f5f9;
+				background-color: rgb(2, 6, 23);
+				color: rgb(241, 245, 249);
 			}
 
 			.sidebar {
-				background-color: #0f172a;
-				border-color: #1e293b;
+				background-color: rgb(15, 23, 42);
+				border-color: rgb(30, 41, 59);
 			}
 
 			.prose {
@@ -327,36 +327,36 @@
 				<h1 class="text-sm font-bold uppercase tracking-tight sm:text-lg sm:normal-case">MD Explorer</h1>
 			</div>
 
-			<div class="flex items-center gap-2">
+			<div class="flex items-center gap-1.5 sm:gap-2">
 				<input type="file" id="file-input" multiple accept=".md,.markdown,text/markdown" class="hidden" />
 				<button id="open-btn"
-					class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all transform active:scale-95 flex items-center gap-2 shadow-sm hover:shadow-md">
+					class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all transform active:scale-95 flex items-center gap-2 shadow-sm hover:shadow-md">
 					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
 					</svg>
-					<span id="btn-text">Open</span>
+					<span class="hidden sm:inline" id="btn-text">Open</span>
 				</button>
 				<button id="paste-btn"
-					class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all transform active:scale-95 flex items-center gap-2 shadow-sm hover:shadow-md">
+					class="bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all transform active:scale-95 flex items-center gap-2 shadow-sm hover:shadow-md">
 					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
 					</svg>
-					<span>Paste</span>
+					<span class="hidden sm:inline">Paste</span>
 				</button>
 				<button id="download-btn"
-					class="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all transform active:scale-95 flex items-center gap-2 shadow-sm hover:shadow-md">
+					class="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all transform active:scale-95 flex items-center gap-2 shadow-sm hover:shadow-md">
 					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
 							d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
 					</svg>
-					<span>Save</span>
+					<span class="hidden sm:inline">Save</span>
 				</button>
 			</div>
 		</div>
 
 		<!-- Bottom Row: Secondary Toolbar (Responsive) -->
 		<div
-			class="px-4 py-2 border-t border-gray-100 dark:border-gray-900 bg-gray-50/50 dark:bg-slate-900/50 flex items-center justify-between sm:justify-end gap-3 overflow-x-auto no-scrollbar">
+			class="px-4 py-2 border-t border-gray-100 dark:border-gray-900 bg-gray-50 dark:bg-slate-900 flex items-center justify-between sm:justify-end gap-3 overflow-x-auto no-scrollbar">
 			<div
 				class="flex items-center border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden bg-white dark:bg-gray-900 shrink-0">
 				<button onclick="changeZoom(-0.1)"
@@ -424,7 +424,7 @@
 		</aside>
 
 		<main class="flex-1 overflow-hidden bg-slate-50 dark:bg-black relative">
-			<div id="editor-container" class="w-full h-full bg-white dark:bg-gray-950 px-4 py-8">
+			<div id="editor-container" class="w-full h-full bg-white dark:bg-slate-950 px-2 sm:px-4 py-2 sm:py-8">
 				<div id="editor" class="h-full border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
 				</div>
 			</div>

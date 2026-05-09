@@ -14,27 +14,27 @@
   <style>
     /* ── Diff colour tokens ───────────────────────────────── */
     :root {
-      --diff-add-line:  #e6f4ec;
-      --diff-add-char:  #9ddbb4;
-      --diff-del-line:  #fce8e8;
-      --diff-del-char:  #f5a0a0;
-      --diff-move-from: #f0eaff;
-      --diff-move-to:   #e8f0ff;
-      --diff-move-char: #c4b5fd;
-      --diff-add-gutter:#22c55e;
-      --diff-del-gutter:#ef4444;
+      --diff-add-line:  rgb(230, 244, 236);
+      --diff-add-char:  rgb(157, 219, 180);
+      --diff-del-line:  rgb(252, 232, 232);
+      --diff-del-char:  rgb(245, 160, 160);
+      --diff-move-from: rgb(240, 234, 255);
+      --diff-move-to:   rgb(232, 240, 255);
+      --diff-move-char: rgb(196, 181, 253);
+      --diff-add-gutter:rgb(34, 197, 94);
+      --diff-del-gutter:rgb(239, 68, 104);
     }
     @media (prefers-color-scheme: dark) {
       :root {
-        --diff-add-line:  #132a1e;
-        --diff-add-char:  #1a5230;
-        --diff-del-line:  #2a1313;
-        --diff-del-char:  #521a1a;
-        --diff-move-from: #1c1035;
-        --diff-move-to:   #0d1535;
-        --diff-move-char: #6d28d9;
-        --diff-add-gutter:#4ade80;
-        --diff-del-gutter:#f87171;
+        --diff-add-line:  rgb(19, 42, 30);
+        --diff-add-char:  rgb(26, 82, 48);
+        --diff-del-line:  rgb(42, 19, 19);
+        --diff-del-char:  rgb(82, 26, 26);
+        --diff-move-from: rgb(28, 16, 53);
+        --diff-move-to:   rgb(13, 21, 53);
+        --diff-move-char: rgb(109, 40, 217);
+        --diff-add-gutter:rgb(74, 222, 128);
+        --diff-del-gutter:rgb(248, 113, 113);
       }
     }
 
@@ -80,10 +80,10 @@
     .stat-add { background: #dcfce7; color: #166534; }
     .stat-del { background: #fee2e2; color: #991b1b; }
     @media (prefers-color-scheme: dark) {
-      .stat-add { background: #14532d; color: #86efac; }
-      .stat-del { background: #450a0a; color: #fca5a5; }
-      body { background: #020617; color: #f1f5f9; }
-      .sidebar { background: #0f172a; border-color: #1e293b; }
+      .stat-add { background: rgb(20, 83, 45); color: rgb(134, 239, 172); }
+      .stat-del { background: rgb(69, 10, 10); color: rgb(252, 165, 165); }
+      body { background: rgb(2, 6, 23); color: rgb(241, 245, 249); }
+      .sidebar { background: rgb(15, 23, 42); border-color: rgb(30, 41, 59); }
     }
   </style>
 </head>
@@ -131,7 +131,7 @@
   </div>
 
   <!-- Row 2: secondary toolbar -->
-  <div class="px-4 py-2 border-t border-gray-100 dark:border-gray-900 bg-gray-50/50 dark:bg-slate-900/50 flex items-center gap-3 flex-wrap">
+  <div class="px-4 py-2 border-t border-gray-100 dark:border-gray-900 bg-gray-50 dark:bg-slate-900 flex items-center gap-3 flex-wrap">
 
     <!-- View toggle -->
     <div class="flex items-center rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden shadow-sm shrink-0">
@@ -220,10 +220,10 @@
   <div class="flex-1 flex flex-col overflow-hidden min-w-0">
 
     <!-- Split view -->
-    <div id="view-split" class="flex-1 flex overflow-hidden">
+    <div id="view-split" class="flex-1 flex flex-col md:flex-row overflow-hidden">
 
       <!-- Left pane (Original) -->
-      <div class="flex-1 flex flex-col overflow-hidden min-w-0 border-r border-gray-200 dark:border-gray-800">
+      <div class="flex-1 flex flex-col overflow-hidden min-w-0 border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-800">
         <div class="flex items-center gap-2 px-3 py-1.5 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-slate-950 shrink-0">
           <span class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Original</span>
           <span id="lbl-left" class="text-[10px] text-gray-400 truncate"></span>

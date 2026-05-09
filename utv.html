@@ -24,10 +24,10 @@
     </script>
     <style>
         :root {
-            --primary: #6366f1;
-            --primary-hover: #4f46e5;
-            --bg-dark: #020617;
-            --panel-dark: rgba(30, 41, 59, 0.4);
+            --primary: rgb(99, 102, 241);
+            --primary-hover: rgb(79, 70, 229);
+            --bg-dark: rgb(2, 6, 23);
+            --panel-dark: rgb(30, 41, 59);
         }
 
         body {
@@ -39,14 +39,14 @@
 
         .glass {
             background: var(--panel-dark);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgb(51, 65, 85);
             border-radius: 1.5rem;
         }
 
         textarea {
-            background: rgba(15, 23, 42, 0.6) !important;
-            border: 1px solid rgba(255, 255, 255, 0.05) !important;
-            color: #e2e8f0 !important;
+            background: rgb(15, 23, 42) !important;
+            border: 1px solid rgb(51, 65, 85) !important;
+            color: rgb(226, 232, 240) !important;
             resize: none;
             transition: all 0.2s ease;
         }
@@ -89,7 +89,7 @@
     </style>
 </head>
 
-<body class="p-4 md:p-8">
+<body class="p-3 md:p-8">
     <div class="max-w-6xl mx-auto space-y-8">
         <!-- Header -->
         <header class="flex items-center justify-between">
@@ -110,7 +110,7 @@
                 </div>
                 <h1 class="text-2xl font-bold tracking-tight">UTV Utility</h1>
             </div>
-            <div class="text-slate-500 text-sm font-medium">URI & Base64 Transformer</div>
+            <div class="hidden sm:block text-slate-500 text-sm font-medium">URI & Base64 Transformer</div>
         </header>
 
         <!-- Main Content -->

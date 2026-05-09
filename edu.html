@@ -23,12 +23,11 @@
 
         header {
             padding: 1rem 2rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgb(51, 65, 85);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            background: rgba(15, 23, 42, 0.5);
-            backdrop-filter: blur(10px);
+            background: rgb(15, 23, 42);
         }
 
         .header-left {
@@ -67,12 +66,11 @@
         }
 
         .glass-panel {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgb(30, 41, 59);
+            border: 1px solid rgb(51, 65, 85);
             border-radius: 16px;
             padding: 2rem;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 10px 30px rgb(0, 0, 0);
             display: flex;
             flex-direction: column;
             gap: 1.5rem;
@@ -103,11 +101,11 @@
         input[type="password"],
         textarea,
         select {
-            background: rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgb(15, 23, 42);
+            border: 1px solid rgb(51, 65, 85);
             border-radius: 8px;
             padding: 0.75rem 1rem;
-            color: #fff;
+            color: rgb(255, 255, 255);
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.9rem;
             transition: border-color 0.2s, box-shadow 0.2s;
@@ -119,8 +117,8 @@
         textarea:focus,
         select:focus {
             outline: none;
-            border-color: #4fc3f7;
-            box-shadow: 0 0 0 2px rgba(79, 195, 247, 0.2);
+            border-color: rgb(79, 195, 247);
+            box-shadow: 0 0 0 2px rgb(79, 195, 247);
         }
 
         textarea {
@@ -153,12 +151,12 @@
         }
 
         .btn-secondary {
-            background: rgba(255, 255, 255, 0.1);
-            color: #fff;
+            background: rgb(51, 65, 85);
+            color: rgb(255, 255, 255);
         }
 
         .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.15);
+            background: rgb(71, 85, 105);
         }
 
         .actions {
@@ -178,16 +176,16 @@
 
         .status.error {
             display: block;
-            background: rgba(239, 68, 68, 0.2);
-            color: #fca5a5;
-            border: 1px solid rgba(239, 68, 68, 0.3);
+            background: rgb(69, 10, 10);
+            color: rgb(252, 165, 165);
+            border: 1px solid rgb(127, 29, 29);
         }
 
         .status.success {
             display: block;
-            background: rgba(34, 197, 94, 0.2);
-            color: #86efac;
-            border: 1px solid rgba(34, 197, 94, 0.3);
+            background: rgb(20, 83, 45);
+            color: rgb(134, 239, 172);
+            border: 1px solid rgb(21, 128, 61);
         }
 
         .result-section {
@@ -244,6 +242,17 @@
             gap: 0.5rem;
         }
 
+        .flex-between {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .btn-compact {
+            padding: 0.25rem 0.75rem;
+            font-size: 0.8rem;
+        }
+
         @media (max-width: 768px) {
             .glass-panel {
                 padding: 1.25rem;
@@ -289,13 +298,13 @@
 
     <div class="container">
         <div class="glass-panel">
-            <div class="flex-row" style="align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
-                <h2 style="font-size: 1.25rem; font-weight: 600;">AES-GCM Decryption</h2>
+            <div class="flex-row flex-between mb-2">
+                <h2 class="text-xl font-semibold">AES-GCM Decryption</h2>
             </div>
             <div class="form-group">
-                <div class="flex-row" style="align-items: center; justify-content: space-between;">
+                <div class="flex-row flex-between">
                     <label for="payload">Encrypted Payload (Base64)</label>
-                    <button class="btn btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.8rem;" onclick="pasteText('payload')">Paste</button>
+                    <button class="btn btn-secondary btn-compact" onclick="pasteText('payload')">Paste</button>
                 </div>
                 <textarea id="payload" placeholder="e.g. U2FsdGVkX1+..."></textarea>
                 <label class="checkbox-label">
@@ -368,14 +377,14 @@
             </div>
         </div>
 
-        <div class="glass-panel" style="margin-top: 2rem;">
-            <div class="flex-row" style="align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
-                <h2 style="font-size: 1.25rem; font-weight: 600;">Hashing Utility</h2>
+        <div class="glass-panel mt-8">
+            <div class="flex-row flex-between mb-2">
+                <h2 class="text-xl font-semibold">Hashing Utility</h2>
             </div>
             <div class="form-group">
-                <div class="flex-row" style="align-items: center; justify-content: space-between;">
+                <div class="flex-row flex-between">
                     <label for="hash-input">Input Text</label>
-                    <button class="btn btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.8rem;" onclick="pasteText('hash-input')">Paste</button>
+                    <button class="btn btn-secondary btn-compact" onclick="pasteText('hash-input')">Paste</button>
                 </div>
                 <textarea id="hash-input" placeholder="Enter text to hash..."></textarea>
             </div>
