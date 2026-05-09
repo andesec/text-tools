@@ -119,8 +119,12 @@
             <section class="glass p-6 space-y-4">
                 <div class="flex items-center justify-between">
                     <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400">Input</h2>
-                    <button onclick="clearText('input')"
-                        class="text-xs text-slate-500 hover:text-red-400 transition-colors">Clear</button>
+                    <div class="flex gap-4">
+                        <button onclick="clearText('input')"
+                            class="text-xs text-slate-500 hover:text-red-400 transition-colors">Clear</button>
+                        <button onclick="pasteText('input')"
+                            class="text-xs text-indigo-400 hover:text-indigo-300 transition-colors font-medium">Paste</button>
+                    </div>
                 </div>
                 <textarea id="input" class="w-full h-80 p-4 rounded-xl font-mono text-sm leading-relaxed"
                     placeholder="Paste your text here..."></textarea>
@@ -231,6 +235,20 @@
             navigator.clipboard.writeText(outputEl.value).then(() => {
                 showToast('Copied to clipboard!');
             });
+        }
+
+        async function pasteText(target) {
+            try {
+                const text = await navigator.clipboard.readText();
+                if (text !== undefined && text !== null) {
+                    const el = document.getElementById(target);
+                    el.value = text;
+                    showToast('Pasted from clipboard!');
+                }
+            } catch (err) {
+                console.error('Failed to read clipboard: ', err);
+                showToast('Clipboard permission denied');
+            }
         }
 
         function showToast(msg) {

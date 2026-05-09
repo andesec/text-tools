@@ -293,7 +293,10 @@
                 <h2 style="font-size: 1.25rem; font-weight: 600;">AES-GCM Decryption</h2>
             </div>
             <div class="form-group">
-                <label for="payload">Encrypted Payload (Base64)</label>
+                <div class="flex-row" style="align-items: center; justify-content: space-between;">
+                    <label for="payload">Encrypted Payload (Base64)</label>
+                    <button class="btn btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.8rem;" onclick="pasteText('payload')">Paste</button>
+                </div>
                 <textarea id="payload" placeholder="e.g. U2FsdGVkX1+..."></textarea>
                 <label class="checkbox-label">
                     <input type="checkbox" id="iv-prepended" checked>
@@ -370,7 +373,10 @@
                 <h2 style="font-size: 1.25rem; font-weight: 600;">Hashing Utility</h2>
             </div>
             <div class="form-group">
-                <label for="hash-input">Input Text</label>
+                <div class="flex-row" style="align-items: center; justify-content: space-between;">
+                    <label for="hash-input">Input Text</label>
+                    <button class="btn btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.8rem;" onclick="pasteText('hash-input')">Paste</button>
+                </div>
                 <textarea id="hash-input" placeholder="Enter text to hash..."></textarea>
             </div>
             <div class="form-row">
@@ -652,6 +658,19 @@
             setTimeout(() => { hashCopyBtn.innerText = originalText; }, 2000);
         });
 
+        async function pasteText(target) {
+            try {
+                const text = await navigator.clipboard.readText();
+                if (text !== undefined && text !== null) {
+                    const el = document.getElementById(target);
+                    el.value = text;
+                    showStatus('Pasted from clipboard!', 'success');
+                }
+            } catch (err) {
+                console.error('Failed to read clipboard: ', err);
+                showStatus('Clipboard permission denied', 'error');
+            }
+        }
     </script>
 </body>
 

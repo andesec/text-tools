@@ -336,6 +336,13 @@
 					</svg>
 					<span id="btn-text">Open</span>
 				</button>
+				<button id="paste-btn"
+					class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all transform active:scale-95 flex items-center gap-2 shadow-sm hover:shadow-md">
+					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+					</svg>
+					<span>Paste</span>
+				</button>
 				<button id="download-btn"
 					class="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all transform active:scale-95 flex items-center gap-2 shadow-sm hover:shadow-md">
 					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -439,6 +446,7 @@
 		const { EditorView, basicSetup, markdown, oneDark } = window.CM_MD;
 
 		const openBtn = document.getElementById("open-btn");
+		const pasteBtn = document.getElementById("paste-btn");
 		const fileInput = document.getElementById("file-input");
 		const fileListContainer = document.getElementById("file-list");
 		const contentArea = document.getElementById("content");
@@ -754,6 +762,33 @@
 				fileInput.click();
 			}
 		};
+
+		if (pasteBtn) {
+			pasteBtn.onclick = async () => {
+				try {
+					const text = await navigator.clipboard.readText();
+					if (text !== undefined && text !== null) {
+						if (!editor) {
+							initEditor(text);
+						} else {
+							const transaction = editor.state.update({
+								changes: { from: 0, to: editor.state.doc.length, insert: text },
+								selection: { anchor: text.length }
+							});
+							editor.dispatch(transaction);
+						}
+						
+						if (!editor.hasFocus) {
+							setTimeout(() => editor.focus(), 10);
+						}
+						updatePreview();
+					}
+				} catch (err) {
+					console.error('Failed to read clipboard contents: ', err);
+					alert("Clipboard permission denied or unsupported");
+				}
+			};
+		}
 
 		fileInput.onchange = (e) => handleFileSelect(e.target.files);
 
