@@ -32,6 +32,7 @@
 	<script src="vendor/prism-bash.min.js"></script>
 	<script src="vendor/prism-javascript.min.js"></script>
 	<script src="vendor/prism-python.min.js"></script>
+	<link rel="stylesheet" href="mdv-comments.css">
 
 	<style>
 		:root {
@@ -343,14 +344,40 @@
 					</svg>
 					<span class="hidden sm:inline">Paste</span>
 				</button>
-				<button id="download-btn"
-					class="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all transform active:scale-95 flex items-center gap-2 shadow-sm hover:shadow-md">
-					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-							d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-					</svg>
-					<span class="hidden sm:inline">Save</span>
-				</button>
+				<div class="save-dropdown-wrapper" id="save-dropdown-wrapper">
+					<button id="save-main-btn"
+						class="save-main-btn bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-2.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold transition-all transform active:scale-95 flex items-center gap-2 shadow-sm hover:shadow-md">
+						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+						</svg>
+						<span class="hidden sm:inline">Save</span>
+					</button>
+					<button id="save-chevron-btn"
+						class="save-chevron-btn bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white py-1.5 sm:py-2 text-xs sm:text-sm transition-all transform active:scale-95 shadow-sm hover:shadow-md">
+						<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+						</svg>
+					</button>
+					<div id="save-dropdown-menu" class="save-dropdown-menu">
+						<button class="save-dropdown-item" onclick="saveMarkdownOnly()">
+							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+							Save Markdown
+						</button>
+						<button class="save-dropdown-item" onclick="saveMarkdownWithComments()">
+							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+							Save MD + Comments
+						</button>
+						<div class="save-dropdown-divider"></div>
+						<button class="save-dropdown-item" onclick="exportComments(false)">
+							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+							Export Comments
+						</button>
+						<button class="save-dropdown-item" onclick="exportComments(true)">
+							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path></svg>
+							Export with Quotes
+						</button>
+					</div>
+				</div>
 			</div>
 		</div>
 
@@ -434,6 +461,28 @@
 		</main>
 	</div>
 
+	<!-- Comment System UI -->
+	<button id="comment-bubble" class="comment-bubble-btn">💬 Comment</button>
+
+	<div id="comment-panel" class="comment-panel">
+		<div id="comment-panel-quote" class="comment-panel-quote"></div>
+		<textarea id="comment-panel-input" class="comment-panel-textarea" placeholder="Write your comment…"></textarea>
+		<div class="comment-panel-actions">
+			<button id="comment-cancel-btn"
+				class="px-4 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all">Cancel</button>
+			<button id="comment-save-btn"
+				class="px-4 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white transition-all shadow-sm">Save Comment</button>
+		</div>
+	</div>
+
+	<div id="comment-tooltip" class="comment-tooltip">
+		<button id="comment-tooltip-close" class="comment-tooltip-delete">×</button>
+		<div id="comment-tooltip-text" class="comment-tooltip-text"></div>
+		<div id="comment-tooltip-meta" class="comment-tooltip-meta"></div>
+	</div>
+
+	<div id="comment-toast" class="comment-toast"></div>
+
 	<button id="mobile-menu"
 		class="fixed bottom-6 right-6 md:hidden bg-blue-600 text-white p-4 rounded-full shadow-2xl z-50">
 		<svg id="menu-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -460,13 +509,11 @@
 		const editControls = document.getElementById("edit-controls");
 		const toggleEditBtn = document.getElementById("toggle-edit-btn");
 		const toggleText = document.getElementById("toggle-text");
-		const downloadBtn = document.getElementById("download-btn");
-
 		let loadedFiles = new Map();
 		let currentZoom = 1.0;
-		let isEditing = true;
-		let currentFileName = "Untitled.md";
-		let editor = null;
+		var isEditing = true;
+		var currentFileName = "Untitled.md";
+		var editor = null;
 		let lineWrap = true;
 		const isFileSystemApiSupported = "showDirectoryPicker" in window;
 
@@ -509,6 +556,7 @@
 				contentArea.innerHTML = DOMPurify.sanitize(marked.parse(text));
 				updateOutline();
 				Prism.highlightAllUnder(contentArea);
+				if (window.MdvComments) MdvComments.applyHighlights();
 			}
 		}
 
@@ -677,13 +725,18 @@
 
 		async function displayFile(name, element) {
 			const file = loadedFiles.get(name);
-			const text = await (file.text ? file.text() : readFileAsText(file));
+			let text = await (file.text ? file.text() : readFileAsText(file));
 			currentFileName = name;
+
+			// Parse embedded comments if present
+			if (window.MdvComments) {
+				const parsed = MdvComments.parseFromMarkdown(text);
+				text = parsed.markdown;
+				MdvComments.setComments(parsed.comments);
+			}
 
 			document.querySelectorAll(".file-item").forEach((el) => el.classList.remove("active"));
 			if (element) element.classList.add("active");
-
-			// contentArea.innerHTML = DOMPurify.sanitize(marked.parse(text));
 
 			// Initialize editor with current text
 			initEditor(text);
@@ -695,7 +748,6 @@
 			}
 
 			if (window.innerWidth < 768 && document.body.classList.contains("mobile-sidebar-active")) toggleSidebar();
-			// document.querySelector("main").scrollTop = 0;
 		}
 
 		function updateViewMode() {
@@ -722,17 +774,7 @@
 
 		window.addEventListener('resize', updateViewMode);
 
-		downloadBtn.onclick = () => {
-			if (!editor || !currentFileName) return;
-			const text = editor.state.doc.toString();
-			const blob = new Blob([text], { type: "text/markdown" });
-			const url = URL.createObjectURL(blob);
-			const a = document.createElement("a");
-			a.href = url;
-			a.download = currentFileName;
-			a.click();
-			URL.revokeObjectURL(url);
-		};
+
 
 		function readFileAsText(file) {
 			return new Promise((resolve) => {
@@ -766,8 +808,14 @@
 		if (pasteBtn) {
 			pasteBtn.onclick = async () => {
 				try {
-					const text = await navigator.clipboard.readText();
+					let text = await navigator.clipboard.readText();
 					if (text !== undefined && text !== null) {
+						// Parse embedded comments if present
+						if (window.MdvComments) {
+							const parsed = MdvComments.parseFromMarkdown(text);
+							text = parsed.markdown;
+							MdvComments.setComments(parsed.comments);
+						}
 						if (!editor) {
 							initEditor(text);
 						} else {
@@ -847,6 +895,8 @@
 		initEditor("");
 		updateViewMode();
 	</script>
+	<script src="mdv-comments.js"></script>
+	<script>MdvComments.init();</script>
 </body>
 
 </html>
