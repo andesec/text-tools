@@ -321,6 +321,47 @@
 		toast("Comments exported");
 	};
 
+	async function copyToClipboard(text, successMsg) {
+		try {
+			await navigator.clipboard.writeText(text);
+			toast(successMsg || "Copied to clipboard");
+		} catch (err) {
+			console.error("Failed to copy:", err);
+			toast("Copy failed");
+		}
+		closeSaveDropdown();
+	}
+
+	window.copyMarkdownOnly = function () {
+		if (!window.editor) return;
+		copyToClipboard(window.editor.state.doc.toString(), "Markdown copied");
+	};
+
+	window.copyMarkdownWithComments = function () {
+		if (!window.editor) return;
+		const md = window.editor.state.doc.toString();
+		const output = serializeComments(md);
+		copyToClipboard(output, "Markdown + Comments copied");
+	};
+
+	window.copyCommentsToClipboard = function (withQuotes) {
+		if (!comments.length) {
+			toast("No comments to copy");
+			closeSaveDropdown();
+			return;
+		}
+		let output = "# Comments — " + (window.currentFileName || "Untitled") + "\n\n";
+		comments.forEach((c, i) => {
+			output += "---\n";
+			output += "### Comment " + (i + 1) + "\n";
+			if (withQuotes) {
+				output += "> \"" + c.quote + "\"\n\n";
+			}
+			output += c.text + "\n\n";
+		});
+		copyToClipboard(output.trim(), "Comments copied");
+	};
+
 	// ── Save Dropdown ──────────────────────────────
 	function setupSaveDropdown() {
 		const chevron = document.getElementById("save-chevron-btn");
