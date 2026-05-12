@@ -33,6 +33,7 @@
 	<script src="vendor/prism-javascript.min.js"></script>
 	<script src="vendor/prism-python.min.js"></script>
 	<link rel="stylesheet" href="mdv-comments.css">
+	<link rel="stylesheet" href="theme.css">
 
 	<style>
 		:root {
@@ -45,16 +46,14 @@
 			}
 		}
 
-		/* Robust Typography System */
 		.prose {
 			max-width: none;
-			color: #374151;
+			color: var(--text-primary) !important;
 			font-size: var(--reader-font-size);
 			line-height: 1.7;
 			word-wrap: break-word;
 		}
 
-		/* Spacing for block elements */
 		.prose p,
 		.prose ul,
 		.prose ol,
@@ -65,35 +64,33 @@
 			margin-bottom: 1.25em;
 		}
 
-		/* Headings */
 		.prose h1 {
-			font-size: 2.5em;
+			font-size: clamp(1.5rem, 4vw, 2.5em);
 			line-height: 1.2;
 			margin-top: 0;
 			margin-bottom: 0.8em;
-			border-bottom: 2px solid #e5e7eb;
+			border-bottom: 2px solid var(--border-default);
 			padding-bottom: 0.3em;
-			color: #111827;
+			color: var(--text-primary);
 		}
 
 		.prose h2 {
-			font-size: 1.8em;
+			font-size: clamp(1.25rem, 3vw, 1.8em);
 			line-height: 1.3;
 			margin-top: 2em;
 			margin-bottom: 1em;
-			border-bottom: 1px solid #f3f4f6;
+			border-bottom: 1px solid var(--border-subtle);
 			padding-bottom: 0.2em;
-			color: #1f2937;
+			color: var(--text-primary);
 		}
 
 		.prose h3 {
-			font-size: 1.4em;
+			font-size: clamp(1.1rem, 2vw, 1.4em);
 			margin-top: 1.6em;
 			margin-bottom: 0.6em;
-			color: #374151;
+			color: var(--text-secondary);
 		}
 
-		/* Lists */
 		.prose ul {
 			list-style-type: disc;
 			padding-left: 1.5em;
@@ -115,31 +112,29 @@
 			margin-bottom: 0.5em;
 		}
 
-		/* Blockquotes */
 		.prose blockquote {
-			border-left: 4px solid #e5e7eb;
+			border-left: 4px solid var(--border-default);
 			padding-left: 1.25em;
 			font-style: italic;
-			color: #6b7280;
+			color: var(--text-secondary);
 		}
 
 		/* Code Handling */
 		.prose :not(pre)>code {
-			background-color: #f3f4f6;
+			background-color: var(--code-inline-bg);
 			padding: 0.2em 0.4em;
 			border-radius: 0.25rem;
-			font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+			font-family: var(--font-mono);
 			font-size: 0.85em;
-			color: #ef4444;
-			/* Distinctive inline code color */
+			color: var(--code-inline-text);
 		}
 
 		.prose pre {
-			background-color: rgb(31, 41, 55) !important;
-			padding: 1.25rem !important;
-			border-radius: 0.75rem;
+			background-color: var(--code-bg) !important;
+			padding: 1rem !important;
+			border-radius: var(--radius-lg);
 			overflow-x: auto;
-			box-shadow: inset 0 2px 4px 0 rgb(0, 0, 0);
+			border: 1px solid var(--border-default);
 		}
 
 		.prose pre code {
@@ -148,8 +143,8 @@
 			border-radius: 0 !important;
 			font-size: 0.85em !important;
 			line-height: 1.5 !important;
-			color: #f9fafb !important;
-			font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+			color: var(--text-primary) !important;
+			font-family: var(--font-mono) !important;
 		}
 
 		/* Tables */
@@ -163,13 +158,13 @@
 		}
 
 		.prose th {
-			background-color: #f9fafb;
+			background-color: var(--bg-surface-hover);
 			text-align: left;
 		}
 
 		.prose th,
 		.prose td {
-			border: 1px solid #e5e7eb;
+			border: 1px solid var(--border-default);
 			padding: 0.75em;
 		}
 
@@ -179,9 +174,9 @@
 		.prose iframe {
 			max-width: 100%;
 			height: auto;
-			border-radius: 0.5rem;
+			border-radius: var(--radius-md);
 		}
-		
+
 		/* KaTeX Math Styling */
 		.katex-display {
 			margin: 1.5em 0 !important;
@@ -189,65 +184,66 @@
 			overflow-y: hidden;
 			padding: 0.5em 0;
 		}
+
 		.katex {
 			font-size: 1.1em;
 		}
 
 		@media (prefers-color-scheme: dark) {
 			body {
-				background-color: rgb(2, 6, 23);
-				color: rgb(241, 245, 249);
+				background-color: var(--bg-root);
+				color: var(--text-primary);
 			}
 
 			.sidebar {
-				background-color: rgb(15, 23, 42);
-				border-color: rgb(30, 41, 59);
+				background-color: var(--bg-surface);
+				border-color: var(--border-default);
 			}
 
 			.prose {
-				color: #cbd5e1;
+				color: var(--text-primary);
 			}
 
 			.prose h1 {
-				color: #f8fafc;
-				border-color: #1e293b;
+				color: var(--text-primary);
+				border-color: var(--border-default);
 			}
 
 			.prose h2 {
-				color: #f1f5f9;
-				border-color: #1e293b;
+				color: var(--text-primary);
+				border-color: var(--border-subtle);
 			}
 
 			.prose h3 {
-				color: #e2e8f0;
+				color: var(--text-secondary);
 			}
 
 			.prose :not(pre)>code {
-				background-color: #1e293b;
-				color: #fb7185;
+				background-color: var(--code-inline-bg);
+				color: var(--code-inline-text);
 			}
 
 			.prose blockquote {
-				border-color: #334155;
-				color: #94a3b8;
+				border-color: var(--border-default);
+				color: var(--text-secondary);
 			}
 
 			.prose th {
-				background-color: #1e293b;
+				background-color: var(--bg-surface-hover);
 			}
 
 			.prose th,
 			.prose td {
-				border-color: #334155;
+				border-color: var(--border-default);
 			}
 
 			.file-item:hover {
-				background-color: #1e293b;
+				background-color: var(--bg-surface-hover);
 			}
 		}
 
 		.file-item.active {
-			background-color: #2563eb !important;
+			background-color: var(--accent) !important;
 			color: white !important;
 		}
 
@@ -259,12 +255,11 @@
 			width: 100%;
 		}
 
-		/* Ensure editor fills container and scrolls correctly */
 		#editor-container {
 			min-height: 0;
 			display: flex;
 			flex-direction: column;
-			transition: all 0.3s ease;
+			transition: all var(--transition-slow);
 		}
 
 		#editor-container.hidden {
@@ -272,9 +267,8 @@
 		}
 
 		#content {
-			transition: all 0.3s ease;
+			transition: all var(--transition-slow);
 		}
-
 
 		#editor {
 			flex: 1;
@@ -298,7 +292,6 @@
 			scrollbar-width: none;
 		}
 
-		/* Transitions for smoother UX */
 		.transition-all {
 			transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 		}
@@ -306,19 +299,18 @@
 </head>
 
 <body class="h-screen flex flex-col overflow-hidden transition-colors duration-200">
-	<header class="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-slate-950 z-50 shadow-sm shrink-0">
-		<!-- Top Row: Logo and Primary Actions -->
-		<div class="px-4 py-3 flex items-center justify-between">
+	<header class="app-header z-50 shrink-0">
+		<div class="app-header-row">
 			<div class="flex items-center gap-2">
-				<a href="index.html"
-					class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 mr-1" title="Home">
+				<a href="index.html" class="btn-icon" title="Home">
 					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
 							d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
 						</path>
 					</svg>
 				</a>
-				<div class="bg-gradient-to-br from-blue-600 to-indigo-700 p-1.5 rounded-lg shadow-sm">
+				<div class="p-1.5 rounded-lg shadow-sm"
+					style="background: linear-gradient(to bottom right, #2563eb, #4338ca);">
 					<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
 							d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
@@ -331,67 +323,101 @@
 			<div class="flex items-center gap-1.5 sm:gap-2">
 				<input type="file" id="file-input" multiple accept=".md,.markdown,text/markdown" class="hidden" />
 				<button id="open-btn"
-					class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all transform active:scale-95 flex items-center gap-2 shadow-sm hover:shadow-md">
+					class="btn btn-gradient-blue btn-sm sm:px-4 sm:py-2 sm:text-sm shadow-sm hover:shadow-md transition-all transform active:scale-95">
 					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
 					</svg>
 					<span class="hidden sm:inline" id="btn-text">Open</span>
 				</button>
-				<button id="paste-btn"
-					class="bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all transform active:scale-95 flex items-center gap-2 shadow-sm hover:shadow-md">
+				<button id="paste-btn" class="btn btn-sm sm:px-4 sm:py-2 sm:text-sm">
 					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+							d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
+						</path>
 					</svg>
 					<span class="hidden sm:inline">Paste</span>
 				</button>
 				<div class="save-dropdown-wrapper" id="save-dropdown-wrapper">
 					<button id="save-main-btn"
-						class="save-main-btn bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-2.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold transition-all transform active:scale-95 flex items-center gap-2 shadow-sm hover:shadow-md">
+						class="save-main-btn btn btn-gradient-green btn-sm sm:px-4 sm:py-2 sm:text-sm shadow-sm hover:shadow-md transition-all transform active:scale-95">
 						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+								d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
 						</svg>
 						<span class="hidden sm:inline">Save</span>
 					</button>
 					<button id="save-chevron-btn"
-						class="save-chevron-btn bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white py-1.5 sm:py-2 text-xs sm:text-sm transition-all transform active:scale-95 shadow-sm hover:shadow-md">
+						class="save-chevron-btn btn btn-gradient-green btn-sm sm:py-2 sm:text-sm shadow-sm hover:shadow-md transition-all transform active:scale-95">
 						<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
+							</path>
 						</svg>
 					</button>
 					<div id="save-dropdown-menu" class="save-dropdown-menu">
 						<button class="save-dropdown-item" onclick="saveMarkdownOnly()">
-							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+									d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+							</svg>
 							Save Markdown
 						</button>
 						<button class="save-dropdown-item" onclick="saveMarkdownWithComments()">
-							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+									d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z">
+								</path>
+							</svg>
 							Save MD + Comments
 						</button>
 						<div class="save-dropdown-divider"></div>
 						<button class="save-dropdown-item" onclick="copyMarkdownOnly()">
-							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+									d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
+								</path>
+							</svg>
 							Copy Markdown
 						</button>
 						<button class="save-dropdown-item" onclick="copyMarkdownWithComments()">
-							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+									d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3">
+								</path>
+							</svg>
 							Copy MD + Comments
 						</button>
 						<div class="save-dropdown-divider"></div>
 						<button class="save-dropdown-item" onclick="exportComments(false)">
-							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+									d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+								</path>
+							</svg>
 							Export Comments
 						</button>
 						<button class="save-dropdown-item" onclick="exportComments(true)">
-							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path></svg>
+							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+									d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z">
+								</path>
+							</svg>
 							Export with Quotes
 						</button>
 						<div class="save-dropdown-divider"></div>
 						<button class="save-dropdown-item" onclick="copyCommentsToClipboard(false)">
-							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+									d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2">
+								</path>
+							</svg>
 							Copy Comments
 						</button>
 						<button class="save-dropdown-item" onclick="copyCommentsToClipboard(true)">
-							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path></svg>
+							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+									d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z">
+								</path>
+							</svg>
 							Copy with Quotes
 						</button>
 					</div>
@@ -400,26 +426,22 @@
 		</div>
 
 		<!-- Bottom Row: Secondary Toolbar (Responsive) -->
-		<div
-			class="px-4 py-2 border-t border-gray-100 dark:border-gray-900 bg-gray-50 dark:bg-slate-900 flex items-center justify-between sm:justify-end gap-3 overflow-x-auto no-scrollbar">
+		<div class="app-header-toolbar">
 			<div
-				class="flex items-center border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden bg-white dark:bg-gray-900 shrink-0">
+				class="flex items-center border border-[var(--border-default)] rounded-md overflow-hidden bg-[var(--bg-surface)] shrink-0">
 				<button onclick="changeZoom(-0.1)"
-					class="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transition-colors">−</button>
+					class="px-2 py-1 hover:bg-[var(--bg-surface-hover)] border-r border-[var(--border-default)] transition-colors">−</button>
 				<span id="zoom-level" class="px-2 text-[10px] font-mono min-w-[2.5rem] text-center">100%</span>
 				<button onclick="changeZoom(0.1)"
-					class="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 border-l border-gray-200 dark:border-gray-700 transition-colors">+</button>
+					class="px-2 py-1 hover:bg-[var(--bg-surface-hover)] border-l border-[var(--border-default)] transition-colors">+</button>
 				<button onclick="toggleWrap()" id="wrap-toggle-btn" title="Toggle Line Wrap"
-					class="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 border-l border-gray-200 dark:border-gray-700 transition-colors text-[10px] font-bold">W</button>
+					class="px-2 py-1 hover:bg-[var(--bg-surface-hover)] border-l border-[var(--border-default)] transition-colors text-[10px] font-bold">W</button>
 			</div>
 
 			<div id="edit-controls" class="flex items-center gap-2 shrink-0">
 				<button onclick="resolveNewlines()" title="Resolve Newlines and Unicode Escapes"
-					class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 px-3 py-1.5 rounded-lg text-xs transition flex items-center">
-					Resolve Escapes
-				</button>
-				<button id="toggle-edit-btn"
-					class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 px-3 py-1.5 rounded-lg text-xs transition flex items-center gap-2">
+					class="btn btn-sm">Resolve Escapes</button>
+				<button id="toggle-edit-btn" class="btn btn-sm">
 					<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
 							d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
@@ -432,8 +454,7 @@
 	</header>
 
 	<div class="flex-1 flex overflow-hidden">
-		<aside id="sidebar"
-			class="w-72 border-r border-gray-200 dark:border-gray-800 flex flex-col shrink-0 sidebar hidden md:flex bg-white dark:bg-slate-900">
+		<aside id="sidebar" class="w-72 app-sidebar flex flex-col shrink-0 hidden md:flex">
 			<!-- Documents Panel (collapsed by default) -->
 			<div id="documents-panel" class="sidebar-panel collapsed">
 				<div class="sidebar-panel-header" data-panel="documents">
@@ -441,15 +462,17 @@
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
 					</svg>
 					<span class="sidebar-panel-title">Documents</span>
-					<button id="close-sidebar" class="md:hidden text-gray-500 p-1 ml-auto">
+					<button id="close-sidebar" class="md:hidden btn-icon ml-auto">
 						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+								d="M6 18L18 6M6 6l12 12"></path>
 						</svg>
 					</button>
 				</div>
 				<div class="sidebar-panel-body">
-					<div id="file-list" class="flex-1 overflow-y-auto p-2 space-y-1">
-						<div class="text-gray-400 text-xs italic p-8 text-center">Open files to begin.</div>
+					<div id="file-list" class="flex-1 overflow-y-auto p-2 space-y-0.5">
+						<div class="text-[var(--text-tertiary)] text-xs italic p-8 text-center">Open files to begin.
+						</div>
 					</div>
 				</div>
 			</div>
@@ -465,8 +488,8 @@
 					<span class="sidebar-panel-title">Outline</span>
 				</div>
 				<div class="sidebar-panel-body">
-					<div id="outline-list" class="flex-1 overflow-y-auto p-2 space-y-1 no-scrollbar">
-						<div class="text-gray-400 text-xs italic p-8 text-center">Select a document.</div>
+					<div id="outline-list" class="flex-1 overflow-y-auto p-2 space-y-0.5 no-scrollbar">
+						<div class="text-[var(--text-tertiary)] text-xs italic p-8 text-center">Select a document.</div>
 					</div>
 				</div>
 			</div>
@@ -483,35 +506,33 @@
 					<span id="sidebar-comment-count" class="sidebar-panel-badge"></span>
 				</div>
 				<div class="sidebar-panel-body">
-					<div id="sidebar-comments-list" class="flex-1 overflow-y-auto p-2 space-y-1 no-scrollbar">
-						<div class="text-gray-400 text-xs italic p-8 text-center">No comments yet.</div>
+					<div id="sidebar-comments-list" class="flex-1 overflow-y-auto p-2 space-y-0.5 no-scrollbar">
+						<div class="text-[var(--text-tertiary)] text-xs italic p-8 text-center">No comments yet.</div>
 					</div>
 				</div>
 			</div>
 		</aside>
 
-		<main class="flex-1 overflow-hidden bg-slate-50 dark:bg-black relative">
-			<div id="editor-container" class="w-full h-full bg-white dark:bg-slate-950 px-2 sm:px-4 py-2 sm:py-8">
-				<div id="editor" class="h-full border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
+		<main class="flex-1 overflow-hidden bg-[var(--bg-root)] relative">
+			<div id="editor-container" class="w-full h-full bg-[var(--bg-surface)] px-0 sm:px-4 py-1 sm:py-4">
+				<div id="editor" class="h-full border border-[var(--border-default)] rounded-lg overflow-hidden">
 				</div>
 			</div>
 			<article id="content"
-				class="prose dark:prose-invert hidden bg-white dark:bg-gray-950 p-4 sm:p-8 md:p-16 h-full border-x border-transparent sm:border-gray-100 dark:sm:border-gray-900 shadow-sm overflow-y-auto overflow-x-hidden w-full">
+				class="prose dark:prose-invert hidden bg-[var(--bg-surface)] p-4 sm:p-8 md:p-16 h-full border-x border-transparent sm:border-[var(--border-default)] overflow-y-auto overflow-x-hidden w-full">
 			</article>
 		</main>
 	</div>
 
 	<!-- Comment System UI -->
-	<button id="comment-bubble" class="comment-bubble-btn">💬 Comment</button>
+	<button id="comment-bubble" class="comment-bubble-btn"> Comment</button>
 
 	<div id="comment-panel" class="comment-panel">
 		<div id="comment-panel-quote" class="comment-panel-quote"></div>
 		<textarea id="comment-panel-input" class="comment-panel-textarea" placeholder="Write your comment…"></textarea>
 		<div class="comment-panel-actions">
-			<button id="comment-cancel-btn"
-				class="px-4 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all">Cancel</button>
-			<button id="comment-save-btn"
-				class="px-4 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white transition-all shadow-sm">Save Comment</button>
+			<button id="comment-cancel-btn" class="btn btn-sm">Cancel</button>
+			<button id="comment-save-btn" class="btn btn-gradient-blue btn-sm shadow-sm">Save Comment</button>
 		</div>
 	</div>
 
@@ -523,8 +544,8 @@
 
 	<div id="comment-toast" class="comment-toast"></div>
 
-	<button id="mobile-menu"
-		class="fixed bottom-6 right-6 md:hidden bg-blue-600 text-white p-4 rounded-full shadow-2xl z-50">
+	<button id="mobile-menu" class="fixed bottom-6 right-6 md:hidden text-white p-4 rounded-full shadow-2xl z-50"
+		style="background: var(--accent);">
 		<svg id="menu-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 			<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
 		</svg>
@@ -569,8 +590,14 @@
 				markdown(),
 				isDark ? oneDark : [],
 				EditorView.theme({
-					"&": { height: "100%", fontSize: "var(--reader-font-size)" },
-					".cm-scroller": { overflow: "auto" }
+					"&": { height: "100%", fontSize: "var(--editor-font-size)", backgroundColor: "var(--bg-surface)" },
+					".cm-scroller": { overflow: "auto", fontFamily: "var(--font-mono)" },
+					".cm-content": { fontWeight: "400 !important", fontFamily: "var(--font-mono) !important" },
+					".cm-line": { fontWeight: "400 !important" },
+					".ͼ1 .cm-keyword": { fontWeight: "500 !important" },
+					".ͼ1 .cm-variableName": { fontWeight: "400 !important" },
+					".ͼ1 .cm-typeName": { fontWeight: "500 !important" },
+					".cm-gutters": { backgroundColor: "var(--bg-surface)", borderRightColor: "var(--border-subtle)", color: "var(--text-tertiary)" }
 				}),
 				EditorView.updateListener.of((update) => {
 					if (update.docChanged) {
@@ -622,8 +649,8 @@
 			outlineList.innerHTML = headings.map(h => `
 				<button 
 					onclick="scrollToHeading(${h.line}, '${h.text.replace(/'/g, "\\'")}')"
-					class="w-full text-left px-3 py-1.5 rounded-md text-[11px] transition-all truncate hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
-					style="padding-left: ${h.level * 0.75}rem"
+					class="w-full text-left px-3 py-1.5 rounded-md text-[11px] transition-all truncate hover:bg-[var(--bg-surface-hover)]"
+					style="padding-left: ${h.level * 0.75}rem; color: var(--text-secondary);"
 				>
 					${h.text}
 				</button>
@@ -654,11 +681,11 @@
 			lineWrap = !lineWrap;
 			const btn = document.getElementById("wrap-toggle-btn");
 			if (lineWrap) {
-				btn.classList.add("bg-blue-600", "text-white", "border-blue-600");
-				btn.classList.remove("hover:bg-gray-100", "dark:hover:bg-gray-800");
+				btn.style.background = "var(--accent)";
+				btn.style.color = "#fff";
 			} else {
-				btn.classList.remove("bg-blue-600", "text-white", "border-blue-600");
-				btn.classList.add("hover:bg-gray-100", "dark:hover:bg-gray-800");
+				btn.style.background = "";
+				btn.style.color = "";
 			}
 			if (editor) {
 				const currentDoc = editor.state.doc.toString();
@@ -667,7 +694,9 @@
 		};
 
 		// Initialize wrap button state
-		document.getElementById("wrap-toggle-btn").classList.add("bg-blue-600", "text-white", "border-blue-600");
+		const wrapBtn = document.getElementById("wrap-toggle-btn");
+		wrapBtn.style.background = "var(--accent)";
+		wrapBtn.style.color = "#fff";
 
 		const toggleSidebar = () => {
 			document.body.classList.toggle("mobile-sidebar-active");
@@ -760,8 +789,8 @@
 
 		function renderFileListItem(name) {
 			const btn = document.createElement("button");
-			btn.className = "file-item w-full text-left px-3 py-3 rounded-lg text-sm transition-all flex items-center gap-3 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800";
-			btn.innerHTML = `<svg class="w-4 h-4 shrink-0 opacity-40" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 012-2h4.586A1 1 0 0111.293 2.707l2 2A1 1 0 0113.586 6H16a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"></path></svg><span class="truncate">${name}</span>`;
+			btn.className = "file-item";
+			btn.innerHTML = `<svg class="w-4 h-4 shrink-0" style="color:var(--text-tertiary)" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 012-2h4.586A1 1 0 0111.293 2.707l2 2A1 1 0 0113.586 6H16a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"></path></svg><span class="truncate">${name}</span>`;
 			btn.onclick = () => displayFile(name, btn);
 			fileListContainer.appendChild(btn);
 		}
@@ -798,14 +827,16 @@
 				contentArea.classList.add("hidden");
 				editorContainer.classList.remove("hidden");
 				toggleText.textContent = "View";
-				toggleEditBtn.classList.add("bg-blue-600", "text-white", "border-blue-600");
-				toggleEditBtn.classList.remove("bg-white", "dark:bg-gray-900", "text-gray-700", "dark:text-gray-300");
+				toggleEditBtn.style.background = "var(--accent)";
+				toggleEditBtn.style.color = "#fff";
+				toggleEditBtn.style.borderColor = "var(--accent)";
 			} else {
 				contentArea.classList.remove("hidden");
 				editorContainer.classList.add("hidden");
 				toggleText.textContent = "Edit";
-				toggleEditBtn.classList.remove("bg-blue-600", "text-white", "border-blue-600");
-				toggleEditBtn.classList.add("bg-white", "dark:bg-gray-900", "text-gray-700", "dark:text-gray-300");
+				toggleEditBtn.style.background = "";
+				toggleEditBtn.style.color = "";
+				toggleEditBtn.style.borderColor = "";
 			}
 			updatePreview();
 		}
@@ -868,7 +899,7 @@
 							});
 							editor.dispatch(transaction);
 						}
-						
+
 						if (!editor.hasFocus) {
 							setTimeout(() => editor.focus(), 10);
 						}

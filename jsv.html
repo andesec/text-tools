@@ -23,6 +23,7 @@
 		}
 	</script>
 	<script src="vendor/purify.min.js"></script>
+	<link rel="stylesheet" href="theme.css">
 
 	<style>
 		:root {
@@ -35,6 +36,7 @@
 
 		.json-tree {
 			font-family: inherit;
+			font-size: 13px;
 			line-height: 1.5;
 		}
 
@@ -58,35 +60,30 @@
 		}
 
 		.json-key {
-			color: #7e22ce;
-			/* Purple */
+			color: var(--code-property);
 			font-weight: normal;
 		}
 
 		.json-value-string {
-			color: #15803d;
-			/* Green */
+			color: var(--code-string);
 			white-space: pre-wrap;
 			word-break: break-word;
 		}
 
 		.json-value-number {
-			color: #1d4ed8;
-			/* Blue */
+			color: var(--code-number);
 		}
 
 		.json-value-boolean {
-			color: #a16207;
-			/* Yellow/Brown */
+			color: var(--code-boolean);
 		}
 
 		.json-value-null {
-			color: #64748b;
-			/* Slate */
+			color: var(--code-null);
 		}
 
 		.json-meta {
-			color: #94a3b8;
+			color: var(--text-tertiary);
 			font-size: 0.7rem;
 			margin-left: 0.5rem;
 			font-weight: normal;
@@ -94,27 +91,27 @@
 		}
 
 		.dark .json-key {
-			color: #c084fc;
+			color: var(--code-property);
 		}
 
 		.dark .json-value-string {
-			color: #4ade80;
+			color: var(--code-string);
 		}
 
 		.dark .json-value-number {
-			color: #60a5fa;
+			color: var(--code-number);
 		}
 
 		.dark .json-value-boolean {
-			color: #fbbf24;
+			color: var(--code-boolean);
 		}
 
 		.dark .json-value-null {
-			color: #94a3b8;
+			color: var(--code-null);
 		}
 
 		.dark .json-meta {
-			color: #475569;
+			color: var(--text-tertiary);
 		}
 
 		.collapsed>.json-children {
@@ -160,11 +157,11 @@
 		}
 
 		.json-node-content:hover {
-			background: rgba(0, 0, 0, 0.05);
+			background: var(--bg-surface-hover);
 		}
 
 		.dark .json-node-content:hover {
-			background: rgba(255, 255, 255, 0.1);
+			background: var(--bg-surface-hover);
 		}
 
 		.copy-toast {
@@ -185,13 +182,13 @@
 
 		@media (prefers-color-scheme: dark) {
 			body {
-				background-color: rgb(2, 6, 23);
-				color: rgb(241, 245, 249);
+				background-color: var(--bg-root);
+				color: var(--text-primary);
 			}
 
 			.sidebar {
-				background-color: rgb(15, 23, 42);
-				border-color: rgb(30, 41, 59);
+				background-color: var(--bg-surface);
+				border-color: var(--border-default);
 			}
 		}
 
@@ -327,20 +324,23 @@
 
 		@media (prefers-color-scheme: dark) {
 			.sidebar-panel-header {
-				background: rgb(15, 23, 42);
-				border-bottom-color: rgb(30, 41, 59);
-				color: rgb(100, 116, 139);
+				background: var(--bg-surface);
+				border-bottom-color: var(--border-subtle);
+				color: var(--text-tertiary);
 			}
+
 			.sidebar-panel-header:hover {
-				background: rgb(30, 41, 59);
+				background: var(--bg-surface-hover);
 			}
+
 			.sidebar-resizer {
-				background: rgb(30, 41, 59);
-				border-color: rgb(15, 23, 42);
+				background: var(--border-subtle);
+				border-color: var(--bg-surface);
 			}
+
 			.sidebar-resizer:hover,
 			.sidebar-resizer:active {
-				background: rgb(37, 99, 235);
+				background: var(--accent);
 			}
 		}
 
@@ -415,6 +415,12 @@
 			background-color: rgb(243, 244, 246);
 		}
 
+		.save-dropdown-item svg {
+			width: 16px;
+			height: 16px;
+			flex-shrink: 0;
+		}
+
 		.save-dropdown-divider {
 			height: 1px;
 			background: rgb(243, 244, 246);
@@ -445,39 +451,43 @@
 
 		@media (prefers-color-scheme: dark) {
 			.save-dropdown-menu {
-				background: rgb(15, 23, 42);
-				border-color: rgb(30, 41, 59);
+				background: var(--bg-surface-raised);
+				border-color: var(--border-default);
 			}
+
 			.save-dropdown-item {
-				color: rgb(203, 213, 225);
+				color: var(--text-primary);
 			}
+
 			.save-dropdown-item:hover {
-				background-color: rgb(30, 41, 59);
+				background-color: var(--bg-surface-hover);
 			}
+
 			.save-dropdown-divider {
-				background: rgb(30, 41, 59);
+				background: var(--border-subtle);
 			}
+
 			.toast {
-				background: rgb(241, 245, 249);
-				color: rgb(15, 23, 42);
+				background: var(--bg-surface-raised);
+				color: var(--text-primary);
 			}
+		}
 	</style>
 </head>
 
 <body class="h-screen flex flex-col overflow-hidden transition-colors duration-200">
-	<header class="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-slate-950 z-50 shadow-sm shrink-0">
-		<!-- Top Row: Logo and Primary Actions -->
-		<div class="px-4 py-3 flex items-center justify-between">
+	<header class="app-header z-50 shrink-0">
+		<div class="app-header-row">
 			<div class="flex items-center gap-2">
-				<a href="index.html"
-					class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 mr-1" title="Home">
+				<a href="index.html" class="btn-icon" title="Home">
 					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
 							d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
 						</path>
 					</svg>
 				</a>
-				<div class="bg-gradient-to-br from-yellow-500 to-orange-600 p-1.5 rounded-lg shadow-sm">
+				<div class="p-1.5 rounded-lg shadow-sm"
+					style="background: linear-gradient(to bottom right, #eab308, #ea580c);">
 					<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
 							d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
@@ -488,15 +498,13 @@
 
 			<div class="flex items-center gap-1.5 sm:gap-2">
 				<input type="file" id="file-input" multiple accept=".js,.json,.ts,.txt" class="hidden" />
-				<button id="new-btn"
-					class="bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all transform active:scale-95 flex items-center gap-2 shadow-sm hover:shadow-md">
+				<button id="new-btn" class="btn btn-primary btn-sm sm:px-4 sm:py-2 sm:text-sm">
 					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
 					</svg>
 					<span class="hidden sm:inline">New</span>
 				</button>
-				<button id="open-btn"
-					class="bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all transform active:scale-95 flex items-center gap-2 shadow-sm hover:shadow-md">
+				<button id="open-btn" class="btn btn-sm sm:px-4 sm:py-2 sm:text-sm">
 					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
 							d="M4 12v.01M7 12v.01M10 12v.01M13 12v.01M16 12v.01M19 12v.01M4 15v.01M7 15v.01M10 15v.01M13 15v.01M16 15v.01M19 15v.01M4 18v.01M7 18v.01M10 18v.01M13 18v.01M16 18v.01M19 18v.01M4 9v.01M7 9v.01M10 9v.01M13 9v.01M16 9v.01M19 9v.01M4 6v.01M7 6v.01M10 6v.01M13 6v.01M16 6v.01M19 6v.01">
@@ -504,16 +512,17 @@
 					</svg>
 					<span id="btn-text" class="hidden sm:inline">Open</span>
 				</button>
-				<button id="paste-btn"
-					class="bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all transform active:scale-95 flex items-center gap-2 shadow-sm hover:shadow-md">
+				<button id="paste-btn" class="btn btn-sm sm:px-4 sm:py-2 sm:text-sm">
 					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+							d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
+						</path>
 					</svg>
 					<span class="hidden sm:inline">Paste</span>
 				</button>
 				<div class="save-dropdown-wrapper" id="save-dropdown-wrapper">
 					<button id="download-btn"
-						class="save-main-btn bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-2.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold transition-all transform active:scale-95 flex items-center gap-2 shadow-sm hover:shadow-md">
+						class="save-main-btn btn btn-gradient-green btn-sm sm:px-4 sm:py-2 sm:text-sm shadow-sm hover:shadow-md transition-all transform active:scale-95">
 						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
 								d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
@@ -521,28 +530,43 @@
 						<span class="hidden sm:inline">Save</span>
 					</button>
 					<button id="save-chevron-btn"
-						class="save-chevron-btn bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-1 py-1.5 sm:py-2 text-xs transition-all transform active:scale-95 flex items-center shadow-sm hover:shadow-md">
+						class="save-chevron-btn btn btn-gradient-green btn-sm sm:py-2 sm:text-sm shadow-sm hover:shadow-md transition-all transform active:scale-95">
 						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
+							</path>
 						</svg>
 					</button>
 
 					<div id="save-dropdown-menu" class="save-dropdown-menu">
 						<button class="save-dropdown-item" onclick="saveJson()">
-							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+									d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+							</svg>
 							Save RAW
 						</button>
 						<button class="save-dropdown-item" onclick="saveFormattedJson()">
-							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+									d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+							</svg>
 							Save Formatted
 						</button>
 						<div class="save-dropdown-divider"></div>
 						<button class="save-dropdown-item" onclick="copyRawJson()">
-							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m-7 4h7m-7 4h7m-7 4h3"></path></svg>
+							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+									d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m-7 4h7m-7 4h7m-7 4h3">
+								</path>
+							</svg>
 							Copy RAW
 						</button>
 						<button class="save-dropdown-item" onclick="copyFormattedJson()">
-							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m-7 4h7m-7 4h7m-7 4h3"></path></svg>
+							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+									d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m-7 4h7m-7 4h7m-7 4h3">
+								</path>
+							</svg>
 							Copy Formatted
 						</button>
 					</div>
@@ -551,12 +575,10 @@
 		</div>
 
 		<!-- Bottom Row: Secondary Toolbar (Responsive) -->
-		<div
-			class="px-4 py-2 border-t border-gray-100 dark:border-gray-900 bg-gray-50 dark:bg-slate-900 flex items-center justify-between sm:justify-end gap-3 flex-wrap relative z-40">
+		<div class="app-header-toolbar">
 			<div class="flex items-center gap-2 shrink-0">
 				<div class="relative" id="dropdown-instance">
-					<button id="instance-menu-btn"
-						class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 px-3 py-1.5 rounded-lg text-xs transition flex items-center gap-2">
+					<button id="instance-menu-btn" class="btn btn-sm">
 						<span id="instance-label">JSON 1</span>
 						<svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
@@ -564,37 +586,28 @@
 						</svg>
 					</button>
 					<div id="instance-menu-dropdown"
-						class="absolute left-0 sm:right-0 sm:left-auto mt-1 w-32 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-xl hidden z-[100]">
+						class="absolute left-0 sm:right-0 sm:left-auto mt-1 w-32 bg-[var(--bg-surface-raised)] border border-[var(--border-default)] rounded-lg shadow-xl hidden z-[100]">
 						<button onclick="switchInstance(0)"
-							class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs instance-btn"
+							class="w-full text-left px-4 py-2 hover:bg-[var(--bg-surface-hover)] text-xs instance-btn"
 							data-instance="0">JSON 1</button>
 						<button onclick="switchInstance(1)"
-							class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs instance-btn"
+							class="w-full text-left px-4 py-2 hover:bg-[var(--bg-surface-hover)] text-xs instance-btn"
 							data-instance="1">JSON 2</button>
 						<button onclick="switchInstance(2)"
-							class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs instance-btn"
+							class="w-full text-left px-4 py-2 hover:bg-[var(--bg-surface-hover)] text-xs instance-btn"
 							data-instance="2">JSON 3</button>
 					</div>
 				</div>
 
-				<button onclick="prettify()"
-					class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 px-3 py-1.5 rounded-lg text-xs transition flex items-center">
-					Format
-				</button>
-				<button onclick="toggleWrap()" id="wrap-toggle-btn"
-					class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 px-3 py-1.5 rounded-lg text-xs transition flex items-center font-bold">
-					W
-				</button>
+				<button onclick="prettify()" class="btn btn-sm">Format</button>
+				<button onclick="toggleWrap()" id="wrap-toggle-btn" class="btn btn-sm font-bold">W</button>
 			</div>
 
 			<div class="flex items-center gap-2 shrink-0">
-				<button id="source-view-btn" onclick="revertToSource()"
-					class="hidden bg-orange-100 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-800 text-orange-700 dark:text-orange-300 hover:bg-orange-200 px-3 py-1.5 rounded-lg text-xs transition flex items-center">
-					Source
-				</button>
+				<button id="source-view-btn" onclick="revertToSource()" class="hidden btn btn-sm"
+					style="color: var(--warning);">Source</button>
 				<div class="relative" id="dropdown-tools">
-					<button id="tools-menu-btn"
-						class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 px-3 py-1.5 rounded-lg text-xs transition flex items-center gap-2">
+					<button id="tools-menu-btn" class="btn btn-sm">
 						<span>Tools</span>
 						<svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
@@ -602,23 +615,22 @@
 						</svg>
 					</button>
 					<div id="tools-menu-dropdown"
-						class="absolute right-0 mt-1 w-48 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-xl hidden z-[100]">
+						class="absolute right-0 mt-1 w-48 bg-[var(--bg-surface-raised)] border border-[var(--border-default)] rounded-lg shadow-xl hidden z-[100]">
 						<button onclick="transform('cleanJSON')"
-							class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs text-green-500">Fix/Clean
-							JSON</button>
+							class="w-full text-left px-4 py-2 hover:bg-[var(--bg-surface-hover)] text-xs"
+							style="color: var(--success);">Fix/Clean JSON</button>
 						<button onclick="transform('escapeJSON')"
-							class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs text-blue-500">Escape
-							JSON String</button>
+							class="w-full text-left px-4 py-2 hover:bg-[var(--bg-surface-hover)] text-xs"
+							style="color: var(--info);">Escape JSON String</button>
 						<button onclick="transform('unescapeJSON')"
-							class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs text-blue-500">Unescape
-							JSON String</button>
+							class="w-full text-left px-4 py-2 hover:bg-[var(--bg-surface-hover)] text-xs"
+							style="color: var(--info);">Unescape JSON String</button>
 						<button onclick="transform('resolveNewlines')"
-							class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs text-purple-500">Resolve
-							Escapes (\n, \u)</button>
+							class="w-full text-left px-4 py-2 hover:bg-[var(--bg-surface-hover)] text-xs"
+							style="color: var(--accent-text);">Resolve Escapes</button>
 					</div>
 				</div>
-				<button id="toggle-view-btn"
-					class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 px-3 py-1.5 rounded-lg text-xs transition flex items-center">
+				<button id="toggle-view-btn" class="btn btn-sm">
 					<span id="toggle-text">Tree</span>
 				</button>
 			</div>
@@ -626,30 +638,31 @@
 	</header>
 
 	<div class="flex-1 flex overflow-hidden relative">
-		<aside id="sidebar"
-			class="w-72 border-r border-gray-200 dark:border-gray-800 flex flex-col shrink-0 sidebar hidden md:flex bg-white dark:bg-slate-900">
-			<!-- Files Panel (collapsed by default) -->
+		<aside id="sidebar" class="w-72 app-sidebar flex flex-col shrink-0 hidden md:flex">
 			<div id="files-panel" class="sidebar-panel collapsed">
 				<div class="sidebar-panel-header" data-panel="files">
 					<svg class="sidebar-panel-caret" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
 					</svg>
 					<span class="sidebar-panel-title">Files</span>
-					<button id="close-sidebar" class="md:hidden text-gray-500 p-1 ml-auto">
+					<button id="close-sidebar" class="md:hidden btn-icon ml-auto">
 						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+								d="M6 18L18 6M6 6l12 12"></path>
 						</svg>
 					</button>
 				</div>
 				<div class="sidebar-panel-body">
-					<div id="file-list" class="flex-1 overflow-y-auto p-2 space-y-1">
-						<div class="text-gray-400 text-xs italic p-8 text-center">Open files to begin.</div>
+					<div id="file-list" class="flex-1 overflow-y-auto p-2 space-y-0.5">
+						<div class="text-[var(--text-tertiary)] text-xs italic p-8 text-center">Open files to begin.
+						</div>
 					</div>
-					<div class="p-3 border-t border-gray-100 dark:border-gray-800 flex-shrink-0">
+					<div class="p-3 border-t border-[var(--border-subtle)] flex-shrink-0">
 						<button id="new-btn-sidebar" onclick="createNewScratchpad()"
-							class="w-full flex items-center justify-center gap-2 py-2 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-xs font-medium transition-all">
+							class="w-full flex items-center justify-center gap-2 py-2 bg-[var(--bg-surface-hover)] hover:bg-[var(--border-default)] rounded-lg text-xs font-medium transition-all">
 							<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+									d="M12 4v16m8-8H4"></path>
 							</svg>
 							New Scratchpad
 						</button>
@@ -659,7 +672,6 @@
 
 			<div class="sidebar-resizer" data-resizer="0"></div>
 
-			<!-- Tree View Panel -->
 			<div id="tree-panel" class="sidebar-panel">
 				<div class="sidebar-panel-header" data-panel="tree">
 					<svg class="sidebar-panel-caret" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -675,17 +687,17 @@
 			</div>
 		</aside>
 
-		<div id="sidebar-h-resizer" class="sidebar-h-resizer border-r border-gray-200 dark:border-gray-800"></div>
+		<div id="sidebar-h-resizer" class="sidebar-h-resizer border-r border-[var(--border-default)]"></div>
 
-		<main class="flex-1 overflow-hidden bg-slate-50 dark:bg-black relative flex flex-col">
-			<div id="editor-container" class="flex-1 w-full bg-white dark:bg-slate-950 px-2 sm:px-4 py-2 sm:py-8">
-				<div id="editor" class="h-full border-y sm:border border-gray-200 dark:border-gray-800 sm:rounded-lg overflow-hidden"></div>
+		<main class="flex-1 overflow-hidden bg-[var(--bg-root)] relative flex flex-col">
+			<div id="editor-container" class="flex-1 w-full bg-[var(--bg-surface)] px-0 sm:px-4 py-1 sm:py-4">
+				<div id="editor" class="h-full border border-[var(--border-default)] rounded-lg overflow-hidden"></div>
 			</div>
 		</main>
 	</div>
 
-	<button id="mobile-menu"
-		class="fixed bottom-6 right-6 md:hidden bg-blue-600 text-white p-4 rounded-full shadow-2xl z-50">
+	<button id="mobile-menu" class="fixed bottom-6 right-6 md:hidden text-white p-4 rounded-full shadow-2xl z-50"
+		style="background: var(--accent);">
 		<svg id="menu-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 			<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
 		</svg>
@@ -732,7 +744,7 @@
 							editor.dispatch(transaction);
 							setTimeout(() => editor.focus(), 10);
 						}
-						
+
 						copyToast.textContent = "Pasted from clipboard!";
 						copyToast.style.opacity = "1";
 						setTimeout(() => copyToast.style.opacity = "0", 2000);
@@ -834,7 +846,6 @@
 		function initEditor(initialValue = "", language = "javascript", readOnly = false) {
 			if (editor) editor.destroy();
 			const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-
 			const extensions = [
 				basicSetup,
 				language === "json" ? json() : javascript(),
@@ -842,8 +853,14 @@
 				keymap.of(foldKeymap),
 				EditorView.editable.of(!readOnly),
 				EditorView.theme({
-					"&": { height: "100%", fontSize: "13px" },
-					".cm-scroller": { overflow: "auto" }
+					"&": { height: "100%", fontSize: "var(--editor-font-size)", backgroundColor: "var(--bg-surface)" },
+					".cm-scroller": { overflow: "auto", fontFamily: "var(--font-mono)" },
+					".cm-content": { fontWeight: "400 !important", fontFamily: "var(--font-mono) !important" },
+					".cm-line": { fontWeight: "400 !important" },
+					".ͼ1 .cm-keyword": { fontWeight: "500 !important" },
+					".ͼ1 .cm-variableName": { fontWeight: "400 !important" },
+					".ͼ1 .cm-typeName": { fontWeight: "500 !important" },
+					".cm-gutters": { backgroundColor: "var(--bg-surface)", borderRightColor: "var(--border-subtle)", color: "var(--text-tertiary)" }
 				}),
 				EditorView.updateListener.of((update) => {
 					if (update.docChanged) {

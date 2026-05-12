@@ -1,8 +1,8 @@
 /* ============================================
    MDV Comments System — Logic
    Depends on globals from mdv.html:
-     contentArea, editor, currentFileName,
-     isEditing, updatePreview()
+	 contentArea, editor, currentFileName,
+	 isEditing, updatePreview()
    ============================================ */
 
 (function () {
@@ -82,7 +82,7 @@
 
 		pendingSelection = { quote };
 		const rect = range.getBoundingClientRect();
-		bubbleEl.style.top = (rect.bottom + window.scrollY + 6) + "px";
+		bubbleEl.style.top = (rect.bottom + 6) + "px";
 		bubbleEl.style.left = (rect.left + rect.width / 2 - 50) + "px";
 		bubbleEl.style.display = "block";
 	}
@@ -144,7 +144,10 @@
 
 	// ── Highlight Application ──────────────────────
 	function applyHighlights() {
-		if (!contentEl || contentEl.classList.contains("hidden")) return;
+		if (!contentEl || contentEl.classList.contains("hidden")) {
+			console.log("[MDV Comments] applyHighlights skipped: contentEl hidden or missing");
+			return;
+		}
 
 		// Strip existing marks
 		contentEl.querySelectorAll("mark.comment-highlight").forEach((m) => {
@@ -154,6 +157,7 @@
 			parent.normalize();
 		});
 
+		console.log("[MDV Comments] Applying highlights for", comments.length, "comments");
 		comments.forEach((c) => highlightQuote(c.quote, c.id));
 	}
 
@@ -171,10 +175,30 @@
 			nodeMap.push({ node: tn, start, end: fullText.length });
 		});
 
-		const idx = fullText.indexOf(quote);
-		if (idx === -1) return; // orphaned
+		// Try exact match first
+		let idx = fullText.indexOf(quote);
+		let matchLen = quote.length;
 
-		const qEnd = idx + quote.length;
+		// Fallback: regex with flexible whitespace between words
+		if (idx === -1) {
+			const words = quote.trim().split(/\s+/).filter(Boolean);
+			if (words.length >= 2) {
+				const pattern = words.map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("\\s+");
+				const re = new RegExp(pattern);
+				const m = fullText.match(re);
+				if (m) {
+					idx = m.index;
+					matchLen = m[0].length;
+				}
+			}
+		}
+
+		if (idx === -1) {
+			console.log("[MDV Comments] Quote not found in DOM:", quote.substring(0, 60));
+			return; // orphaned
+		}
+
+		const qEnd = idx + matchLen;
 		const range = document.createRange();
 		let startSet = false;
 
