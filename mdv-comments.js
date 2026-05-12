@@ -17,9 +17,10 @@
 		init,
 		applyHighlights,
 		parseFromMarkdown,
+		renderSidebarComments,
 		getComments: () => comments,
-		setComments: (c) => { comments = c; },
-		clearComments: () => { comments = []; },
+		setComments: (c) => { comments = c; renderSidebarComments(); },
+		clearComments: () => { comments = []; renderSidebarComments(); },
 	};
 
 	// ── DOM refs (set in init) ─────────────────────
@@ -130,12 +131,14 @@
 		window.getSelection().removeAllRanges();
 		applyHighlights();
 		updateBadge();
+		renderSidebarComments();
 	}
 
 	function deleteComment(id) {
 		comments = comments.filter((c) => c.id !== id);
 		applyHighlights();
 		updateBadge();
+		renderSidebarComments();
 		toast("Comment removed");
 	}
 
@@ -386,6 +389,71 @@
 
 	function closeSaveDropdown() {
 		document.getElementById("save-dropdown-menu").classList.remove("visible");
+	}
+
+	// ── Sidebar Comments Panel ─────────────────────
+	function renderSidebarComments() {
+		const listEl = document.getElementById("sidebar-comments-list");
+		const countEl = document.getElementById("sidebar-comment-count");
+		if (!listEl) return;
+
+		if (countEl) countEl.textContent = comments.length > 0 ? comments.length : "";
+
+		if (comments.length === 0) {
+			listEl.innerHTML = '<div class="text-gray-400 text-xs italic p-8 text-center">No comments yet.</div>';
+			return;
+		}
+
+		listEl.innerHTML = "";
+		comments.forEach((c) => {
+			const item = document.createElement("div");
+			item.className = "sidebar-comment-item";
+			item.dataset.commentId = c.id;
+
+			const quoteEl = document.createElement("div");
+			quoteEl.className = "sidebar-comment-item-quote";
+			quoteEl.textContent = c.quote.length > 80 ? c.quote.slice(0, 80) + "…" : c.quote;
+
+			const textEl = document.createElement("div");
+			textEl.className = "sidebar-comment-item-text";
+			textEl.textContent = c.text;
+
+			const metaEl = document.createElement("div");
+			metaEl.className = "sidebar-comment-item-meta";
+			metaEl.textContent = new Date(c.createdAt).toLocaleString();
+
+			item.appendChild(quoteEl);
+			item.appendChild(textEl);
+			item.appendChild(metaEl);
+
+			item.addEventListener("click", () => navigateToComment(c));
+			listEl.appendChild(item);
+		});
+	}
+
+	function navigateToComment(comment) {
+		// Switch to view mode if in editor mode
+		if (typeof isEditing !== "undefined" && isEditing) {
+			const toggleBtn = document.getElementById("toggle-edit-btn");
+			if (toggleBtn) toggleBtn.click();
+			// Wait for preview to render before scrolling
+			setTimeout(() => scrollToCommentMark(comment), 120);
+			return;
+		}
+		scrollToCommentMark(comment);
+	}
+
+	function scrollToCommentMark(comment) {
+		const mark = document.querySelector(`.comment-highlight[data-comment-id="${comment.id}"]`);
+		if (mark) {
+			mark.scrollIntoView({ behavior: "smooth", block: "center" });
+			// Brief flash to draw attention
+			mark.classList.add("comment-highlight-flash");
+			setTimeout(() => mark.classList.remove("comment-highlight-flash"), 1000);
+			showTooltip(comment, mark);
+		} else {
+			toast("Comment not found in current view");
+		}
 	}
 
 	// ── Badge ──────────────────────────────────────

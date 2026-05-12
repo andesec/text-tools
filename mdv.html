@@ -434,36 +434,58 @@
 	<div class="flex-1 flex overflow-hidden">
 		<aside id="sidebar"
 			class="w-72 border-r border-gray-200 dark:border-gray-800 flex flex-col shrink-0 sidebar hidden md:flex bg-white dark:bg-slate-900">
-			<!-- Documents Panel -->
-			<div id="documents-panel" class="flex flex-col overflow-hidden h-[40%]">
-				<div
-					class="p-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-white dark:bg-slate-900 z-10">
-					<h2 class="text-xs text-gray-400 uppercase tracking-widest">Documents</h2>
-					<button id="close-sidebar" class="md:hidden text-gray-500 p-1">
-						<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-								d="M6 18L18 6M6 6l12 12">
-							</path>
+			<!-- Documents Panel (collapsed by default) -->
+			<div id="documents-panel" class="sidebar-panel collapsed">
+				<div class="sidebar-panel-header" data-panel="documents">
+					<svg class="sidebar-panel-caret" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+					</svg>
+					<span class="sidebar-panel-title">Documents</span>
+					<button id="close-sidebar" class="md:hidden text-gray-500 p-1 ml-auto">
+						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
 						</svg>
 					</button>
 				</div>
-				<div id="file-list" class="flex-1 overflow-y-auto p-2 space-y-1">
-					<div class="text-gray-400 text-xs italic p-8 text-center">Open files to begin.</div>
+				<div class="sidebar-panel-body">
+					<div id="file-list" class="flex-1 overflow-y-auto p-2 space-y-1">
+						<div class="text-gray-400 text-xs italic p-8 text-center">Open files to begin.</div>
+					</div>
 				</div>
 			</div>
 
-			<!-- Divider -->
-			<div id="sidebar-resizer"
-				class="h-1.5 bg-gray-50 dark:bg-slate-800 cursor-ns-resize hover:bg-blue-500/50 transition-colors border-y border-gray-200 dark:border-gray-700 shrink-0">
-			</div>
+			<div class="sidebar-resizer" data-resizer="0"></div>
 
 			<!-- Outline Panel -->
-			<div id="outline-panel" class="flex-1 flex flex-col overflow-hidden">
-				<div class="p-4 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-slate-900 z-10">
-					<h2 class="text-xs text-gray-400 uppercase tracking-widest">Outline</h2>
+			<div id="outline-panel" class="sidebar-panel">
+				<div class="sidebar-panel-header" data-panel="outline">
+					<svg class="sidebar-panel-caret" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+					</svg>
+					<span class="sidebar-panel-title">Outline</span>
 				</div>
-				<div id="outline-list" class="flex-1 overflow-y-auto p-2 space-y-1 no-scrollbar">
-					<div class="text-gray-400 text-xs italic p-8 text-center">Select a document.</div>
+				<div class="sidebar-panel-body">
+					<div id="outline-list" class="flex-1 overflow-y-auto p-2 space-y-1 no-scrollbar">
+						<div class="text-gray-400 text-xs italic p-8 text-center">Select a document.</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="sidebar-resizer" data-resizer="1"></div>
+
+			<!-- Comments Panel -->
+			<div id="sidebar-comments-panel" class="sidebar-panel">
+				<div class="sidebar-panel-header" data-panel="sidebar-comments">
+					<svg class="sidebar-panel-caret" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+					</svg>
+					<span class="sidebar-panel-title">Comments</span>
+					<span id="sidebar-comment-count" class="sidebar-panel-badge"></span>
+				</div>
+				<div class="sidebar-panel-body">
+					<div id="sidebar-comments-list" class="flex-1 overflow-y-auto p-2 space-y-1 no-scrollbar">
+						<div class="text-gray-400 text-xs italic p-8 text-center">No comments yet.</div>
+					</div>
 				</div>
 			</div>
 		</aside>
@@ -730,6 +752,9 @@
 			});
 			if (loadedFiles.size === 0) {
 				fileListContainer.innerHTML = '<div class="p-4 text-center text-xs text-red-500">No Markdown files found.</div>';
+			} else if (loadedFiles.size === 1) {
+				const firstBtn = fileListContainer.querySelector('.file-item');
+				if (firstBtn) firstBtn.click();
 			}
 		}
 
@@ -858,33 +883,79 @@
 
 		fileInput.onchange = (e) => handleFileSelect(e.target.files);
 
-		// Divider Resizing Logic
+		// ── Sidebar Panel Toggle & Resize ──────────────────
 		(function () {
-			const resizer = document.getElementById("sidebar-resizer");
-			const topPanel = document.getElementById("documents-panel");
-			const sidebar = document.getElementById("sidebar");
-			let isResizing = false;
+			const sidebarEl = document.getElementById("sidebar");
+			const panels = Array.from(sidebarEl.querySelectorAll(".sidebar-panel"));
+			const resizers = Array.from(sidebarEl.querySelectorAll(".sidebar-resizer"));
 
-			resizer.addEventListener("mousedown", (e) => {
-				isResizing = true;
-				document.body.style.cursor = "ns-resize";
-				document.body.classList.add("select-none");
+			// Toggle panel collapse
+			panels.forEach(panel => {
+				const header = panel.querySelector(".sidebar-panel-header");
+				header.addEventListener("click", (e) => {
+					// Don't toggle when clicking the close-sidebar button
+					if (e.target.closest('#close-sidebar')) return;
+					panel.classList.toggle("collapsed");
+				});
+			});
+
+			// Resizer drag logic
+			let activeResizer = null;
+			let resizerAbove = null;
+			let resizerBelow = null;
+			let startY = 0;
+			let startAboveH = 0;
+			let startBelowH = 0;
+
+			function getExpandedNeighbors(resizerEl) {
+				let above = null, below = null;
+				let prev = resizerEl.previousElementSibling;
+				while (prev) {
+					if (prev.classList.contains('sidebar-panel') && !prev.classList.contains('collapsed')) {
+						above = prev; break;
+					}
+					prev = prev.previousElementSibling;
+				}
+				let next = resizerEl.nextElementSibling;
+				while (next) {
+					if (next.classList.contains('sidebar-panel') && !next.classList.contains('collapsed')) {
+						below = next; break;
+					}
+					next = next.nextElementSibling;
+				}
+				return { above, below };
+			}
+
+			resizers.forEach(r => {
+				r.addEventListener("mousedown", (e) => {
+					const neighbors = getExpandedNeighbors(r);
+					if (!neighbors.above || !neighbors.below) return;
+					activeResizer = r;
+					resizerAbove = neighbors.above;
+					resizerBelow = neighbors.below;
+					startY = e.clientY;
+					startAboveH = resizerAbove.getBoundingClientRect().height;
+					startBelowH = resizerBelow.getBoundingClientRect().height;
+					document.body.style.cursor = "ns-resize";
+					document.body.classList.add("select-none");
+					e.preventDefault();
+				});
 			});
 
 			document.addEventListener("mousemove", (e) => {
-				if (!isResizing) return;
-				const sidebarRect = sidebar.getBoundingClientRect();
-				const offsetY = e.clientY - sidebarRect.top;
-				const percentage = (offsetY / sidebarRect.height) * 100;
-
-				if (percentage > 20 && percentage < 80) {
-					topPanel.style.height = `${percentage}%`;
-				}
+				if (!activeResizer) return;
+				const delta = e.clientY - startY;
+				const newAbove = Math.max(40, startAboveH + delta);
+				const newBelow = Math.max(40, startBelowH - delta);
+				resizerAbove.style.flex = `0 0 ${newAbove}px`;
+				resizerBelow.style.flex = `0 0 ${newBelow}px`;
 			});
 
 			document.addEventListener("mouseup", () => {
-				if (isResizing) {
-					isResizing = false;
+				if (activeResizer) {
+					activeResizer = null;
+					resizerAbove = null;
+					resizerBelow = null;
 					document.body.style.cursor = "";
 					document.body.classList.remove("select-none");
 				}

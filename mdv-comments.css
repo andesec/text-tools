@@ -16,6 +16,16 @@
 	background-color: rgb(253, 224, 71);
 }
 
+.comment-highlight-flash {
+	animation: comment-flash 0.9s ease-out;
+}
+
+@keyframes comment-flash {
+	0%   { background-color: rgb(251, 191, 36); }
+	40%  { background-color: rgb(253, 224, 71); }
+	100% { background-color: rgb(254, 240, 138); }
+}
+
 /* Selection action bubble */
 .comment-bubble-btn {
 	position: fixed;
@@ -244,6 +254,143 @@
 }
 
 /* ============================================
+   Sidebar Panel System
+   ============================================ */
+
+.sidebar-panel {
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	flex: 1 1 0;
+	min-height: 32px;
+	transition: flex 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-panel.collapsed {
+	flex: 0 0 32px;
+}
+
+.sidebar-panel-header {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 0 12px;
+	height: 32px;
+	min-height: 32px;
+	cursor: pointer;
+	user-select: none;
+	background: rgb(255, 255, 255);
+	border-bottom: 1px solid rgb(243, 244, 246);
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: rgb(107, 114, 128);
+	transition: background-color 0.15s;
+}
+
+.sidebar-panel-header:hover {
+	background: rgb(249, 250, 251);
+}
+
+.sidebar-panel-caret {
+	width: 12px;
+	height: 12px;
+	flex-shrink: 0;
+	color: rgb(156, 163, 175);
+	transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-panel.collapsed .sidebar-panel-caret {
+	transform: rotate(-90deg);
+}
+
+.sidebar-panel-title {
+	flex: 1;
+}
+
+.sidebar-panel-badge {
+	background: rgb(234, 179, 8);
+	color: rgb(113, 63, 18);
+	font-size: 10px;
+	font-weight: 700;
+	padding: 1px 6px;
+	border-radius: 10px;
+	line-height: 1.4;
+}
+
+.sidebar-panel-body {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+
+.sidebar-panel.collapsed .sidebar-panel-body {
+	display: none;
+}
+
+/* Resizer between panels */
+.sidebar-resizer {
+	height: 4px;
+	min-height: 4px;
+	background: rgb(243, 244, 246);
+	border-top: 1px solid rgb(229, 231, 235);
+	border-bottom: 1px solid rgb(229, 231, 235);
+	cursor: ns-resize;
+	transition: background-color 0.15s;
+	flex-shrink: 0;
+}
+
+.sidebar-resizer:hover,
+.sidebar-resizer:active {
+	background: rgb(147, 197, 253);
+}
+
+/* Sidebar comment list items */
+.sidebar-comment-item {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+	padding: 8px 10px;
+	border-radius: 8px;
+	cursor: pointer;
+	transition: background-color 0.15s;
+	border: 1px solid transparent;
+}
+
+.sidebar-comment-item:hover {
+	background: rgb(239, 246, 255);
+	border-color: rgb(191, 219, 254);
+}
+
+.sidebar-comment-item-quote {
+	font-size: 10px;
+	color: rgb(107, 114, 128);
+	font-style: italic;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	border-left: 2px solid rgb(234, 179, 8);
+	padding-left: 6px;
+}
+
+.sidebar-comment-item-text {
+	font-size: 12px;
+	color: rgb(55, 65, 81);
+	line-height: 1.4;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+.sidebar-comment-item-meta {
+	font-size: 10px;
+	color: rgb(156, 163, 175);
+}
+
+/* ============================================
    Dark mode
    ============================================ */
 @media (prefers-color-scheme: dark) {
@@ -310,5 +457,44 @@
 	.comment-toast {
 		background: rgb(241, 245, 249);
 		color: rgb(15, 23, 42);
+	}
+
+	/* Sidebar panels — dark */
+	.sidebar-panel-header {
+		background: rgb(15, 23, 42);
+		border-bottom-color: rgb(30, 41, 59);
+		color: rgb(100, 116, 139);
+	}
+
+	.sidebar-panel-header:hover {
+		background: rgb(30, 41, 59);
+	}
+
+	.sidebar-resizer {
+		background: rgb(30, 41, 59);
+		border-color: rgb(15, 23, 42);
+	}
+
+	.sidebar-resizer:hover,
+	.sidebar-resizer:active {
+		background: rgb(37, 99, 235);
+	}
+
+	.sidebar-comment-item:hover {
+		background: rgb(30, 41, 59);
+		border-color: rgb(37, 99, 235);
+	}
+
+	.sidebar-comment-item-quote {
+		color: rgb(100, 116, 139);
+		border-left-color: rgb(202, 138, 4);
+	}
+
+	.sidebar-comment-item-text {
+		color: rgb(203, 213, 225);
+	}
+
+	.sidebar-comment-item-meta {
+		color: rgb(71, 85, 105);
 	}
 }
