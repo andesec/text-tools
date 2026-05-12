@@ -449,6 +449,90 @@
 			transform: translateX(-50%) translateY(0);
 		}
 
+		/* Bottom Tree Panel */
+		.bottom-tree-panel {
+			display: flex;
+			flex-direction: column;
+			overflow: hidden;
+			flex: 1 1 0;
+			min-height: 32px;
+			transition: flex 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+			background: var(--bg-surface);
+			border-top: 1px solid var(--border-default);
+		}
+
+		.bottom-tree-panel.collapsed {
+			flex: 0 0 32px;
+		}
+
+		.bottom-tree-header {
+			display: flex;
+			align-items: center;
+			gap: 6px;
+			padding: 0 12px;
+			height: 32px;
+			min-height: 32px;
+			cursor: pointer;
+			user-select: none;
+			background: rgb(255, 255, 255);
+			border-bottom: 1px solid rgb(243, 244, 246);
+			font-size: 11px;
+			font-weight: 600;
+			letter-spacing: 0.08em;
+			text-transform: uppercase;
+			color: rgb(107, 114, 128);
+			transition: background-color 0.15s;
+		}
+
+		.bottom-tree-header:hover {
+			background: rgb(249, 250, 251);
+		}
+
+		.bottom-tree-caret {
+			width: 12px;
+			height: 12px;
+			flex-shrink: 0;
+			color: rgb(156, 163, 175);
+			transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+		}
+
+		.bottom-tree-panel.collapsed .bottom-tree-caret {
+			transform: rotate(-90deg);
+		}
+
+		.bottom-tree-body {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			overflow: hidden;
+		}
+
+		.bottom-tree-panel.collapsed .bottom-tree-body {
+			display: none;
+		}
+
+		.bottom-tree-container {
+			flex: 1;
+			overflow: auto;
+			padding: 12px;
+		}
+
+		.bottom-resizer {
+			height: 4px;
+			min-height: 4px;
+			background: rgb(243, 244, 246);
+			border-top: 1px solid rgb(229, 231, 235);
+			border-bottom: 1px solid rgb(229, 231, 235);
+			cursor: ns-resize;
+			transition: background-color 0.15s;
+			flex-shrink: 0;
+		}
+
+		.bottom-resizer:hover,
+		.bottom-resizer:active {
+			background: rgb(147, 197, 253);
+		}
+
 		@media (prefers-color-scheme: dark) {
 			.save-dropdown-menu {
 				background: var(--bg-surface-raised);
@@ -470,6 +554,26 @@
 			.toast {
 				background: var(--bg-surface-raised);
 				color: var(--text-primary);
+			}
+
+			.bottom-tree-header {
+				background: var(--bg-surface);
+				border-bottom-color: var(--border-subtle);
+				color: var(--text-tertiary);
+			}
+
+			.bottom-tree-header:hover {
+				background: var(--bg-surface-hover);
+			}
+
+			.bottom-resizer {
+				background: var(--border-subtle);
+				border-color: var(--bg-surface);
+			}
+
+			.bottom-resizer:hover,
+			.bottom-resizer:active {
+				background: var(--accent);
 			}
 		}
 	</style>
@@ -600,6 +704,8 @@
 				</div>
 
 				<button onclick="prettify()" class="btn btn-sm">Format</button>
+				<button onclick="transform('resolveNewlines')" class="btn btn-sm"
+					style="color: var(--accent-text);">Resolve</button>
 				<button onclick="toggleWrap()" id="wrap-toggle-btn" class="btn btn-sm font-bold">W</button>
 			</div>
 
@@ -625,9 +731,6 @@
 						<button onclick="transform('unescapeJSON')"
 							class="w-full text-left px-4 py-2 hover:bg-[var(--bg-surface-hover)] text-xs"
 							style="color: var(--info);">Unescape JSON String</button>
-						<button onclick="transform('resolveNewlines')"
-							class="w-full text-left px-4 py-2 hover:bg-[var(--bg-surface-hover)] text-xs"
-							style="color: var(--accent-text);">Resolve Escapes</button>
 					</div>
 				</div>
 				<button id="toggle-view-btn" class="btn btn-sm">
@@ -670,21 +773,6 @@
 				</div>
 			</div>
 
-			<div class="sidebar-resizer" data-resizer="0"></div>
-
-			<div id="tree-panel" class="sidebar-panel">
-				<div class="sidebar-panel-header" data-panel="tree">
-					<svg class="sidebar-panel-caret" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-					</svg>
-					<span class="sidebar-panel-title">Tree View</span>
-				</div>
-				<div class="sidebar-panel-body">
-					<div id="tree-container" class="flex-1 overflow-auto p-3 no-scrollbar">
-						<div id="json-tree-root" class="json-tree"></div>
-					</div>
-				</div>
-			</div>
 		</aside>
 
 		<div id="sidebar-h-resizer" class="sidebar-h-resizer border-r border-[var(--border-default)]"></div>
@@ -692,6 +780,20 @@
 		<main class="flex-1 overflow-hidden bg-[var(--bg-root)] relative flex flex-col">
 			<div id="editor-container" class="flex-1 w-full bg-[var(--bg-surface)] px-0 sm:px-4 py-1 sm:py-4">
 				<div id="editor" class="h-full border border-[var(--border-default)] rounded-lg overflow-hidden"></div>
+			</div>
+			<div id="bottom-resizer" class="bottom-resizer"></div>
+			<div id="bottom-tree-panel" class="bottom-tree-panel collapsed">
+				<div class="bottom-tree-header">
+					<svg class="bottom-tree-caret" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+					</svg>
+					<span>Tree View</span>
+				</div>
+				<div class="bottom-tree-body">
+					<div id="tree-container" class="bottom-tree-container no-scrollbar">
+						<div id="json-tree-root" class="json-tree"></div>
+					</div>
+				</div>
 			</div>
 		</main>
 	</div>
@@ -1039,6 +1141,82 @@
 			return cleaned;
 		}
 
+		function buildOffsetMap(text) {
+			const map = new Map();
+			const path = [];
+			let i = 0;
+
+			function skipWhitespace() {
+				while (i < text.length && /\s/.test(text[i])) i++;
+			}
+
+			function readString() {
+				const start = i;
+				i++;
+				while (i < text.length && text[i] !== '"') {
+					if (text[i] === '\\') i += 2;
+					else i++;
+				}
+				if (i < text.length) i++;
+				return text.slice(start, i);
+			}
+
+			function parseValue() {
+				skipWhitespace();
+				const start = i;
+				map.set(JSON.stringify(path), start);
+
+				if (text[i] === '"') {
+					readString();
+				} else if (text[i] === '{') {
+					i++;
+					skipWhitespace();
+					let first = true;
+					while (i < text.length && text[i] !== '}') {
+						if (!first) {
+							if (text[i] === ',') i++;
+							skipWhitespace();
+						}
+						first = false;
+						skipWhitespace();
+						if (text[i] === '"') {
+							const keyStr = readString();
+							const key = JSON.parse(keyStr);
+							skipWhitespace();
+							if (text[i] === ':') i++;
+							path.push(key);
+							parseValue();
+							path.pop();
+						} else {
+							i++;
+						}
+					}
+					if (i < text.length && text[i] === '}') i++;
+				} else if (text[i] === '[') {
+					i++;
+					skipWhitespace();
+					let index = 0;
+					while (i < text.length && text[i] !== ']') {
+						if (index > 0) {
+							if (text[i] === ',') i++;
+							skipWhitespace();
+						}
+						path.push(index);
+						parseValue();
+						path.pop();
+						index++;
+					}
+					if (i < text.length && text[i] === ']') i++;
+				} else {
+					while (i < text.length && /[^,\]\}\s]/.test(text[i])) i++;
+				}
+			}
+
+			skipWhitespace();
+			parseValue();
+			return map;
+		}
+
 		function buildTree(text) {
 			treeRoot.innerHTML = "";
 			if (!text || text.trim() === "") {
@@ -1047,7 +1225,8 @@
 			}
 			try {
 				const data = safeJsonParse(text);
-				treeRoot.appendChild(renderNode(null, data, true));
+				const offsetMap = buildOffsetMap(text);
+				treeRoot.appendChild(renderNode(null, data, true, null, [], offsetMap));
 			} catch (e) {
 				treeRoot.innerHTML = `<div class="text-red-500 p-4 border border-red-200 rounded-lg">
                     <div class="mb-1">Invalid JSON for Tree View:</div>
@@ -1057,9 +1236,13 @@
 			}
 		}
 
-		function renderNode(key, value, isLast = true, index = null) {
+		function renderNode(key, value, isLast = true, index = null, path = [], offsetMap = null) {
 			const node = document.createElement("div");
 			node.className = "json-node collapsed";
+
+			const currentPath = index !== null ? [...path, index] : (key !== null ? [...path, key] : path);
+			const pathKey = JSON.stringify(currentPath);
+			node.dataset.path = pathKey;
 
 			const content = document.createElement("span");
 			content.className = "json-node-content";
@@ -1119,7 +1302,7 @@
 
 				const keys = Object.keys(value);
 				keys.forEach((k, i) => {
-					children.appendChild(renderNode(isArray ? null : k, value[k], i === keys.length - 1, isArray ? i : null));
+					children.appendChild(renderNode(isArray ? null : k, value[k], i === keys.length - 1, isArray ? i : null, currentPath, offsetMap));
 				});
 				node.appendChild(content);
 				node.appendChild(children);
@@ -1149,7 +1332,14 @@
 
 			content.onclick = (e) => {
 				e.stopPropagation();
-				copyToClipboard(isObject ? JSON.stringify(value, null, 2) : String(value));
+				if (offsetMap && offsetMap.has(pathKey) && editor) {
+					const offset = offsetMap.get(pathKey);
+					editor.dispatch({
+						selection: { anchor: offset },
+						effects: EditorView.scrollIntoView(offset, { y: 'center' })
+					});
+					editor.focus();
+				}
 			};
 
 			return node;
@@ -1246,7 +1436,7 @@
 		};
 
 		toggleViewBtn.onclick = () => {
-			const treePanel = document.getElementById('tree-panel');
+			const treePanel = document.getElementById('bottom-tree-panel');
 			if (!treePanel) return;
 			const isCollapsed = treePanel.classList.toggle('collapsed');
 			if (isCollapsed) {
@@ -1272,18 +1462,6 @@
 				header.addEventListener('click', (e) => {
 					if (e.target.closest('#close-sidebar')) return;
 					panel.classList.toggle('collapsed');
-					// Keep toggle btn label in sync when tree-panel is toggled via header
-					if (panel.id === 'tree-panel') {
-						const isCollapsed = panel.classList.contains('collapsed');
-						toggleText.textContent = isCollapsed ? 'Tree' : 'Tree ✓';
-						if (isCollapsed) {
-							toggleViewBtn.classList.remove('bg-blue-600', 'text-white', 'border-blue-600');
-							toggleViewBtn.classList.add('bg-white', 'dark:bg-gray-900', 'text-gray-700', 'dark:text-gray-300');
-						} else {
-							toggleViewBtn.classList.add('bg-blue-600', 'text-white', 'border-blue-600');
-							toggleViewBtn.classList.remove('bg-white', 'dark:bg-gray-900', 'text-gray-700', 'dark:text-gray-300');
-						}
-					}
 				});
 			});
 
@@ -1354,6 +1532,62 @@
 			document.addEventListener('mouseup', () => {
 				if (isResizingH) {
 					isResizingH = false;
+					document.body.style.cursor = '';
+					document.body.classList.remove('select-none');
+				}
+			});
+		})();
+
+		// ── Bottom Tree Panel Toggle & Resize ──────────────
+		(function () {
+			const bottomPanel = document.getElementById('bottom-tree-panel');
+			const bottomHeader = bottomPanel.querySelector('.bottom-tree-header');
+			const bottomResizer = document.getElementById('bottom-resizer');
+			const editorContainer = document.getElementById('editor-container');
+
+			bottomHeader.addEventListener('click', () => {
+				const isCollapsed = bottomPanel.classList.toggle('collapsed');
+				toggleText.textContent = isCollapsed ? 'Tree' : 'Tree ✓';
+				if (isCollapsed) {
+					toggleViewBtn.classList.remove('bg-blue-600', 'text-white', 'border-blue-600');
+					toggleViewBtn.classList.add('bg-white', 'dark:bg-gray-900', 'text-gray-700', 'dark:text-gray-300');
+					editorContainer.style.flex = '';
+					bottomPanel.style.flex = '';
+				} else {
+					toggleViewBtn.classList.add('bg-blue-600', 'text-white', 'border-blue-600');
+					toggleViewBtn.classList.remove('bg-white', 'dark:bg-gray-900', 'text-gray-700', 'dark:text-gray-300');
+				}
+			});
+
+			// Resizer drag
+			let isResizing = false;
+			let startY = 0;
+			let startEditorH = 0;
+			let startPanelH = 0;
+
+			bottomResizer.addEventListener('mousedown', (e) => {
+				if (bottomPanel.classList.contains('collapsed')) return;
+				isResizing = true;
+				startY = e.clientY;
+				startEditorH = editorContainer.getBoundingClientRect().height;
+				startPanelH = bottomPanel.getBoundingClientRect().height;
+				document.body.style.cursor = 'ns-resize';
+				document.body.classList.add('select-none');
+				e.preventDefault();
+			});
+
+			document.addEventListener('mousemove', (e) => {
+				if (!isResizing) return;
+				const delta = e.clientY - startY;
+				const newEditorH = Math.max(100, startEditorH + delta);
+				const newPanelH = Math.max(100, startPanelH - delta);
+				editorContainer.style.flex = `0 0 ${newEditorH}px`;
+				bottomPanel.style.flex = `0 0 ${newPanelH}px`;
+			});
+
+			document.addEventListener('mouseup', () => {
+				if (isResizing) {
+					isResizing = false;
 					document.body.style.cursor = '';
 					document.body.classList.remove('select-none');
 				}
