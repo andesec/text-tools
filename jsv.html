@@ -244,6 +244,223 @@
 			-ms-overflow-style: none;
 			scrollbar-width: none;
 		}
+
+		/* ── Sidebar Panel System ── */
+		.sidebar-panel {
+			display: flex;
+			flex-direction: column;
+			overflow: hidden;
+			flex: 1 1 0;
+			min-height: 32px;
+			transition: flex 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+		}
+
+		.sidebar-panel.collapsed {
+			flex: 0 0 32px;
+		}
+
+		.sidebar-panel-header {
+			display: flex;
+			align-items: center;
+			gap: 6px;
+			padding: 0 12px;
+			height: 32px;
+			min-height: 32px;
+			cursor: pointer;
+			user-select: none;
+			background: rgb(255, 255, 255);
+			border-bottom: 1px solid rgb(243, 244, 246);
+			font-size: 11px;
+			font-weight: 600;
+			letter-spacing: 0.08em;
+			text-transform: uppercase;
+			color: rgb(107, 114, 128);
+			transition: background-color 0.15s;
+		}
+
+		.sidebar-panel-header:hover {
+			background: rgb(249, 250, 251);
+		}
+
+		.sidebar-panel-caret {
+			width: 12px;
+			height: 12px;
+			flex-shrink: 0;
+			color: rgb(156, 163, 175);
+			transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+		}
+
+		.sidebar-panel.collapsed .sidebar-panel-caret {
+			transform: rotate(-90deg);
+		}
+
+		.sidebar-panel-title {
+			flex: 1;
+		}
+
+		.sidebar-panel-body {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			overflow: hidden;
+		}
+
+		.sidebar-panel.collapsed .sidebar-panel-body {
+			display: none;
+		}
+
+		.sidebar-resizer {
+			height: 4px;
+			min-height: 4px;
+			background: rgb(243, 244, 246);
+			border-top: 1px solid rgb(229, 231, 235);
+			border-bottom: 1px solid rgb(229, 231, 235);
+			cursor: ns-resize;
+			transition: background-color 0.15s;
+			flex-shrink: 0;
+		}
+
+		.sidebar-resizer:hover,
+		.sidebar-resizer:active {
+			background: rgb(147, 197, 253);
+		}
+
+		@media (prefers-color-scheme: dark) {
+			.sidebar-panel-header {
+				background: rgb(15, 23, 42);
+				border-bottom-color: rgb(30, 41, 59);
+				color: rgb(100, 116, 139);
+			}
+			.sidebar-panel-header:hover {
+				background: rgb(30, 41, 59);
+			}
+			.sidebar-resizer {
+				background: rgb(30, 41, 59);
+				border-color: rgb(15, 23, 42);
+			}
+			.sidebar-resizer:hover,
+			.sidebar-resizer:active {
+				background: rgb(37, 99, 235);
+			}
+		}
+
+		/* Horizontal Resizer (Sidebar Width) */
+		.sidebar-h-resizer {
+			width: 4px;
+			cursor: ew-resize;
+			background: transparent;
+			transition: background-color 0.2s;
+			z-index: 40;
+			flex-shrink: 0;
+		}
+
+		.sidebar-h-resizer:hover,
+		.sidebar-h-resizer:active {
+			background: rgb(37, 99, 235);
+		}
+
+		/* Save dropdown */
+		.save-dropdown-wrapper {
+			position: relative;
+			display: flex;
+		}
+
+		.save-main-btn {
+			border-radius: 8px 0 0 8px !important;
+		}
+
+		.save-chevron-btn {
+			border-radius: 0 8px 8px 0 !important;
+			border-left: 1px solid rgb(21, 128, 61) !important;
+			padding-left: 6px;
+			padding-right: 6px;
+		}
+
+		.save-dropdown-menu {
+			position: absolute;
+			top: 100%;
+			right: 0;
+			margin-top: 4px;
+			min-width: 220px;
+			background: rgb(255, 255, 255);
+			border: 1px solid rgb(229, 231, 235);
+			border-radius: 10px;
+			box-shadow: 0 8px 24px rgb(0, 0, 0, 0.14);
+			z-index: 80;
+			display: none;
+			overflow: hidden;
+		}
+
+		.save-dropdown-menu.visible {
+			display: block;
+		}
+
+		.save-dropdown-item {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			width: 100%;
+			text-align: left;
+			padding: 10px 14px;
+			font-size: 13px;
+			color: rgb(55, 65, 81);
+			border: none;
+			background: none;
+			cursor: pointer;
+			transition: background-color 0.15s;
+			font-family: 'Inter', sans-serif;
+		}
+
+		.save-dropdown-item:hover {
+			background-color: rgb(243, 244, 246);
+		}
+
+		.save-dropdown-divider {
+			height: 1px;
+			background: rgb(243, 244, 246);
+		}
+
+		/* Toast notifications */
+		.toast {
+			position: fixed;
+			bottom: 24px;
+			left: 50%;
+			transform: translateX(-50%) translateY(80px);
+			z-index: 200;
+			background: rgb(17, 24, 39);
+			color: white;
+			padding: 10px 20px;
+			border-radius: 10px;
+			font-size: 13px;
+			font-family: 'Inter', sans-serif;
+			font-weight: 500;
+			box-shadow: 0 8px 24px rgb(0, 0, 0, 0.24);
+			transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+			pointer-events: none;
+		}
+
+		.toast.visible {
+			transform: translateX(-50%) translateY(0);
+		}
+
+		@media (prefers-color-scheme: dark) {
+			.save-dropdown-menu {
+				background: rgb(15, 23, 42);
+				border-color: rgb(30, 41, 59);
+			}
+			.save-dropdown-item {
+				color: rgb(203, 213, 225);
+			}
+			.save-dropdown-item:hover {
+				background-color: rgb(30, 41, 59);
+			}
+			.save-dropdown-divider {
+				background: rgb(30, 41, 59);
+			}
+			.toast {
+				background: rgb(241, 245, 249);
+				color: rgb(15, 23, 42);
+			}
 	</style>
 </head>
 
@@ -294,14 +511,42 @@
 					</svg>
 					<span class="hidden sm:inline">Paste</span>
 				</button>
-				<button id="download-btn"
-					class="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all transform active:scale-95 flex items-center gap-2 shadow-sm hover:shadow-md">
-					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-							d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-					</svg>
-					<span class="hidden sm:inline">Save</span>
-				</button>
+				<div class="save-dropdown-wrapper" id="save-dropdown-wrapper">
+					<button id="download-btn"
+						class="save-main-btn bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-2.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold transition-all transform active:scale-95 flex items-center gap-2 shadow-sm hover:shadow-md">
+						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+								d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+						</svg>
+						<span class="hidden sm:inline">Save</span>
+					</button>
+					<button id="save-chevron-btn"
+						class="save-chevron-btn bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-1 py-1.5 sm:py-2 text-xs transition-all transform active:scale-95 flex items-center shadow-sm hover:shadow-md">
+						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+						</svg>
+					</button>
+
+					<div id="save-dropdown-menu" class="save-dropdown-menu">
+						<button class="save-dropdown-item" onclick="saveJson()">
+							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+							Save RAW
+						</button>
+						<button class="save-dropdown-item" onclick="saveFormattedJson()">
+							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+							Save Formatted
+						</button>
+						<div class="save-dropdown-divider"></div>
+						<button class="save-dropdown-item" onclick="copyRawJson()">
+							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m-7 4h7m-7 4h7m-7 4h3"></path></svg>
+							Copy RAW
+						</button>
+						<button class="save-dropdown-item" onclick="copyFormattedJson()">
+							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m-7 4h7m-7 4h7m-7 4h3"></path></svg>
+							Copy Formatted
+						</button>
+					</div>
+				</div>
 			</div>
 		</div>
 
@@ -383,43 +628,59 @@
 	<div class="flex-1 flex overflow-hidden relative">
 		<aside id="sidebar"
 			class="w-72 border-r border-gray-200 dark:border-gray-800 flex flex-col shrink-0 sidebar hidden md:flex bg-white dark:bg-slate-900">
-			<!-- Documents Panel -->
-			<div class="flex flex-col overflow-hidden h-full">
-				<div
-					class="p-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-white dark:bg-slate-900 z-10">
-					<h2 class="text-xs text-gray-400 uppercase tracking-widest">Files</h2>
-					<button id="close-sidebar" class="md:hidden text-gray-500 p-1">
-						<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-								d="M6 18L18 6M6 6l12 12">
-							</path>
+			<!-- Files Panel (collapsed by default) -->
+			<div id="files-panel" class="sidebar-panel collapsed">
+				<div class="sidebar-panel-header" data-panel="files">
+					<svg class="sidebar-panel-caret" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+					</svg>
+					<span class="sidebar-panel-title">Files</span>
+					<button id="close-sidebar" class="md:hidden text-gray-500 p-1 ml-auto">
+						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
 						</svg>
 					</button>
 				</div>
-				<div id="file-list" class="flex-1 overflow-y-auto p-2 space-y-1">
-					<div class="text-gray-400 text-xs italic p-8 text-center">Open files to begin.</div>
+				<div class="sidebar-panel-body">
+					<div id="file-list" class="flex-1 overflow-y-auto p-2 space-y-1">
+						<div class="text-gray-400 text-xs italic p-8 text-center">Open files to begin.</div>
+					</div>
+					<div class="p-3 border-t border-gray-100 dark:border-gray-800 flex-shrink-0">
+						<button id="new-btn-sidebar" onclick="createNewScratchpad()"
+							class="w-full flex items-center justify-center gap-2 py-2 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-xs font-medium transition-all">
+							<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+							</svg>
+							New Scratchpad
+						</button>
+					</div>
 				</div>
-				<div class="p-3 border-t border-gray-100 dark:border-gray-800">
-					<button id="new-btn-sidebar" onclick="createNewScratchpad()"
-						class="w-full flex items-center justify-center gap-2 py-2 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-xs font-medium transition-all">
-						<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-						</svg>
-						New Scratchpad
-					</button>
+			</div>
+
+			<div class="sidebar-resizer" data-resizer="0"></div>
+
+			<!-- Tree View Panel -->
+			<div id="tree-panel" class="sidebar-panel">
+				<div class="sidebar-panel-header" data-panel="tree">
+					<svg class="sidebar-panel-caret" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+					</svg>
+					<span class="sidebar-panel-title">Tree View</span>
+				</div>
+				<div class="sidebar-panel-body">
+					<div id="tree-container" class="flex-1 overflow-auto p-3 no-scrollbar">
+						<div id="json-tree-root" class="json-tree"></div>
+					</div>
 				</div>
 			</div>
 		</aside>
+
+		<div id="sidebar-h-resizer" class="sidebar-h-resizer border-r border-gray-200 dark:border-gray-800"></div>
 
 		<main class="flex-1 overflow-hidden bg-slate-50 dark:bg-black relative flex flex-col">
 			<div id="editor-container" class="flex-1 w-full bg-white dark:bg-slate-950 px-2 sm:px-4 py-2 sm:py-8">
 				<div id="editor" class="h-full border-y sm:border border-gray-200 dark:border-gray-800 sm:rounded-lg overflow-hidden"></div>
 			</div>
-			<div id="tree-container"
-				class="hidden flex-1 w-full bg-white dark:bg-slate-950 overflow-auto p-4 sm:p-8 md:p-16 font-mono text-sm border-x border-transparent sm:border-gray-100 dark:sm:border-gray-900 shadow-sm">
-				<div id="json-tree-root" class="json-tree"></div>
-			</div>
-			<!-- Empty State removal or adjustment if needed, but mdv.html doesn't have it clearly -->
 		</main>
 	</div>
 
@@ -430,7 +691,7 @@
 		</svg>
 	</button>
 
-	<div id="copy-toast" class="copy-toast">Copied to clipboard!</div>
+	<div id="copy-toast" class="toast">Copied to clipboard!</div>
 
 	<script src="vendor/cm-js-bundle.js"></script>
 	<script>
@@ -443,6 +704,8 @@
 		const toggleViewBtn = document.getElementById("toggle-view-btn");
 		const toggleText = document.getElementById("toggle-text");
 		const downloadBtn = document.getElementById("download-btn");
+		const saveChevronBtn = document.getElementById("save-chevron-btn");
+		const saveDropdownMenu = document.getElementById("save-dropdown-menu");
 		const copyToast = document.getElementById("copy-toast");
 		const sourceBtn = document.getElementById("source-view-btn");
 		const sidebar = document.getElementById("sidebar");
@@ -541,12 +804,23 @@
 			}
 		});
 
+		// Save dropdown handling
+		saveChevronBtn.addEventListener('click', (e) => {
+			e.stopPropagation();
+			saveDropdownMenu.classList.toggle('visible');
+			instanceDropdown.classList.add('hidden');
+			toolsDropdown.classList.add('hidden');
+		});
+
 		window.addEventListener('click', (e) => {
 			if (!e.target.closest('#dropdown-instance')) {
 				instanceDropdown.classList.add('hidden');
 			}
 			if (!e.target.closest('#dropdown-tools')) {
 				toolsDropdown.classList.add('hidden');
+			}
+			if (!e.target.closest('#save-dropdown-wrapper')) {
+				saveDropdownMenu.classList.remove('visible');
 			}
 		});
 		let currentInstance = 0;
@@ -664,9 +938,11 @@
 				loadedFiles.set(file.name, file);
 				renderFileListItem(file.name);
 			});
-			if (loadedFiles.size > 0) {
-				const first = Array.from(loadedFiles.keys())[0];
-				displayFile(first);
+			if (loadedFiles.size === 0) {
+				fileListContainer.innerHTML = '<div class="text-gray-400 text-xs italic p-8 text-center">Open files to begin.</div>';
+			} else if (loadedFiles.size === 1) {
+				const firstBtn = fileListContainer.querySelector('.file-item');
+				if (firstBtn) firstBtn.click();
 			}
 		}
 
@@ -953,35 +1229,173 @@
 		};
 
 		toggleViewBtn.onclick = () => {
-			if (viewMode === "editor") {
-				viewMode = "tree";
-				editorContainer.classList.add("hidden");
-				treeContainer.classList.remove("hidden");
-				toggleText.textContent = "Editor";
-				toggleViewBtn.classList.add("bg-blue-600", "text-white", "border-blue-600");
-				toggleViewBtn.classList.remove("bg-white", "dark:bg-gray-900", "text-gray-700", "dark:text-gray-300");
-				// tree view is now kept in sync by updateListener
+			const treePanel = document.getElementById('tree-panel');
+			if (!treePanel) return;
+			const isCollapsed = treePanel.classList.toggle('collapsed');
+			if (isCollapsed) {
+				toggleText.textContent = 'Tree';
+				toggleViewBtn.classList.remove('bg-blue-600', 'text-white', 'border-blue-600');
+				toggleViewBtn.classList.add('bg-white', 'dark:bg-gray-900', 'text-gray-700', 'dark:text-gray-300');
 			} else {
-				viewMode = "editor";
-				editorContainer.classList.remove("hidden");
-				treeContainer.classList.add("hidden");
-				toggleText.textContent = "Tree";
-				toggleViewBtn.classList.remove("bg-blue-600", "text-white", "border-blue-600");
-				toggleViewBtn.classList.add("bg-white", "dark:bg-gray-900", "text-gray-700", "dark:text-gray-300");
+				toggleText.textContent = 'Tree ✓';
+				toggleViewBtn.classList.add('bg-blue-600', 'text-white', 'border-blue-600');
+				toggleViewBtn.classList.remove('bg-white', 'dark:bg-gray-900', 'text-gray-700', 'dark:text-gray-300');
 			}
 		};
 
-		downloadBtn.onclick = () => {
+		// ── Sidebar Panel Toggle & Resize ──────────────────
+		(function () {
+			const sidebarEl = document.getElementById('sidebar');
+			const panels = Array.from(sidebarEl.querySelectorAll('.sidebar-panel'));
+			const resizers = Array.from(sidebarEl.querySelectorAll('.sidebar-resizer'));
+
+			// Toggle panel collapse on header click
+			panels.forEach(panel => {
+				const header = panel.querySelector('.sidebar-panel-header');
+				header.addEventListener('click', (e) => {
+					if (e.target.closest('#close-sidebar')) return;
+					panel.classList.toggle('collapsed');
+					// Keep toggle btn label in sync when tree-panel is toggled via header
+					if (panel.id === 'tree-panel') {
+						const isCollapsed = panel.classList.contains('collapsed');
+						toggleText.textContent = isCollapsed ? 'Tree' : 'Tree ✓';
+						if (isCollapsed) {
+							toggleViewBtn.classList.remove('bg-blue-600', 'text-white', 'border-blue-600');
+							toggleViewBtn.classList.add('bg-white', 'dark:bg-gray-900', 'text-gray-700', 'dark:text-gray-300');
+						} else {
+							toggleViewBtn.classList.add('bg-blue-600', 'text-white', 'border-blue-600');
+							toggleViewBtn.classList.remove('bg-white', 'dark:bg-gray-900', 'text-gray-700', 'dark:text-gray-300');
+						}
+					}
+				});
+			});
+
+			// Resizer drag
+			let activeResizer = null, resizerAbove = null, resizerBelow = null;
+			let startY = 0, startAboveH = 0, startBelowH = 0;
+
+			function getExpandedNeighbors(resizerEl) {
+				let above = null, below = null;
+				let prev = resizerEl.previousElementSibling;
+				while (prev) {
+					if (prev.classList.contains('sidebar-panel') && !prev.classList.contains('collapsed')) { above = prev; break; }
+					prev = prev.previousElementSibling;
+				}
+				let next = resizerEl.nextElementSibling;
+				while (next) {
+					if (next.classList.contains('sidebar-panel') && !next.classList.contains('collapsed')) { below = next; break; }
+					next = next.nextElementSibling;
+				}
+				return { above, below };
+			}
+
+			resizers.forEach(r => {
+				r.addEventListener('mousedown', (e) => {
+					const nb = getExpandedNeighbors(r);
+					if (!nb.above || !nb.below) return;
+					activeResizer = r;
+					resizerAbove = nb.above;
+					resizerBelow = nb.below;
+					startY = e.clientY;
+					startAboveH = resizerAbove.getBoundingClientRect().height;
+					startBelowH = resizerBelow.getBoundingClientRect().height;
+					document.body.style.cursor = 'ns-resize';
+					document.body.classList.add('select-none');
+					e.preventDefault();
+				});
+			});
+
+			document.addEventListener('mousemove', (e) => {
+				if (!activeResizer) return;
+				const delta = e.clientY - startY;
+				resizerAbove.style.flex = `0 0 ${Math.max(40, startAboveH + delta)}px`;
+				resizerBelow.style.flex = `0 0 ${Math.max(40, startBelowH - delta)}px`;
+			});
+
+			document.addEventListener('mouseup', () => {
+				if (activeResizer) {
+					activeResizer = null; resizerAbove = null; resizerBelow = null;
+					document.body.style.cursor = '';
+					document.body.classList.remove('select-none');
+				}
+			});
+
+			// Sidebar width resizing (Horizontal)
+			const hResizer = document.getElementById('sidebar-h-resizer');
+			let isResizingH = false;
+			hResizer.addEventListener('mousedown', (e) => {
+				isResizingH = true;
+				document.body.style.cursor = 'ew-resize';
+				document.body.classList.add('select-none');
+				e.preventDefault();
+			});
+			document.addEventListener('mousemove', (e) => {
+				if (!isResizingH) return;
+				const newWidth = Math.max(160, Math.min(600, e.clientX));
+				sidebarEl.style.width = `${newWidth}px`;
+			});
+			document.addEventListener('mouseup', () => {
+				if (isResizingH) {
+					isResizingH = false;
+					document.body.style.cursor = '';
+					document.body.classList.remove('select-none');
+				}
+			});
+		})();
+
+		function toast(msg) {
+			copyToast.textContent = msg;
+			copyToast.classList.add("visible");
+			setTimeout(() => copyToast.classList.remove("visible"), 2000);
+		}
+
+		window.saveJson = () => {
 			if (!editor || !currentFileName) return;
 			const text = sourceJSON !== null ? sourceJSON : editor.state.doc.toString();
-			const blob = new Blob([text], { type: "application/javascript" });
+			download(text, currentFileName);
+		};
+
+		window.saveFormattedJson = () => {
+			if (!editor || !currentFileName) return;
+			try {
+				const text = sourceJSON !== null ? sourceJSON : editor.state.doc.toString();
+				const formatted = JSON.stringify(JSON.parse(text), null, 2);
+				download(formatted, currentFileName.replace(/\.[^.]+$/, "") + ".formatted.json");
+			} catch (e) {
+				alert("Invalid JSON - cannot format for save");
+			}
+		};
+
+		window.copyRawJson = () => {
+			if (!editor) return;
+			const text = sourceJSON !== null ? sourceJSON : editor.state.doc.toString();
+			navigator.clipboard.writeText(text).then(() => toast("RAW JSON copied to clipboard"));
+			saveDropdownMenu.classList.remove('visible');
+		};
+
+		window.copyFormattedJson = () => {
+			if (!editor) return;
+			try {
+				const text = sourceJSON !== null ? sourceJSON : editor.state.doc.toString();
+				const formatted = JSON.stringify(JSON.parse(text), null, 2);
+				navigator.clipboard.writeText(formatted).then(() => toast("Formatted JSON copied to clipboard"));
+			} catch (e) {
+				alert("Invalid JSON - cannot format for copy");
+			}
+			saveDropdownMenu.classList.remove('visible');
+		};
+
+		function download(text, filename) {
+			const blob = new Blob([text], { type: "application/json" });
 			const url = URL.createObjectURL(blob);
 			const a = document.createElement("a");
 			a.href = url;
-			a.download = currentFileName;
+			a.download = filename;
 			a.click();
 			URL.revokeObjectURL(url);
-		};
+		}
+
+		downloadBtn.onclick = saveJson;
 
 		function readFileAsText(file) {
 			return new Promise((resolve) => {
