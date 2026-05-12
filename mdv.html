@@ -321,7 +321,8 @@
 			</div>
 
 			<div class="flex items-center gap-1.5 sm:gap-2">
-				<input type="file" id="file-input" multiple accept=".md,.markdown,text/markdown" class="hidden" />
+				<input type="file" id="file-input" multiple accept=".md,.markdown,.txt,text/markdown,text/plain"
+					class="hidden" />
 				<button id="open-btn"
 					class="btn btn-gradient-blue btn-sm sm:px-4 sm:py-2 sm:text-sm shadow-sm hover:shadow-md transition-all transform active:scale-95">
 					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -774,13 +775,14 @@
 			fileListContainer.innerHTML = "";
 			loadedFiles.clear();
 			Array.from(files).forEach((file) => {
-				if (file.name.toLowerCase().endsWith(".md") || file.name.toLowerCase().endsWith(".markdown")) {
+				const lower = file.name.toLowerCase();
+				if (lower.endsWith(".md") || lower.endsWith(".markdown") || lower.endsWith(".txt")) {
 					loadedFiles.set(file.name, file);
 					renderFileListItem(file.name);
 				}
 			});
 			if (loadedFiles.size === 0) {
-				fileListContainer.innerHTML = '<div class="p-4 text-center text-xs text-red-500">No Markdown files found.</div>';
+				fileListContainer.innerHTML = '<div class="p-4 text-center text-xs text-red-500">No Markdown or text files found.</div>';
 			} else if (loadedFiles.size === 1) {
 				const firstBtn = fileListContainer.querySelector('.file-item');
 				if (firstBtn) firstBtn.click();
