@@ -24,560 +24,11 @@
 	</script>
 	<script src="vendor/purify.min.js"></script>
 	<link rel="stylesheet" href="theme.css">
+	<link rel="stylesheet" href="jsv.css">
 
-	<style>
-		:root {
-			--reader-font-size: 0.9rem;
-		}
 
-		body {
-			font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-		}
-
-		.json-tree {
-			font-family: inherit;
-			font-size: 13px;
-			line-height: 1.5;
-		}
-
-		.json-node {
-			margin-left: 1.25rem;
-			position: relative;
-		}
-
-		.json-toggle {
-			position: absolute;
-			left: -1.1rem;
-			cursor: pointer;
-			user-select: none;
-			opacity: 0.5;
-			transition: opacity 0.2s;
-			padding: 2px;
-		}
-
-		.json-toggle:hover {
-			opacity: 1;
-		}
-
-		.json-key {
-			color: var(--code-property);
-			font-weight: normal;
-		}
-
-		.json-value-string {
-			color: var(--code-string);
-			white-space: pre-wrap;
-			word-break: break-word;
-		}
-
-		.json-value-number {
-			color: var(--code-number);
-		}
-
-		.json-value-boolean {
-			color: var(--code-boolean);
-		}
-
-		.json-value-null {
-			color: var(--code-null);
-		}
-
-		.json-meta {
-			color: var(--text-tertiary);
-			font-size: 0.7rem;
-			margin-left: 0.5rem;
-			font-weight: normal;
-			opacity: 0.8;
-		}
-
-		.dark .json-key {
-			color: var(--code-property);
-		}
-
-		.dark .json-value-string {
-			color: var(--code-string);
-		}
-
-		.dark .json-value-number {
-			color: var(--code-number);
-		}
-
-		.dark .json-value-boolean {
-			color: var(--code-boolean);
-		}
-
-		.dark .json-value-null {
-			color: var(--code-null);
-		}
-
-		.dark .json-meta {
-			color: var(--text-tertiary);
-		}
-
-		.collapsed>.json-children {
-			display: none;
-		}
-
-		.collapsed>.json-toggle::before {
-			content: "▶";
-		}
-
-		.json-toggle::before {
-			content: "▼";
-			font-size: 0.7rem;
-		}
-
-		.expanded-only {
-			display: none;
-		}
-
-		.json-node:not(.collapsed)>.expanded-only {
-			display: block;
-		}
-
-		.json-node:not(.collapsed)>.json-node-content>.collapsed-only {
-			display: none;
-		}
-
-		.json-node.collapsed>.expanded-only {
-			display: none;
-		}
-
-		.json-node.collapsed>.json-node-content>.collapsed-only {
-			display: inline;
-		}
-
-		.json-node-content {
-			cursor: pointer;
-			padding: 2px 4px;
-			border-radius: 4px;
-			transition: background 0.2s;
-			display: inline-block;
-			vertical-align: top;
-		}
-
-		.json-node-content:hover {
-			background: var(--bg-surface-hover);
-		}
-
-		.dark .json-node-content:hover {
-			background: var(--bg-surface-hover);
-		}
-
-		.copy-toast {
-			position: fixed;
-			bottom: 2rem;
-			left: 50%;
-			transform: translateX(-50%);
-			background: #333;
-			color: white;
-			padding: 0.5rem 1rem;
-			border-radius: 2rem;
-			font-size: 0.8rem;
-			z-index: 1000;
-			opacity: 0;
-			transition: opacity 0.3s;
-			pointer-events: none;
-		}
-
-		@media (prefers-color-scheme: dark) {
-			body {
-				background-color: var(--bg-root);
-				color: var(--text-primary);
-			}
-
-			.sidebar {
-				background-color: var(--bg-surface);
-				border-color: var(--border-default);
-			}
-		}
-
-		/* Mobile specific improvements */
-		@media (max-width: 640px) {
-			:root {
-				--reader-font-size: 0.85rem;
-			}
-		}
-
-		.mobile-sidebar-active #sidebar {
-			display: flex !important;
-			position: fixed;
-			inset: 0;
-			z-index: 60;
-			width: 100%;
-		}
-
-		/* Ensure editor fills container and scrolls correctly */
-		#editor-container {
-			min-height: 0;
-			display: flex;
-			flex-direction: column;
-		}
-
-		#editor {
-			flex: 1;
-			min-height: 0;
-		}
-
-		.cm-editor {
-			height: 100% !important;
-		}
-
-		.cm-scroller {
-			overflow: auto !important;
-		}
-
-		.file-item.active {
-			background-color: rgb(37, 99, 235) !important;
-			color: rgb(255, 255, 255) !important;
-		}
-
-		/* Hide scrollbars but allow scrolling */
-		.no-scrollbar::-webkit-scrollbar {
-			display: none;
-		}
-
-		.no-scrollbar {
-			-ms-overflow-style: none;
-			scrollbar-width: none;
-		}
-
-		/* ── Sidebar Panel System ── */
-		.sidebar-panel {
-			display: flex;
-			flex-direction: column;
-			overflow: hidden;
-			flex: 1 1 0;
-			min-height: 32px;
-			transition: flex 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-		}
-
-		.sidebar-panel.collapsed {
-			flex: 0 0 32px;
-		}
-
-		.sidebar-panel-header {
-			display: flex;
-			align-items: center;
-			gap: 6px;
-			padding: 0 12px;
-			height: 32px;
-			min-height: 32px;
-			cursor: pointer;
-			user-select: none;
-			background: rgb(255, 255, 255);
-			border-bottom: 1px solid rgb(243, 244, 246);
-			font-size: 11px;
-			font-weight: 600;
-			letter-spacing: 0.08em;
-			text-transform: uppercase;
-			color: rgb(107, 114, 128);
-			transition: background-color 0.15s;
-		}
-
-		.sidebar-panel-header:hover {
-			background: rgb(249, 250, 251);
-		}
-
-		.sidebar-panel-caret {
-			width: 12px;
-			height: 12px;
-			flex-shrink: 0;
-			color: rgb(156, 163, 175);
-			transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-		}
-
-		.sidebar-panel.collapsed .sidebar-panel-caret {
-			transform: rotate(-90deg);
-		}
-
-		.sidebar-panel-title {
-			flex: 1;
-		}
-
-		.sidebar-panel-body {
-			flex: 1;
-			display: flex;
-			flex-direction: column;
-			overflow: hidden;
-		}
-
-		.sidebar-panel.collapsed .sidebar-panel-body {
-			display: none;
-		}
-
-		.sidebar-resizer {
-			height: 4px;
-			min-height: 4px;
-			background: rgb(243, 244, 246);
-			border-top: 1px solid rgb(229, 231, 235);
-			border-bottom: 1px solid rgb(229, 231, 235);
-			cursor: ns-resize;
-			transition: background-color 0.15s;
-			flex-shrink: 0;
-		}
-
-		.sidebar-resizer:hover,
-		.sidebar-resizer:active {
-			background: rgb(147, 197, 253);
-		}
-
-		@media (prefers-color-scheme: dark) {
-			.sidebar-panel-header {
-				background: var(--bg-surface);
-				border-bottom-color: var(--border-subtle);
-				color: var(--text-tertiary);
-			}
-
-			.sidebar-panel-header:hover {
-				background: var(--bg-surface-hover);
-			}
-
-			.sidebar-resizer {
-				background: var(--border-subtle);
-				border-color: var(--bg-surface);
-			}
-
-			.sidebar-resizer:hover,
-			.sidebar-resizer:active {
-				background: var(--accent);
-			}
-		}
-
-		/* Horizontal Resizer (Sidebar Width) */
-		.sidebar-h-resizer {
-			width: 4px;
-			cursor: ew-resize;
-			background: transparent;
-			transition: background-color 0.2s;
-			z-index: 40;
-			flex-shrink: 0;
-		}
-
-		.sidebar-h-resizer:hover,
-		.sidebar-h-resizer:active {
-			background: rgb(37, 99, 235);
-		}
-
-		/* Save dropdown */
-		.save-dropdown-wrapper {
-			position: relative;
-			display: flex;
-		}
-
-		.save-main-btn {
-			border-radius: 8px 0 0 8px !important;
-		}
-
-		.save-chevron-btn {
-			border-radius: 0 8px 8px 0 !important;
-			border-left: 1px solid rgb(21, 128, 61) !important;
-			padding-left: 6px;
-			padding-right: 6px;
-		}
-
-		.save-dropdown-menu {
-			position: absolute;
-			top: 100%;
-			right: 0;
-			margin-top: 4px;
-			min-width: 220px;
-			background: rgb(255, 255, 255);
-			border: 1px solid rgb(229, 231, 235);
-			border-radius: 10px;
-			box-shadow: 0 8px 24px rgb(0, 0, 0, 0.14);
-			z-index: 80;
-			display: none;
-			overflow: hidden;
-		}
-
-		.save-dropdown-menu.visible {
-			display: block;
-		}
-
-		.save-dropdown-item {
-			display: flex;
-			align-items: center;
-			gap: 10px;
-			width: 100%;
-			text-align: left;
-			padding: 10px 14px;
-			font-size: 13px;
-			color: rgb(55, 65, 81);
-			border: none;
-			background: none;
-			cursor: pointer;
-			transition: background-color 0.15s;
-			font-family: 'Inter', sans-serif;
-		}
-
-		.save-dropdown-item:hover {
-			background-color: rgb(243, 244, 246);
-		}
-
-		.save-dropdown-item svg {
-			width: 16px;
-			height: 16px;
-			flex-shrink: 0;
-		}
-
-		.save-dropdown-divider {
-			height: 1px;
-			background: rgb(243, 244, 246);
-		}
-
-		/* Toast notifications */
-		.toast {
-			position: fixed;
-			bottom: 24px;
-			left: 50%;
-			transform: translateX(-50%) translateY(80px);
-			z-index: 200;
-			background: rgb(17, 24, 39);
-			color: white;
-			padding: 10px 20px;
-			border-radius: 10px;
-			font-size: 13px;
-			font-family: 'Inter', sans-serif;
-			font-weight: 500;
-			box-shadow: 0 8px 24px rgb(0, 0, 0, 0.24);
-			transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-			pointer-events: none;
-		}
-
-		.toast.visible {
-			transform: translateX(-50%) translateY(0);
-		}
-
-		/* Bottom Tree Panel */
-		.bottom-tree-panel {
-			display: flex;
-			flex-direction: column;
-			overflow: hidden;
-			flex: 1 1 0;
-			min-height: 32px;
-			transition: flex 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-			background: var(--bg-surface);
-			border-top: 1px solid var(--border-default);
-		}
-
-		.bottom-tree-panel.collapsed {
-			flex: 0 0 32px;
-		}
-
-		.bottom-tree-header {
-			display: flex;
-			align-items: center;
-			gap: 6px;
-			padding: 0 12px;
-			height: 32px;
-			min-height: 32px;
-			cursor: pointer;
-			user-select: none;
-			background: rgb(255, 255, 255);
-			border-bottom: 1px solid rgb(243, 244, 246);
-			font-size: 11px;
-			font-weight: 600;
-			letter-spacing: 0.08em;
-			text-transform: uppercase;
-			color: rgb(107, 114, 128);
-			transition: background-color 0.15s;
-		}
-
-		.bottom-tree-header:hover {
-			background: rgb(249, 250, 251);
-		}
-
-		.bottom-tree-caret {
-			width: 12px;
-			height: 12px;
-			flex-shrink: 0;
-			color: rgb(156, 163, 175);
-			transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-		}
-
-		.bottom-tree-panel.collapsed .bottom-tree-caret {
-			transform: rotate(-90deg);
-		}
-
-		.bottom-tree-body {
-			flex: 1;
-			display: flex;
-			flex-direction: column;
-			overflow: hidden;
-		}
-
-		.bottom-tree-panel.collapsed .bottom-tree-body {
-			display: none;
-		}
-
-		.bottom-tree-container {
-			flex: 1;
-			overflow: auto;
-			padding: 12px;
-		}
-
-		.bottom-resizer {
-			height: 4px;
-			min-height: 4px;
-			background: rgb(243, 244, 246);
-			border-top: 1px solid rgb(229, 231, 235);
-			border-bottom: 1px solid rgb(229, 231, 235);
-			cursor: ns-resize;
-			transition: background-color 0.15s;
-			flex-shrink: 0;
-		}
-
-		.bottom-resizer:hover,
-		.bottom-resizer:active {
-			background: rgb(147, 197, 253);
-		}
-
-		@media (prefers-color-scheme: dark) {
-			.save-dropdown-menu {
-				background: var(--bg-surface-raised);
-				border-color: var(--border-default);
-			}
-
-			.save-dropdown-item {
-				color: var(--text-primary);
-			}
-
-			.save-dropdown-item:hover {
-				background-color: var(--bg-surface-hover);
-			}
-
-			.save-dropdown-divider {
-				background: var(--border-subtle);
-			}
-
-			.toast {
-				background: var(--bg-surface-raised);
-				color: var(--text-primary);
-			}
-
-			.bottom-tree-header {
-				background: var(--bg-surface);
-				border-bottom-color: var(--border-subtle);
-				color: var(--text-tertiary);
-			}
-
-			.bottom-tree-header:hover {
-				background: var(--bg-surface-hover);
-			}
-
-			.bottom-resizer {
-				background: var(--border-subtle);
-				border-color: var(--bg-surface);
-			}
-
-			.bottom-resizer:hover,
-			.bottom-resizer:active {
-				background: var(--accent);
-			}
-		}
-	</style>
 </head>
+
 
 <body class="h-screen flex flex-col overflow-hidden transition-colors duration-200">
 	<header class="app-header z-50 shrink-0">
@@ -773,6 +224,23 @@
 				</div>
 			</div>
 
+			<div class="sidebar-resizer"></div>
+
+			<!-- Tree View panel — desktop sidebar -->
+			<div id="sidebar-tree-panel" class="sidebar-panel sidebar-tree-panel">
+				<div class="sidebar-panel-header" data-panel="sidebar-tree">
+					<svg class="sidebar-panel-caret" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+					</svg>
+					<span class="sidebar-panel-title">Tree View</span>
+				</div>
+				<div class="sidebar-panel-body">
+					<div id="sidebar-tree-container" class="sidebar-tree-container no-scrollbar">
+						<div id="json-tree-root" class="json-tree"></div>
+					</div>
+				</div>
+			</div>
+
 		</aside>
 
 		<div id="sidebar-h-resizer" class="sidebar-h-resizer border-r border-[var(--border-default)]"></div>
@@ -782,6 +250,7 @@
 				<div id="editor" class="h-full border border-[var(--border-default)] rounded-lg overflow-hidden"></div>
 			</div>
 			<div id="bottom-resizer" class="bottom-resizer"></div>
+			<!-- Bottom tree panel — mobile only (CSS controls visibility) -->
 			<div id="bottom-tree-panel" class="bottom-tree-panel collapsed">
 				<div class="bottom-tree-header">
 					<svg class="bottom-tree-caret" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -791,7 +260,7 @@
 				</div>
 				<div class="bottom-tree-body">
 					<div id="tree-container" class="bottom-tree-container no-scrollbar">
-						<div id="json-tree-root" class="json-tree"></div>
+						<div id="json-tree-mobile" class="json-tree"></div>
 					</div>
 				</div>
 			</div>
@@ -814,6 +283,7 @@
 		const editorContainer = document.getElementById("editor-container");
 		const treeContainer = document.getElementById("tree-container");
 		const treeRoot = document.getElementById("json-tree-root");
+		const treeMobile = document.getElementById("json-tree-mobile");
 		const editorEl = document.getElementById("editor");
 		const toggleViewBtn = document.getElementById("toggle-view-btn");
 		const toggleText = document.getElementById("toggle-text");
@@ -1218,21 +688,24 @@
 		}
 
 		function buildTree(text) {
-			treeRoot.innerHTML = "";
+			const empty = '<div style="color:var(--text-tertiary);padding:2rem;text-align:center;font-style:italic;font-size:12px;">Editor is empty. Paste or type JSON to see the tree view.</div>';
+			const renderTo = [treeRoot, treeMobile];
+			renderTo.forEach(r => r.innerHTML = "");
 			if (!text || text.trim() === "") {
-				treeRoot.innerHTML = '<div class="text-gray-400 p-8 text-center italic">Editor is empty. Paste or type JSON to see the tree view.</div>';
+				renderTo.forEach(r => r.innerHTML = empty);
 				return;
 			}
 			try {
 				const data = safeJsonParse(text);
 				const offsetMap = buildOffsetMap(text);
-				treeRoot.appendChild(renderNode(null, data, true, null, [], offsetMap));
+				renderTo.forEach(r => r.appendChild(renderNode(null, data, true, null, [], offsetMap)));
 			} catch (e) {
-				treeRoot.innerHTML = `<div class="text-red-500 p-4 border border-red-200 rounded-lg">
-                    <div class="mb-1">Invalid JSON for Tree View:</div>
-                    <div class="text-xs font-mono opacity-70">${e.message}</div>
-                    <button onclick="transform('cleanJSON')" class="mt-4 px-3 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded text-xs transition">Try to Auto-Fix JSON</button>
-                </div>`;
+				const errHtml = `<div style="color:var(--danger);padding:1rem;border:1px solid var(--danger);border-radius:8px;">
+					<div style="margin-bottom:4px;font-weight:600;">Invalid JSON</div>
+					<div style="font-size:11px;font-family:var(--font-mono);color:var(--text-secondary);">${e.message}</div>
+					<button onclick="transform('cleanJSON')" style="margin-top:12px;padding:4px 10px;background:var(--danger-muted);color:var(--danger);border:none;border-radius:6px;font-size:11px;cursor:pointer;">Try to Auto-Fix JSON</button>
+				</div>`;
+				renderTo.forEach(r => r.innerHTML = errHtml);
 			}
 		}
 
@@ -1319,12 +792,11 @@
 				valSpan.textContent = type === "string" ? `"${value}"` : String(value);
 				content.appendChild(valSpan);
 
-				if (type === "string") {
-					const meta = document.createElement("span");
-					meta.className = "json-meta opacity-40";
-					meta.textContent = `${value.length} ch`;
-					content.appendChild(meta);
-				}
+				// Type badge
+				const badge = document.createElement("span");
+				badge.className = `json-type-badge json-type-${type}`;
+				badge.textContent = type === "string" ? `str·${value.length}` : type;
+				content.appendChild(badge);
 
 				if (!isLast) content.appendChild(document.createTextNode(","));
 				node.appendChild(content);
@@ -1334,11 +806,33 @@
 				e.stopPropagation();
 				if (offsetMap && offsetMap.has(pathKey) && editor) {
 					const offset = offsetMap.get(pathKey);
+					// Compute end of the value in the doc
+					const doc = editor.state.doc;
+					const text = doc.toString();
+					let end = offset;
+					// Scan forward to find end of value token
+					if (text[offset] === '"') {
+						end++;
+						while (end < text.length && text[end] !== '"') {
+							if (text[end] === '\\') end++;
+							end++;
+						}
+						end++; // include closing quote
+					} else if (text[offset] === '{' || text[offset] === '[') {
+						end = offset + 1; // just place cursor at open bracket
+					} else {
+						// number / boolean / null — scan to delimiter
+						while (end < text.length && /[^,\]\}\s]/.test(text[end])) end++;
+					}
 					editor.dispatch({
-						selection: { anchor: offset },
+						selection: { anchor: offset, head: end },
 						effects: EditorView.scrollIntoView(offset, { y: 'center' })
 					});
 					editor.focus();
+
+					// Flash the tree node for visual feedback
+					node.classList.add('tree-node-active');
+					setTimeout(() => node.classList.remove('tree-node-active'), 600);
 				}
 			};
 
@@ -1436,19 +930,22 @@
 		};
 
 		toggleViewBtn.onclick = () => {
-			const treePanel = document.getElementById('bottom-tree-panel');
-			if (!treePanel) return;
-			const isCollapsed = treePanel.classList.toggle('collapsed');
-			if (isCollapsed) {
-				toggleText.textContent = 'Tree';
-				toggleViewBtn.classList.remove('bg-blue-600', 'text-white', 'border-blue-600');
-				toggleViewBtn.classList.add('bg-white', 'dark:bg-gray-900', 'text-gray-700', 'dark:text-gray-300');
+			const isMobile = window.innerWidth < 768;
+			if (isMobile) {
+				// Mobile: toggle bottom panel
+				const treePanel = document.getElementById('bottom-tree-panel');
+				if (!treePanel) return;
+				const isCollapsed = treePanel.classList.toggle('collapsed');
+				toggleText.textContent = isCollapsed ? 'Tree' : 'Tree ✓';
 			} else {
-				toggleText.textContent = 'Tree ✓';
-				toggleViewBtn.classList.add('bg-blue-600', 'text-white', 'border-blue-600');
-				toggleViewBtn.classList.remove('bg-white', 'dark:bg-gray-900', 'text-gray-700', 'dark:text-gray-300');
+				// Desktop: toggle sidebar tree panel
+				const sidebarTreePanel = document.getElementById('sidebar-tree-panel');
+				if (!sidebarTreePanel) return;
+				const isCollapsed = sidebarTreePanel.classList.toggle('collapsed');
+				toggleText.textContent = isCollapsed ? 'Tree' : 'Tree ✓';
 			}
 		};
+
 
 		// ── Sidebar Panel Toggle & Resize ──────────────────
 		(function () {
@@ -1549,13 +1046,8 @@
 				const isCollapsed = bottomPanel.classList.toggle('collapsed');
 				toggleText.textContent = isCollapsed ? 'Tree' : 'Tree ✓';
 				if (isCollapsed) {
-					toggleViewBtn.classList.remove('bg-blue-600', 'text-white', 'border-blue-600');
-					toggleViewBtn.classList.add('bg-white', 'dark:bg-gray-900', 'text-gray-700', 'dark:text-gray-300');
 					editorContainer.style.flex = '';
 					bottomPanel.style.flex = '';
-				} else {
-					toggleViewBtn.classList.add('bg-blue-600', 'text-white', 'border-blue-600');
-					toggleViewBtn.classList.remove('bg-white', 'dark:bg-gray-900', 'text-gray-700', 'dark:text-gray-300');
 				}
 			});
 
