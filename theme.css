@@ -542,3 +542,108 @@ body {
 .sidebar-h-resizer:active {
   background: var(--accent);
 }
+
+/* ── Workspace Tabs ── */
+.workspace-tabs-bar {
+  display: flex;
+  align-items: center;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-default);
+  overflow-x: auto;
+  user-select: none;
+}
+
+.workspace-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  background: var(--bg-surface-raised);
+  border-right: 1px solid var(--border-default);
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  min-width: 120px;
+  max-width: 200px;
+}
+
+.workspace-tab.active {
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border-bottom: 2px solid var(--accent);
+  font-weight: 500;
+}
+
+.workspace-tab:hover:not(.active) {
+  background: var(--bg-surface-hover);
+  color: var(--text-primary);
+}
+
+.workspace-tab-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workspace-tab-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-sm);
+  color: var(--text-tertiary);
+  transition: all var(--transition-fast);
+  opacity: 0.5;
+}
+
+.workspace-tab:hover .workspace-tab-close {
+  opacity: 1;
+}
+
+.workspace-tab-close:hover {
+  background: var(--bg-surface-hover);
+  color: var(--text-primary);
+}
+
+.workspace-add-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin-left: 8px;
+  margin-right: 16px;
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.workspace-add-tab:hover {
+  background: var(--bg-surface-raised);
+  color: var(--text-primary);
+}
+
+.workspace-content {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.workspace-iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: none;
+}
+
+.workspace-iframe.active {
+  display: block;
+}

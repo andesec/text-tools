@@ -578,6 +578,19 @@
 		var editor = null;
 		let lineWrap = true;
 		const isFileSystemApiSupported = "showDirectoryPicker" in window;
+		const MDV_STORAGE_KEY = window.name && window.name.startsWith('tab_') 
+			? `mdv_state_${window.name}` 
+			: 'mdv_state_default';
+
+		function saveMdvState() {
+			if (editor) {
+				localStorage.setItem(MDV_STORAGE_KEY, editor.state.doc.toString());
+			}
+		}
+
+		function loadMdvState() {
+			return localStorage.getItem(MDV_STORAGE_KEY) || "";
+		}
 
 		// Initialize CodeMirror
 		function initEditor(initialValue = "") {
@@ -603,6 +616,7 @@
 				EditorView.updateListener.of((update) => {
 					if (update.docChanged) {
 						updatePreview();
+						saveMdvState();
 					}
 				})
 			];
@@ -1014,11 +1028,19 @@
 		};
 
 		// Initial setup
-		initEditor("");
+		initEditor(loadMdvState());
 		updateViewMode();
 	</script>
 	<script src="mdv-comments.js"></script>
-	<script>MdvComments.init();</script>
+	<script>
+		MdvComments.init();
+		if (window.parent && window.parent !== window) {
+			window.parent.postMessage({
+				type: 'toolSelection',
+				url: window.location.pathname.split('/').pop() + window.location.search
+			}, '*');
+		}
+	</script>
 </body>
 
 </html>

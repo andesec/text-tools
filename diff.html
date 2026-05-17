@@ -344,7 +344,7 @@ let diffTimer = null;
 let syncingScroll = false;
 let currentLang = 'auto';
 let opts = { ignoreWS: false, caseInsensitive: false, normalizeTypo: false };
-const STORAGE = 'difftool-v2';
+const STORAGE = window.name && window.name.startsWith('tab_') ? 'difftool-v2_' + window.name : 'difftool-v2';
 
 const isDark = () => window.matchMedia('(prefers-color-scheme: dark)').matches;
 const theme  = () => isDark() ? oneDark : [];
@@ -1086,7 +1086,15 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () 
   // Mark outline btn active by default
   document.getElementById('btn-outline').classList.add('bg-violet-600','text-white','border-violet-600');
   if (!loadFromStorage()) createEditors('', '');
+
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({
+      type: 'toolSelection',
+      url: window.location.pathname.split('/').pop() + window.location.search
+    }, '*');
+  }
 })();
 </script>
 </body>
+
 </html>

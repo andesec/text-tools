@@ -407,12 +407,38 @@
 				saveDropdownMenu.classList.remove('visible');
 			}
 		});
+		const JSV_STORAGE_KEY = window.name && window.name.startsWith('tab_') 
+			? `jsv_state_${window.name}` 
+			: 'jsv_state_default';
+
 		let currentInstance = 0;
 		let instances = [
 			{ content: "", fileName: "scratchpad-1.json" },
 			{ content: "", fileName: "scratchpad-2.json" },
 			{ content: "", fileName: "scratchpad-3.json" }
 		];
+
+		function loadJsvState() {
+			try {
+				const stored = localStorage.getItem(JSV_STORAGE_KEY);
+				if (stored) {
+					const data = JSON.parse(stored);
+					if (data.instances) instances = data.instances;
+					if (data.currentInstance !== undefined) currentInstance = data.currentInstance;
+				}
+			} catch(e) {}
+		}
+
+		function saveJsvState() {
+			try {
+				localStorage.setItem(JSV_STORAGE_KEY, JSON.stringify({
+					instances: instances,
+					currentInstance: currentInstance
+				}));
+			} catch(e) {}
+		}
+
+		loadJsvState();
 
 		// Initialize CodeMirror
 		function initEditor(initialValue = "", language = "javascript", readOnly = false) {
@@ -439,6 +465,7 @@
 						const content = update.state.doc.toString();
 						instances[currentInstance].content = content;
 						debouncedBuildTree(content);
+						saveJsvState();
 					}
 				})
 			];
@@ -1167,8 +1194,31 @@
 
 		// Initialize
 		(function init() {
-			// Default to a new scratchpad
-			createNewScratchpad();
+			currentFileName = instances[currentInstance].fileName;
+			const isJson = currentFileName.toLowerCase().endsWith(".json");
+			initEditor(instances[currentInstance].content, isJson ? "json" : "javascript");
+			
+			if (instances[currentInstance].content.trim()) {
+				buildTree(instances[currentInstance].content);
+			} else {
+				treeRoot.innerHTML = '<div class="text-gray-400 p-8 text-center italic">Not currently showing tree for non-JSON content.</div>';
+			}
+
+			// Update UI
+			document.getElementById("instance-label").textContent = `JSON ${currentInstance + 1}`;
+			document.querySelectorAll(".instance-btn").forEach(btn => {
+				btn.classList.remove("bg-blue-100", "dark:bg-blue-900/30");
+				if (parseInt(btn.dataset.instance) === currentInstance) {
+					btn.classList.add("bg-blue-100", "dark:bg-blue-900/30");
+				}
+			});
+
+			if (window.parent && window.parent !== window) {
+				window.parent.postMessage({
+					type: 'toolSelection',
+					url: window.location.pathname.split('/').pop() + window.location.search
+				}, '*');
+			}
 		})();
 	</script>
 </body>

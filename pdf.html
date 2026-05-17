@@ -886,6 +886,14 @@
                 modal.style.display = 'none';
             }
         }
+
+        if (window.parent && window.parent !== window) {
+            window.parent.postMessage({
+                type: 'toolSelection',
+                url: window.location.pathname.split('/').pop() + window.location.search
+            }, '*');
+        }
     </script>
 </body>
+
 </html>

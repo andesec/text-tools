@@ -192,6 +192,33 @@
         const outputEl = document.getElementById('output');
         const toastEl = document.getElementById('toast');
 
+        const UTV_STORAGE_KEY = window.name && window.name.startsWith('tab_') 
+            ? `utv_state_${window.name}` 
+            : 'utv_state_default';
+
+        function loadState() {
+            try {
+                const stored = localStorage.getItem(UTV_STORAGE_KEY);
+                if (stored) {
+                    const data = JSON.parse(stored);
+                    inputEl.value = data.input || '';
+                    outputEl.value = data.output || '';
+                }
+            } catch (e) {}
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem(UTV_STORAGE_KEY, JSON.stringify({
+                    input: inputEl.value,
+                    output: outputEl.value
+                }));
+            } catch (e) {}
+        }
+
+        inputEl.addEventListener('input', saveState);
+        outputEl.addEventListener('input', saveState);
+
         function transform(type) {
             const text = inputEl.value;
             if (!text) return;
@@ -214,6 +241,7 @@
                         break;
                 }
                 outputEl.value = result;
+                saveState();
                 showToast('Transformation successful!');
             } catch (e) {
                 alert('Operation failed: ' + e.message);
@@ -224,10 +252,12 @@
             const temp = inputEl.value;
             inputEl.value = outputEl.value;
             outputEl.value = temp;
+            saveState();
         }
 
         function clearText(target) {
             document.getElementById(target).value = '';
+            saveState();
         }
 
         function copyOutput() {
@@ -243,6 +273,7 @@
                 if (text !== undefined && text !== null) {
                     const el = document.getElementById(target);
                     el.value = text;
+                    saveState();
                     showToast('Pasted from clipboard!');
                 }
             } catch (err) {
@@ -255,6 +286,14 @@
             toastEl.textContent = msg;
             toastEl.classList.add('show');
             setTimeout(() => toastEl.classList.remove('show'), 2000);
+        }
+
+        loadState();
+        if (window.parent && window.parent !== window) {
+            window.parent.postMessage({
+                type: 'toolSelection',
+                url: window.location.pathname.split('/').pop() + window.location.search
+            }, '*');
         }
     </script>
 </body>

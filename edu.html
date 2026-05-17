@@ -475,6 +475,75 @@
         const copyBtn = document.getElementById('copy-btn');
         const resolveBtn = document.getElementById('resolve-btn');
 
+        // Hashing logic UI Elements
+        const hashInput = document.getElementById('hash-input');
+        const hashAlgo = document.getElementById('hash-algo');
+        const hashOutputFormat = document.getElementById('hash-output-format');
+        const hashBtn = document.getElementById('hash-btn');
+        const hashResultSection = document.getElementById('hash-result-section');
+        const hashResult = document.getElementById('hash-result');
+        const hashCopyBtn = document.getElementById('hash-copy-btn');
+        const hashStatus = document.getElementById('hash-status');
+
+        const EDU_STORAGE_KEY = window.name && window.name.startsWith('tab_') 
+            ? `edu_state_${window.name}` 
+            : 'edu_state_default';
+
+        function loadEduState() {
+            try {
+                const stored = localStorage.getItem(EDU_STORAGE_KEY);
+                if (stored) {
+                    const data = JSON.parse(stored);
+                    if (data.payload !== undefined) payloadInput.value = data.payload;
+                    if (data.key !== undefined) keyInput.value = data.key;
+                    if (data.keyFormat) keyFormat.value = data.keyFormat;
+                    if (data.iv !== undefined) ivInput.value = data.iv;
+                    if (data.ivFormat) ivFormat.value = data.ivFormat;
+                    if (data.ivPrepended !== undefined) ivPrependedCb.checked = data.ivPrepended;
+                    if (data.result !== undefined) {
+                        resultInput.value = data.result;
+                        if (data.result) resultSection.classList.add('show');
+                    }
+                    if (data.hashInput !== undefined) hashInput.value = data.hashInput;
+                    if (data.hashAlgo) hashAlgo.value = data.hashAlgo;
+                    if (data.hashOutputFormat) hashOutputFormat.value = data.hashOutputFormat;
+                    if (data.hashResult !== undefined) {
+                        hashResult.value = data.hashResult;
+                        if (data.hashResult) hashResultSection.classList.add('show');
+                    }
+                    
+                    if (ivPrependedCb.checked) ivGroup.classList.add('hidden');
+                    else ivGroup.classList.remove('hidden');
+                }
+            } catch (e) {}
+        }
+
+        function saveEduState() {
+            try {
+                localStorage.setItem(EDU_STORAGE_KEY, JSON.stringify({
+                    payload: payloadInput.value,
+                    key: keyInput.value,
+                    keyFormat: keyFormat.value,
+                    iv: ivInput.value,
+                    ivFormat: ivFormat.value,
+                    ivPrepended: ivPrependedCb.checked,
+                    result: resultInput.value,
+                    hashInput: hashInput.value,
+                    hashAlgo: hashAlgo.value,
+                    hashOutputFormat: hashOutputFormat.value,
+                    hashResult: hashResult.value
+                }));
+            } catch (e) {}
+        }
+
+        [
+            payloadInput, keyInput, keyFormat, ivInput, ivFormat, ivPrependedCb,
+            hashInput, hashAlgo, hashOutputFormat
+        ].forEach(el => {
+            el.addEventListener('input', saveEduState);
+            el.addEventListener('change', saveEduState);
+        });
+
         // Toggle IV group visibility
         ivPrependedCb.addEventListener('change', (e) => {
             if (e.target.checked) ivGroup.classList.add('hidden');
@@ -562,6 +631,7 @@
                 const decryptedText = toUtf8(decryptedBuffer);
                 resultInput.value = decryptedText;
                 resultSection.classList.add('show');
+                saveEduState();
                 showStatus("Decryption successful!", "success");
 
             } catch (e) {
@@ -576,6 +646,7 @@
             ivInput.value = '';
             statusMsg.classList.add('hidden');
             resultSection.classList.remove('show');
+            saveEduState();
         });
 
         copyBtn.addEventListener('click', () => {
@@ -616,18 +687,9 @@
                     return String.fromCharCode(parseInt(grp, 16));
                 });
             resultInput.value = resolved;
+            saveEduState();
             showStatus("Escapes resolved!", "success");
         });
-
-        // Hashing logic
-        const hashInput = document.getElementById('hash-input');
-        const hashAlgo = document.getElementById('hash-algo');
-        const hashOutputFormat = document.getElementById('hash-output-format');
-        const hashBtn = document.getElementById('hash-btn');
-        const hashResultSection = document.getElementById('hash-result-section');
-        const hashResult = document.getElementById('hash-result');
-        const hashCopyBtn = document.getElementById('hash-copy-btn');
-        const hashStatus = document.getElementById('hash-status');
 
         hashBtn.addEventListener('click', async () => {
             hashStatus.classList.add('hidden');
@@ -652,6 +714,7 @@
 
                 hashResult.value = result;
                 hashResultSection.classList.add('show');
+                saveEduState();
             } catch (e) {
                 hashStatus.textContent = "Hashing failed: " + e.message;
                 hashStatus.className = 'status error';
@@ -673,12 +736,21 @@
                 if (text !== undefined && text !== null) {
                     const el = document.getElementById(target);
                     el.value = text;
+                    saveEduState();
                     showStatus('Pasted from clipboard!', 'success');
                 }
             } catch (err) {
                 console.error('Failed to read clipboard: ', err);
                 showStatus('Clipboard permission denied', 'error');
             }
+        }
+        
+        loadEduState();
+        if (window.parent && window.parent !== window) {
+            window.parent.postMessage({
+                type: 'toolSelection',
+                url: window.location.pathname.split('/').pop() + window.location.search
+            }, '*');
         }
     </script>
 </body>

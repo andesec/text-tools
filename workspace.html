@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tabbed Workspace - Andesec</title>
+  <link rel="stylesheet" href="theme.css">
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--bg-root);
+    }
+    .header-controls {
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+    }
+    .back-btn {
+      margin-left: 8px;
+      margin-right: 8px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 6px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .back-btn:hover {
+      background: var(--bg-surface-hover);
+      color: var(--text-primary);
+    }
+    #tabs-container {
+      display: flex;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    #tabs-container::-webkit-scrollbar {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="workspace-tabs-bar">
+    <a href="index.html" class="back-btn" title="Back to Home">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+      </svg>
+    </a>
+    <div id="tabs-container"></div>
+    <div class="workspace-add-tab" id="add-tab-btn" title="New Tab">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+      </svg>
+    </div>
+  </div>
+  
+  <div class="workspace-content" id="workspace-content">
+  </div>
+
+  <script>
+    const MAX_TABS = 10;
+    const STORAGE_KEY = 'andesec_workspace_tabs';
+    const NEW_TAB_URL = 'tools.html';
+    
+    let tabs = [];
+    let activeTabId = null;
+    let tabIdCounter = 0;
+
+    const tabsContainer = document.getElementById('tabs-container');
+    const contentContainer = document.getElementById('workspace-content');
+    const addTabBtn = document.getElementById('add-tab-btn');
+
+    const TOOL_MAP = {
+      'mdv.html': { name: 'Markdown', icon: '📝' },
+      'jsv.html': { name: 'JSON', icon: '📋' },
+      'diff.html': { name: 'Diff', icon: '⚖️' },
+      'utv.html': { name: 'UTV', icon: '🛠️' },
+      'edu.html': { name: 'Encryption', icon: '🔐' },
+      'pdf.html': { name: 'PDF', icon: '📄' }
+    };
+
+    function getNextToolNumber(name) {
+      let max = 0;
+      tabs.forEach(t => {
+        if (t.assignedName && t.assignedName.startsWith(name + '-')) {
+          const num = parseInt(t.assignedName.substring(name.length + 1));
+          if (!isNaN(num) && num > max) max = num;
+        }
+      });
+      return max + 1;
+    }
+
+    function init() {
+      loadState();
+      
+      if (tabs.length === 0) {
+        createTab(NEW_TAB_URL, 'New Tab');
+      } else {
+        renderTabs();
+        if (!tabs.find(t => t.id === activeTabId)) {
+          activeTabId = tabs[0].id;
+        }
+        activateTab(activeTabId);
+      }
+
+      addTabBtn.addEventListener('click', () => {
+        if (tabs.length < MAX_TABS) {
+          createTab(NEW_TAB_URL, 'New Tab');
+        } else {
+          alert('Maximum limit of ' + MAX_TABS + ' tabs reached.');
+        }
+      });
+    }
+
+    function loadState() {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          tabs = parsed.tabs || [];
+          activeTabId = parsed.activeTabId || null;
+          // Find max id to avoid collisions
+          tabs.forEach(t => {
+            if (t.id >= tabIdCounter) tabIdCounter = t.id + 1;
+          });
+        }
+      } catch (e) {
+        console.error('Failed to load tabs state', e);
+      }
+    }
+
+    function saveState() {
+      const stateToSave = {
+        tabs: tabs.map(t => ({ id: t.id, url: t.url, title: t.title, assignedName: t.assignedName, icon: t.icon })),
+        activeTabId: activeTabId
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
+    }
+
+    function createTab(url, title) {
+      const id = tabIdCounter++;
+      const tab = { id, url, title };
+      tabs.push(tab);
+      activeTabId = id;
+      saveState();
+      renderTabs();
+      activateTab(id);
+    }
+
+    function closeTab(id, event) {
+      event.stopPropagation();
+      if (!confirm('Are you sure you want to close this tab? All saved data for this tool will be permanently deleted.')) {
+        return;
+      }
+
+      const idx = tabs.findIndex(t => t.id === id);
+      if (idx === -1) return;
+      
+      // Cleanup localStorage for this tab's tool data
+      const tabSuffix = `_tab_${id}`;
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const key = localStorage.key(i);
+        if (key && key.endsWith(tabSuffix)) {
+          localStorage.removeItem(key);
+        }
+      }
+
+      // Remove DOM elements
+      const tabEl = document.getElementById(`tab-${id}`);
+      const iframeEl = document.getElementById(`iframe-${id}`);
+      if (tabEl) tabEl.remove();
+      if (iframeEl) iframeEl.remove();
+      
+      tabs.splice(idx, 1);
+      
+      if (tabs.length === 0) {
+        createTab(NEW_TAB_URL, 'New Tab');
+        return;
+      }
+
+      if (activeTabId === id) {
+        // Activate the one to the left, or right if it was the first
+        const nextIdx = Math.max(0, idx - 1);
+        activeTabId = tabs[nextIdx].id;
+      }
+      
+      saveState();
+      renderTabs();
+      activateTab(activeTabId);
+    }
+
+    function activateTab(id) {
+      activeTabId = id;
+      
+      // Update Tab UI
+      document.querySelectorAll('.workspace-tab').forEach(el => {
+        if (el.id === `tab-${id}`) {
+          el.classList.add('active');
+          el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+        } else {
+          el.classList.remove('active');
+        }
+      });
+      
+      // Update Iframes
+      let iframe = document.getElementById(`iframe-${id}`);
+      if (!iframe) {
+        const tabData = tabs.find(t => t.id === id);
+        if (!tabData) return;
+        iframe = document.createElement('iframe');
+        iframe.id = `iframe-${id}`;
+        iframe.name = `tab_${id}`;
+        iframe.className = 'workspace-iframe';
+        iframe.src = tabData.url;
+        
+        iframe.onload = () => {
+          try {
+            // Update URL and Title
+            const pathParts = iframe.contentWindow.location.pathname.split('/');
+            const newUrlPath = pathParts[pathParts.length - 1];
+            const newUrl = newUrlPath + iframe.contentWindow.location.search;
+            
+            let newTitle = iframe.contentDocument.title || 'Tool';
+            if (newTitle === 'Text Tools - Andesec' || newTitle === 'Select a Tool') {
+              newTitle = 'New Tab';
+            }
+            
+            const toolInfo = TOOL_MAP[newUrlPath];
+            const t = tabs.find(x => x.id === id);
+            
+            if (t) {
+              t.url = newUrl;
+              if (toolInfo) {
+                if (!t.assignedName) {
+                  const num = getNextToolNumber(toolInfo.name);
+                  t.assignedName = `${toolInfo.name}-${num}`;
+                  t.icon = toolInfo.icon;
+                }
+                newTitle = t.assignedName;
+              } else {
+                t.assignedName = null;
+                t.icon = null;
+              }
+              
+              t.title = newTitle;
+              
+              // Update Tab UI immediately without re-rendering everything if possible
+              const titleEl = document.getElementById(`tab-title-${id}`);
+              if (titleEl) {
+                titleEl.innerHTML = '';
+                if (t.icon) {
+                  const iconSpan = document.createElement('span');
+                  iconSpan.style.marginRight = '6px';
+                  iconSpan.textContent = t.icon;
+                  titleEl.appendChild(iconSpan);
+                }
+                const textNode = document.createTextNode(newTitle);
+                titleEl.appendChild(textNode);
+              }
+              saveState();
+            }
+          } catch(e) {
+             // cross-origin or other error
+          }
+        };
+        
+        contentContainer.appendChild(iframe);
+      }
+      
+      document.querySelectorAll('.workspace-iframe').forEach(el => {
+        if (el.id === `iframe-${id}`) {
+          el.classList.add('active');
+        } else {
+          el.classList.remove('active');
+        }
+      });
+      
+      saveState();
+    }
+
+    function renderTabs() {
+      tabsContainer.innerHTML = '';
+      tabs.forEach(tab => {
+        const tabEl = document.createElement('div');
+        tabEl.className = 'workspace-tab';
+        tabEl.id = `tab-${tab.id}`;
+        if (tab.id === activeTabId) tabEl.classList.add('active');
+        
+        tabEl.onclick = () => activateTab(tab.id);
+        
+        const titleEl = document.createElement('span');
+        titleEl.className = 'workspace-tab-title';
+        titleEl.id = `tab-title-${tab.id}`;
+        
+        if (tab.icon) {
+          const iconSpan = document.createElement('span');
+          iconSpan.style.marginRight = '6px';
+          iconSpan.textContent = tab.icon;
+          titleEl.appendChild(iconSpan);
+        }
+        const textNode = document.createTextNode(tab.title);
+        titleEl.appendChild(textNode);
+        titleEl.title = tab.title;
+        
+        const closeBtn = document.createElement('div');
+        closeBtn.className = 'workspace-tab-close';
+        closeBtn.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+        closeBtn.onclick = (e) => closeTab(tab.id, e);
+        
+        tabEl.appendChild(titleEl);
+        tabEl.appendChild(closeBtn);
+        tabsContainer.appendChild(tabEl);
+      });
+    }
+
+    window.addEventListener('message', (event) => {
+      const data = event.data;
+      if (data && data.type === 'toolSelection') {
+        // Find which iframe sent the message
+        const iframe = Array.from(document.querySelectorAll('.workspace-iframe')).find(
+          f => f.contentWindow === event.source
+        );
+        if (!iframe) return;
+        
+        const id = parseInt(iframe.id.replace('iframe-', ''));
+        const t = tabs.find(x => x.id === id);
+        if (!t) return;
+        
+        const urlPath = data.url.split('?')[0];
+        const toolInfo = TOOL_MAP[urlPath];
+        
+        t.url = data.url;
+        if (toolInfo) {
+          if (!t.assignedName) {
+            const num = getNextToolNumber(toolInfo.name);
+            t.assignedName = `${toolInfo.name}-${num}`;
+            t.icon = toolInfo.icon;
+          }
+          t.title = t.assignedName;
+        } else {
+          t.assignedName = null;
+          t.icon = null;
+          t.title = 'New Tab';
+        }
+        
+        // Update Tab UI immediately without re-rendering everything if possible
+        const titleEl = document.getElementById(`tab-title-${id}`);
+        if (titleEl) {
+          titleEl.innerHTML = '';
+          if (t.icon) {
+            const iconSpan = document.createElement('span');
+            iconSpan.style.marginRight = '6px';
+            iconSpan.textContent = t.icon;
+            titleEl.appendChild(iconSpan);
+          }
+          const textNode = document.createTextNode(t.title);
+          titleEl.appendChild(textNode);
+        }
+        saveState();
+      }
+    });
+
+    // Initialize
+    init();
+  </script>
+</body>
+</html>

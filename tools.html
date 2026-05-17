@@ -130,17 +130,10 @@
 
 <body>
   <div class="container">
-    <h1>Text Tools</h1>
-    <p class="subtitle">A collection of tools to edit, view, and format your text</p>
+    <h1>Select a Tool</h1>
+    <p class="subtitle">Choose a tool to open in this tab</p>
 
     <div class="cards">
-      <a href="workspace.html" class="card" style="border-color: var(--accent); box-shadow: var(--shadow-md);">
-        <div class="card-icon">🗂️</div>
-        <h2>Tabbed Workspace</h2>
-        <p>A unified interface to open multiple tools in tabs, preserving context as you switch between them.</p>
-        <div class="card-arrow">Open Workspace <span style="font-size:1.1em">→</span></div>
-      </a>
-
       <a href="mdv.html" class="card">
         <div class="card-icon">📝</div>
         <h2>Markdown Viewer</h2>
@@ -193,6 +186,14 @@
       <p>Made with ❤️ by <a href="https://github.com/andesec" target="_blank" rel="noopener">Andesec</a></p>
     </footer>
   </div>
+  <script>
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({
+        type: 'toolSelection',
+        url: window.location.pathname.split('/').pop() + window.location.search
+      }, '*');
+    }
+  </script>
 </body>
 
 </html>
