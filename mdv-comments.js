@@ -21,6 +21,7 @@
 		getComments: () => comments,
 		setComments: (c) => { comments = c; renderSidebarComments(); },
 		clearComments: () => { comments = []; renderSidebarComments(); },
+		toast,
 	};
 
 	// ── DOM refs (set in init) ─────────────────────

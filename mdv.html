@@ -295,6 +295,22 @@
 		.transition-all {
 			transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 		}
+
+		.open-main-btn {
+			border-radius: var(--radius-md) 0 0 var(--radius-md) !important;
+		}
+
+		.open-chevron-btn {
+			border-radius: 0 var(--radius-md) var(--radius-md) 0 !important;
+			border-left: 1px solid rgb(64, 64, 70) !important;
+			padding-left: 6px;
+			padding-right: 6px;
+		}
+
+		.open-dropdown-menu {
+			left: 0 !important;
+			right: auto !important;
+		}
 	</style>
 </head>
 
@@ -323,13 +339,38 @@
 			<div class="flex items-center gap-1.5 sm:gap-2">
 				<input type="file" id="file-input" multiple accept=".md,.markdown,.txt,text/markdown,text/plain"
 					class="hidden" />
-				<button id="open-btn"
-					class="btn btn-gradient-blue btn-sm sm:px-4 sm:py-2 sm:text-sm shadow-sm hover:shadow-md transition-all transform active:scale-95">
-					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-					</svg>
-					<span class="hidden sm:inline" id="btn-text">Open</span>
-				</button>
+				<div class="save-dropdown-wrapper" id="open-dropdown-wrapper">
+					<button id="open-btn"
+						class="open-main-btn btn btn-gradient-blue btn-sm sm:px-4 sm:py-2 sm:text-sm shadow-sm hover:shadow-md transition-all transform active:scale-95">
+						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+						</svg>
+						<span class="hidden sm:inline" id="btn-text">Open</span>
+					</button>
+					<button id="open-chevron-btn"
+						class="open-chevron-btn btn btn-gradient-blue btn-sm sm:py-2 sm:text-sm shadow-sm hover:shadow-md transition-all transform active:scale-95 hidden">
+						<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
+							</path>
+						</svg>
+					</button>
+					<div id="open-dropdown-menu" class="save-dropdown-menu open-dropdown-menu">
+						<button class="save-dropdown-item" onclick="openDirectoryPicker()">
+							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+									d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+							</svg>
+							Open Directory
+						</button>
+						<button class="save-dropdown-item" onclick="openFilePickerFS()">
+							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+									d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+							</svg>
+							Open File(s)
+						</button>
+					</div>
+				</div>
 				<button id="paste-btn" class="btn btn-sm sm:px-4 sm:py-2 sm:text-sm">
 					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -440,6 +481,24 @@
 			</div>
 
 			<div id="edit-controls" class="flex items-center gap-2 shrink-0">
+				<button id="reload-btn" onclick="reloadFile()" title="Reload File from disk"
+					class="btn btn-sm hidden">
+					<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+							d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89H18m0 0V4">
+						</path>
+					</svg>
+					<span>Reload</span>
+				</button>
+				<button id="overwrite-btn" onclick="overwriteOriginalFile()" title="Save back to disk"
+					class="btn btn-sm hidden">
+					<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+							d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2v-9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4">
+						</path>
+					</svg>
+					<span>Overwrite</span>
+				</button>
 				<button onclick="resolveNewlines()" title="Resolve Newlines and Unicode Escapes"
 					class="btn btn-sm">Resolve Escapes</button>
 				<button id="toggle-edit-btn" class="btn btn-sm">
@@ -577,6 +636,7 @@
 		var currentFileName = "Untitled.md";
 		var editor = null;
 		let lineWrap = true;
+		let currentFileHandle = null;
 		const isFileSystemApiSupported = "showDirectoryPicker" in window;
 		const MDV_STORAGE_KEY = window.name && window.name.startsWith('tab_') 
 			? `mdv_state_${window.name}` 
@@ -791,7 +851,7 @@
 			Array.from(files).forEach((file) => {
 				const lower = file.name.toLowerCase();
 				if (lower.endsWith(".md") || lower.endsWith(".markdown") || lower.endsWith(".txt")) {
-					loadedFiles.set(file.name, file);
+					loadedFiles.set(file.name, { file: file, handle: null });
 					renderFileListItem(file.name);
 				}
 			});
@@ -812,9 +872,32 @@
 		}
 
 		async function displayFile(name, element) {
-			const file = loadedFiles.get(name);
+			const item = loadedFiles.get(name);
+			if (!item) return;
+
+			let file, handle;
+			if (item.handle !== undefined) {
+				file = item.file;
+				handle = item.handle;
+			} else {
+				file = item;
+				handle = null;
+			}
+
 			let text = await (file.text ? file.text() : readFileAsText(file));
 			currentFileName = name;
+			currentFileHandle = handle;
+
+			// Toggle Reload and Overwrite buttons based on whether we have a file handle
+			const reloadBtn = document.getElementById("reload-btn");
+			const overwriteBtn = document.getElementById("overwrite-btn");
+			if (handle) {
+				if (reloadBtn) reloadBtn.classList.remove("hidden");
+				if (overwriteBtn) overwriteBtn.classList.remove("hidden");
+			} else {
+				if (reloadBtn) reloadBtn.classList.add("hidden");
+				if (overwriteBtn) overwriteBtn.classList.add("hidden");
+			}
 
 			// Parse embedded comments if present
 			if (window.MdvComments) {
@@ -874,26 +957,169 @@
 			});
 		}
 
+		async function openDirectoryPicker() {
+			try {
+				const dirHandle = await window.showDirectoryPicker();
+				fileListContainer.innerHTML = "";
+				loadedFiles.clear();
+				for await (const entry of dirHandle.values()) {
+					if (entry.kind === "file" && (entry.name.toLowerCase().endsWith(".md") || entry.name.toLowerCase().endsWith(".markdown") || entry.name.toLowerCase().endsWith(".txt"))) {
+						const file = await entry.getFile();
+						loadedFiles.set(entry.name, { file: file, handle: entry });
+						renderFileListItem(entry.name);
+					}
+				}
+				if (loadedFiles.size === 0) {
+					fileListContainer.innerHTML = '<div class="p-4 text-center text-xs text-red-500">No Markdown or text files found.</div>';
+				} else if (loadedFiles.size === 1) {
+					const firstBtn = fileListContainer.querySelector('.file-item');
+					if (firstBtn) firstBtn.click();
+				}
+			} catch (e) {
+				if (e.name !== "AbortError") console.error(e);
+			}
+			closeOpenDropdown();
+		}
+
+		async function openFilePickerFS() {
+			try {
+				const fileHandles = await window.showOpenFilePicker({
+					multiple: true,
+					types: [
+						{
+							description: 'Markdown and Text Files',
+							accept: {
+								'text/markdown': ['.md', '.markdown'],
+								'text/plain': ['.txt']
+							}
+						}
+					]
+				});
+				fileListContainer.innerHTML = "";
+				loadedFiles.clear();
+				for (const handle of fileHandles) {
+					const file = await handle.getFile();
+					loadedFiles.set(handle.name, { file: file, handle: handle });
+					renderFileListItem(handle.name);
+				}
+				if (loadedFiles.size === 0) {
+					fileListContainer.innerHTML = '<div class="p-4 text-center text-xs text-red-500">No Markdown or text files found.</div>';
+				} else if (loadedFiles.size === 1) {
+					const firstBtn = fileListContainer.querySelector('.file-item');
+					if (firstBtn) firstBtn.click();
+				}
+			} catch (e) {
+				if (e.name !== "AbortError") console.error(e);
+			}
+			closeOpenDropdown();
+		}
+
+		window.reloadFile = async function () {
+			if (!currentFileName || !currentFileHandle) return;
+			try {
+				const file = await currentFileHandle.getFile();
+				let text = await (file.text ? file.text() : readFileAsText(file));
+
+				if (window.MdvComments) {
+					const parsed = MdvComments.parseFromMarkdown(text);
+					text = parsed.markdown;
+					MdvComments.setComments(parsed.comments);
+				}
+
+				if (editor) {
+					const transaction = editor.state.update({
+						changes: { from: 0, to: editor.state.doc.length, insert: text }
+					});
+					editor.dispatch(transaction);
+				} else {
+					initEditor(text);
+				}
+				updatePreview();
+
+				const item = loadedFiles.get(currentFileName);
+				if (item) {
+					item.file = file;
+				}
+
+				if (window.MdvComments && typeof window.MdvComments.toast === "function") {
+					window.MdvComments.toast("File reloaded");
+				} else {
+					alert("File reloaded");
+				}
+			} catch (e) {
+				console.error("Failed to reload file:", e);
+				alert("Failed to reload file from disk. Please make sure the app has permissions.");
+			}
+		};
+
+		window.overwriteOriginalFile = async function () {
+			if (!currentFileName || !currentFileHandle) return;
+			try {
+				if (!editor) return;
+				let content = editor.state.doc.toString();
+
+				if (window.MdvComments) {
+					const commentsList = MdvComments.getComments();
+					if (commentsList && commentsList.length > 0) {
+						const START_TAG = "<!-- mdv-comments:start -->";
+						const END_TAG = "<!-- mdv-comments:end -->";
+						content = content.trimEnd() + "\n\n" +
+							START_TAG + "\n" +
+							JSON.stringify(commentsList, null, 2) + "\n" +
+							END_TAG + "\n";
+					}
+				}
+
+				const writable = await currentFileHandle.createWritable();
+				await writable.write(content);
+				await writable.close();
+
+				const file = await currentFileHandle.getFile();
+				loadedFiles.set(currentFileName, { file: file, handle: currentFileHandle });
+
+				if (window.MdvComments && typeof window.MdvComments.toast === "function") {
+					window.MdvComments.toast("Changes saved directly");
+				} else {
+					alert("Changes saved directly");
+				}
+			} catch (e) {
+				console.error("Failed to overwrite file:", e);
+				alert("Failed to save changes back to disk. Please verify write permissions.");
+			}
+		};
+
 		openBtn.onclick = async () => {
 			if (isFileSystemApiSupported) {
-				try {
-					const dirHandle = await window.showDirectoryPicker();
-					fileListContainer.innerHTML = "";
-					loadedFiles.clear();
-					for await (const entry of dirHandle.values()) {
-						if (entry.kind === "file" && (entry.name.toLowerCase().endsWith(".md") || entry.name.toLowerCase().endsWith(".markdown"))) {
-							const file = await entry.getFile();
-							loadedFiles.set(entry.name, file);
-							renderFileListItem(entry.name);
-						}
-					}
-				} catch (e) {
-					if (e.name !== "AbortError") console.error(e);
-				}
+				await openDirectoryPicker();
 			} else {
 				fileInput.click();
 			}
 		};
+
+		const openChevron = document.getElementById("open-chevron-btn");
+		const openMenu = document.getElementById("open-dropdown-menu");
+
+		if (isFileSystemApiSupported) {
+			document.getElementById("btn-text").textContent = "Directory";
+			if (openChevron) openChevron.classList.remove("hidden");
+		}
+
+		if (openChevron) {
+			openChevron.addEventListener("click", (e) => {
+				e.stopPropagation();
+				openMenu.classList.toggle("visible");
+			});
+		}
+
+		function closeOpenDropdown() {
+			if (openMenu) openMenu.classList.remove("visible");
+		}
+
+		document.addEventListener("click", (e) => {
+			if (openMenu && !openMenu.contains(e.target) && openChevron && !openChevron.contains(e.target)) {
+				openMenu.classList.remove("visible");
+			}
+		});
 
 		if (pasteBtn) {
 			pasteBtn.onclick = async () => {
