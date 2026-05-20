@@ -320,46 +320,71 @@
 
 		.tts-speak-btn {
 			position: absolute;
-			right: 4px;
-			top: 4px;
-			width: 26px;
-			height: 26px;
-			border-radius: 50%;
-			border: 1px solid var(--border-default);
+			right: 0;
+			top: 50%;
+			transform: translateY(-50%);
+			width: 40px;
+			height: 40px;
+			border: none;
 			background: var(--bg-surface);
 			color: var(--text-tertiary);
 			cursor: pointer;
 			display: flex;
 			align-items: center;
 			justify-content: center;
-			flex-shrink: 0;
 			opacity: 0;
 			pointer-events: none;
+			border-radius: 8px 0 0 8px;
 			z-index: 1;
-			transition: opacity var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast);
+			transition: opacity var(--transition-fast), background var(--transition-fast);
+			-webkit-tap-highlight-color: transparent;
 		}
 
-		.tts-block-wrapper:hover .tts-speak-btn,
-		.tts-active-block .tts-speak-btn {
-			opacity: 1;
-			pointer-events: auto;
+		@media (hover: hover) {
+			.tts-block-wrapper:hover .tts-speak-btn {
+				opacity: 1;
+				pointer-events: auto;
+			}
+		}
+
+		@media (hover: none) {
+			.tts-speak-btn {
+				opacity: 0.3;
+				pointer-events: auto;
+			}
+			.tts-speak-btn:active {
+				opacity: 1;
+				background: var(--accent);
+				color: #fff;
+			}
 		}
 
 		.tts-speak-btn svg {
-			width: 13px;
-			height: 13px;
+			width: 20px;
+			height: 20px;
 		}
 
 		.tts-speak-btn:hover {
 			background: var(--accent);
-			border-color: var(--accent);
-			color: #ffffff;
+			color: #fff;
 		}
 
 		.tts-active-block > *:first-child,
 		.tts-active-block {
-			border-left: 3px solid var(--accent) !important;
+			border-left: 2px solid var(--accent) !important;
 			background: var(--bg-surface-raised);
+		}
+
+		@media (max-width: 600px) {
+			.tts-speak-btn {
+				width: 36px;
+				height: 36px;
+				border-radius: 6px 0 0 6px;
+			}
+			.tts-speak-btn svg {
+				width: 18px;
+				height: 18px;
+			}
 		}
 
 		/* Floating TTS Player Bar */
@@ -416,8 +441,8 @@
 		}
 
 		.tts-bar-btn {
-			width: 34px;
-			height: 34px;
+			width: 40px;
+			height: 40px;
 			border-radius: 50%;
 			border: 1px solid var(--border-default);
 			background: var(--bg-surface-raised);
@@ -427,6 +452,20 @@
 			justify-content: center;
 			cursor: pointer;
 			transition: all var(--transition-fast);
+			flex-shrink: 0;
+		}
+
+		.tts-bar-btn svg {
+			width: 18px;
+			height: 18px;
+		}
+
+		.tts-bar-play-btn {
+			width: 44px;
+			height: 44px;
+			background: var(--accent);
+			border-color: var(--accent);
+			color: #ffffff;
 		}
 
 		.tts-bar-btn svg {
@@ -474,10 +513,10 @@
 			background: var(--bg-surface-raised);
 			border: 1px solid var(--border-default);
 			border-radius: var(--radius-md);
-			padding: 4px 8px;
+			padding: 8px 10px;
 			color: var(--text-primary);
 			font-family: var(--font-sans);
-			font-size: var(--font-size-xs);
+			font-size: var(--font-size-sm);
 			outline: none;
 			cursor: pointer;
 			transition: border-color var(--transition-fast);
@@ -540,6 +579,35 @@
 
 		.tts-toggle-dot.visible {
 			display: block;
+		}
+
+		@media (max-width: 600px) {
+			#tts-player-bar {
+				padding: var(--space-2) var(--space-2);
+				gap: var(--space-2);
+			}
+			.tts-bar-controls {
+				gap: var(--space-1);
+			}
+			.tts-bar-btn {
+				width: 36px;
+				height: 36px;
+			}
+			.tts-bar-play-btn {
+				width: 40px;
+				height: 40px;
+			}
+			.tts-bar-btn svg {
+				width: 16px;
+				height: 16px;
+			}
+			.tts-bar-select {
+				padding: 6px 8px;
+				font-size: var(--font-size-xs);
+			}
+			.tts-bar-text {
+				font-size: var(--font-size-xs);
+			}
 		}
 	</style>
 </head>
