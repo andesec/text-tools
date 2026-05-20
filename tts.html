@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Supertonic TTS Player - Andesec</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="theme.css">
+  <style>
+    body {
+      margin: 0;
+      font-family: var(--font-sans);
+      background: var(--bg-root);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    .tts-container {
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: var(--space-4) var(--space-5);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+
+    .header-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-default);
+      padding-bottom: var(--space-3);
+    }
+
+    .header-title-group {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .header-logo {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-md);
+      background: linear-gradient(to bottom right, rgb(108, 92, 231), rgb(124, 111, 240));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+
+    .header-text h1 {
+      margin: 0;
+      font-size: var(--font-size-xl);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .header-text p {
+      margin: 0;
+      font-size: var(--font-size-xs);
+      color: var(--text-secondary);
+    }
+
+    .hardware-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg-surface-raised);
+      border: 1px solid var(--border-default);
+      padding: 6px 12px;
+      border-radius: var(--radius-md);
+      font-size: var(--font-size-xs);
+      font-weight: 500;
+    }
+
+    .hardware-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgb(56, 189, 248);
+    }
+
+    .hardware-dot.webgpu {
+      background: rgb(34, 197, 94);
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--space-4);
+    }
+
+    @media (min-width: 900px) {
+      .main-grid {
+        grid-template-columns: 3fr 2fr;
+      }
+    }
+
+    .card-panel {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-lg);
+      padding: var(--space-4);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+
+    .panel-title {
+      font-size: var(--font-size-sm);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-title svg {
+      width: 16px;
+      height: 16px;
+      color: var(--accent);
+    }
+
+    .text-input-wrapper {
+      position: relative;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .text-input-field {
+      width: 100%;
+      min-height: 200px;
+      flex: 1;
+      background: var(--bg-surface-raised);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      padding: var(--space-3);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-size: var(--font-size-base);
+      line-height: 1.6;
+      resize: vertical;
+      outline: none;
+      transition: border-color var(--transition-fast);
+    }
+
+    .text-input-field:focus {
+      border-color: var(--accent);
+    }
+
+    .character-counter {
+      position: absolute;
+      bottom: 8px;
+      right: 12px;
+      font-size: var(--font-size-xs);
+      color: var(--text-tertiary);
+      pointer-events: none;
+    }
+
+    .presets-row {
+      display: flex;
+      gap: var(--space-2);
+      flex-wrap: wrap;
+    }
+
+    .preset-btn {
+      font-size: var(--font-size-xs);
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-surface-raised);
+      border: 1px solid var(--border-default);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .preset-btn:hover {
+      border-color: var(--accent);
+      color: var(--text-primary);
+    }
+
+    .settings-grid {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+
+    .setting-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .setting-label {
+      font-size: var(--font-size-xs);
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .select-dropdown {
+      width: 100%;
+      background: var(--bg-surface-raised);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      padding: 8px 12px;
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-size: var(--font-size-sm);
+      outline: none;
+      cursor: pointer;
+      transition: border-color var(--transition-fast);
+    }
+
+    .select-dropdown:focus {
+      border-color: var(--accent);
+    }
+
+    .voice-selection-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+    }
+
+    .voice-item-btn {
+      padding: 8px 0;
+      border-radius: var(--radius-md);
+      background: var(--bg-surface-raised);
+      border: 1px solid var(--border-default);
+      color: var(--text-secondary);
+      font-size: var(--font-size-xs);
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      transition: all var(--transition-fast);
+    }
+
+    .voice-item-btn:hover {
+      border-color: var(--accent);
+      color: var(--text-primary);
+    }
+
+    .voice-item-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #ffffff;
+    }
+
+    .speed-slider-wrapper {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    .speed-slider {
+      flex: 1;
+      height: 6px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: var(--border-default);
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .speed-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: none;
+      transition: background var(--transition-fast);
+    }
+
+    .speed-slider::-webkit-slider-thumb:hover {
+      background: var(--accent-hover);
+    }
+
+    .speed-value-display {
+      font-family: var(--font-mono);
+      font-size: var(--font-size-sm);
+      color: var(--text-primary);
+      min-width: 40px;
+    }
+
+    .action-btn-row {
+      margin-top: auto;
+    }
+
+    .synthesize-btn {
+      width: 100%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px;
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      border: none;
+      background: var(--accent);
+      color: #ffffff;
+      cursor: pointer;
+      transition: all var(--transition-base);
+    }
+
+    .synthesize-btn:hover {
+      background: var(--accent-hover);
+    }
+
+    .synthesize-btn:disabled {
+      background: var(--border-default);
+      color: var(--text-tertiary);
+      cursor: not-allowed;
+    }
+
+    .loading-spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgb(240, 240, 240);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      display: none;
+    }
+
+    .synthesize-btn.generating .loading-spinner {
+      display: inline-block;
+    }
+
+    .synthesize-btn.generating svg {
+      display: none;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .player-panel {
+      grid-column: 1 / -1;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-lg);
+      padding: var(--space-4);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+
+    .visualizer-container {
+      width: 100%;
+      height: 80px;
+      background: var(--bg-surface-raised);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .visualizer-canvas {
+      width: 100%;
+      height: 100%;
+      background: #111113;
+    }
+
+    .visualizer-placeholder {
+      position: absolute;
+      color: var(--text-tertiary);
+      font-size: var(--font-size-xs);
+      font-family: var(--font-mono);
+      pointer-events: none;
+    }
+
+    .player-controls-row {
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+      flex-wrap: wrap;
+    }
+
+    .player-button {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--bg-surface-raised);
+      border: 1px solid var(--border-default);
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .player-button:hover:not(:disabled) {
+      border-color: var(--accent);
+      color: var(--accent-text);
+      background: var(--bg-surface-hover);
+    }
+
+    .player-button:disabled {
+      color: var(--text-disabled);
+      border-color: var(--border-subtle);
+      cursor: not-allowed;
+    }
+
+    .play-trigger-btn {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #ffffff;
+    }
+
+    .play-trigger-btn:hover:not(:disabled) {
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
+      color: #ffffff;
+    }
+
+    .time-tracker {
+      font-family: var(--font-mono);
+      font-size: var(--font-size-xs);
+      color: var(--text-secondary);
+      user-select: none;
+    }
+
+    .timeline-range-wrapper {
+      flex: 1;
+      min-width: 150px;
+      display: flex;
+      align-items: center;
+    }
+
+    .timeline-range {
+      width: 100%;
+      height: 4px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: var(--border-default);
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .timeline-range::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: none;
+    }
+
+    .timeline-range::-webkit-slider-thumb:hover {
+      background: var(--accent-hover);
+    }
+
+    .volume-control-wrapper {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .volume-slider {
+      width: 70px;
+      height: 4px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: var(--border-default);
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .volume-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--text-secondary);
+      border: none;
+    }
+
+    .volume-slider::-webkit-slider-thumb:hover {
+      background: var(--accent);
+    }
+
+    .download-audio-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: var(--radius-md);
+      font-size: var(--font-size-xs);
+      font-weight: 500;
+      border: 1px solid var(--border-default);
+      background: var(--bg-surface-raised);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .download-audio-btn:hover:not(:disabled) {
+      border-color: var(--accent);
+      color: var(--text-primary);
+      background: var(--bg-surface-hover);
+    }
+
+    .download-audio-btn:disabled {
+      color: var(--text-disabled);
+      border-color: var(--border-subtle);
+      cursor: not-allowed;
+    }
+
+    .console-panel {
+      grid-column: 1 / -1;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-lg);
+      padding: var(--space-4);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .console-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .console-clear-btn {
+      font-size: var(--font-size-xs);
+      padding: 2px 6px;
+      background: var(--bg-surface-raised);
+      border: 1px solid var(--border-default);
+      color: var(--text-tertiary);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .console-clear-btn:hover {
+      color: var(--text-primary);
+      border-color: var(--accent);
+    }
+
+    .console-terminal {
+      background: var(--bg-root);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: var(--space-3);
+      font-family: var(--font-mono);
+      font-size: var(--font-size-xs);
+      color: rgb(34, 197, 94);
+      height: 180px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .console-log-line {
+      display: flex;
+      gap: 8px;
+    }
+
+    .log-timestamp {
+      color: var(--text-tertiary);
+      flex-shrink: 0;
+    }
+
+    .log-text {
+      word-break: break-all;
+    }
+
+    .log-text.warning {
+      color: var(--warning);
+    }
+
+    .log-text.error {
+      color: var(--danger);
+    }
+
+    .log-text.system {
+      color: rgb(56, 189, 248);
+    }
+  </style>
+</head>
+<body>
+  
+  <div class="tts-container">
+    
+    <!-- Top Header Navigation -->
+    <header class="header-section">
+      <div class="header-title-group">
+        <a href="index.html" class="btn-icon" title="Home" style="border:none; background:transparent; display:flex; align-items:center;">
+          <svg style="width: 20px; height: 20px; color: var(--text-secondary);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+          </svg>
+        </a>
+        <div class="header-logo">S</div>
+        <div class="header-text">
+          <h1>Supertonic TTS</h1>
+          <p>Browser-based Text-to-Speech synthesizer running via WebGPU / WebAssembly</p>
+        </div>
+      </div>
+      
+      <div class="hardware-badge">
+        <div class="hardware-dot" id="hardware-status-dot"></div>
+        <span id="hardware-status-text">Detecting Acceleration...</span>
+      </div>
+    </header>
+
+    <!-- Main Grid Dashboard -->
+    <main class="main-grid">
+      
+      <!-- Input Panel -->
+      <section class="card-panel">
+        <div class="panel-title">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          Synthesis Text Input
+        </div>
+        
+        <div class="text-input-wrapper">
+          <textarea id="tts-textarea" class="text-input-field" placeholder="Enter text to speak here..." maxlength="5000"></textarea>
+          <div class="character-counter" id="char-counter">0 / 5000</div>
+        </div>
+
+        <div class="setting-label">Preset Templates</div>
+        <div class="presets-row">
+          <button class="preset-btn" onclick="loadSampleText(1)">Short Greeting</button>
+          <button class="preset-btn" onclick="loadSampleText(2)">Multi-line Paragraph</button>
+          <button class="preset-btn" onclick="loadSampleText(3)">Technical Explanation</button>
+        </div>
+      </section>
+
+      <!-- Settings & Trigger Panel -->
+      <section class="card-panel">
+        <div class="panel-title">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
+          </svg>
+          Inference Parameters
+        </div>
+
+        <div class="settings-grid">
+          
+          <div class="setting-group">
+            <div class="setting-label">Language Model</div>
+            <select class="select-dropdown" id="language-select">
+              <option value="en" selected>English (en)</option>
+              <option value="es">Spanish (es)</option>
+              <option value="fr">French (fr)</option>
+              <option value="de">German (de)</option>
+              <option value="ja">Japanese (ja)</option>
+              <option value="ko">Korean (ko)</option>
+            </select>
+          </div>
+
+          <div class="setting-group">
+            <div class="setting-label">Voice Presets</div>
+            <div class="voice-selection-grid">
+              <button class="voice-item-btn active" data-voice="M1">M1</button>
+              <button class="voice-item-btn" data-voice="M2">M2</button>
+              <button class="voice-item-btn" data-voice="M3">M3</button>
+              <button class="voice-item-btn" data-voice="M4">M4</button>
+              <button class="voice-item-btn" data-voice="M5">M5</button>
+              <button class="voice-item-btn" data-voice="F1">F1</button>
+              <button class="voice-item-btn" data-voice="F2">F2</button>
+              <button class="voice-item-btn" data-voice="F3">F3</button>
+              <button class="voice-item-btn" data-voice="F4">F4</button>
+              <button class="voice-item-btn" data-voice="F5">F5</button>
+            </div>
+          </div>
+
+          <div class="setting-group">
+            <div class="setting-label">Playback Speed</div>
+            <div class="speed-slider-wrapper">
+              <input type="range" class="speed-slider" id="speed-slider" min="0.5" max="2.0" step="0.1" value="1.0">
+              <span class="speed-value-display" id="speed-val">1.0x</span>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="action-btn-row">
+          <button class="synthesize-btn" id="synthesize-trigger">
+            <svg style="width: 18px; height: 18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div class="loading-spinner"></div>
+            <span>Synthesize Audio</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Player Panel -->
+      <section class="player-panel">
+        <div class="panel-title">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>
+          </svg>
+          Premium Player Interface
+        </div>
+
+        <div class="visualizer-container">
+          <canvas class="visualizer-canvas" id="canvas-visualizer" width="900" height="80"></canvas>
+          <div class="visualizer-placeholder" id="vis-placeholder">No Audio Synthesized</div>
+        </div>
+
+        <div class="player-controls-row">
+          <button class="player-button play-trigger-btn" id="player-play-btn" disabled>
+            <svg style="width: 18px; height: 18px;" fill="currentColor" viewBox="0 0 24 24" id="play-icon-svg">
+              <path d="M8 5v14l11-7z"></path>
+            </svg>
+          </button>
+          
+          <div class="time-tracker">
+            <span id="player-time-elapsed">0:00</span> / <span id="player-time-total">0:00</span>
+          </div>
+
+          <div class="timeline-range-wrapper">
+            <input type="range" class="timeline-range" id="player-timeline" min="0" max="100" value="0" disabled>
+          </div>
+
+          <div class="volume-control-wrapper">
+            <svg style="width: 16px; height: 16px; color: var(--text-secondary);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>
+            </svg>
+            <input type="range" class="volume-slider" id="player-volume" min="0" max="100" value="100">
+          </div>
+
+          <button class="download-audio-btn" id="player-download-btn" disabled>
+            <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+            </svg>
+            <span>Download WAV</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Logging Console -->
+      <section class="console-panel">
+        <div class="console-header">
+          <div class="panel-title">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            Inference System Logs
+          </div>
+          <button class="console-clear-btn" id="console-clear-btn">Clear Logs</button>
+        </div>
+        <div class="console-terminal" id="console-terminal"></div>
+      </section>
+
+    </main>
+
+  </div>
+
+  <audio id="audio-player"></audio>
+
+  <!-- JS Logic: WebGPU detection, ONNX Runtime Pipeline orchestration -->
+  <script type="module">
+    import { detectDevice, initPipeline, loadEmbedding, synthesize, audioToWavBlob, formatTime, clearEmbeddingCache } from './tts-engine.js';
+
+    // UI Elements
+    const statusDot = document.getElementById("hardware-status-dot");
+    const statusText = document.getElementById("hardware-status-text");
+    const textarea = document.getElementById("tts-textarea");
+    const charCounter = document.getElementById("char-counter");
+    const speedSlider = document.getElementById("speed-slider");
+    const speedVal = document.getElementById("speed-val");
+    const synthesizeTrigger = document.getElementById("synthesize-trigger");
+    const voiceBtns = document.querySelectorAll(".voice-item-btn");
+    const languageSelect = document.getElementById("language-select");
+    const consoleTerminal = document.getElementById("console-terminal");
+    const consoleClearBtn = document.getElementById("console-clear-btn");
+    
+    // Player UI Elements
+    const audioPlayer = document.getElementById("audio-player");
+    const playerPlayBtn = document.getElementById("player-play-btn");
+    const playerTimeElapsed = document.getElementById("player-time-elapsed");
+    const playerTimeTotal = document.getElementById("player-time-total");
+    const playerTimeline = document.getElementById("player-timeline");
+    const playerVolume = document.getElementById("player-volume");
+    const playerDownloadBtn = document.getElementById("player-download-btn");
+    const visPlaceholder = document.getElementById("vis-placeholder");
+    const canvas = document.getElementById("canvas-visualizer");
+    
+    // Web Audio Visualizer states
+    let audioCtx = null;
+    let analyser = null;
+    let sourceNode = null;
+    let animationFrameId = null;
+
+    // Runtime state
+    let activeVoice = "M1";
+    let activeEmbedding = null;
+    let inferenceDevice = "wasm";
+    let ttsPipeline = null;
+    let activeBlob = null;
+
+    // Standard Sample texts
+    const SAMPLES = {
+      1: "Welcome to Supertonic text to speech! This is running completely client side in your web browser. You can select different voice styles to synthesize high quality speech instantly.",
+      2: "Client side machine learning provides incredible benefits for modern web development. First, it ensures complete user privacy since no text ever leaves the local system. Second, it reduces hosting costs, and third, it allows for offline operation once the pipeline is downloaded and cached.",
+      3: "Supertonic TTS uses a lightweight neural vocoder structure optimized for browser execution. By using the WebGPU API, we can achieve up to ten times faster speech synthesis than standard single-threaded environments, falling back cleanly to multi threaded web assembly where needed."
+    };
+
+    window.loadSampleText = (index) => {
+      textarea.value = SAMPLES[index] || "";
+      updateCharCount();
+      logger(`[Preset] Loaded Template ${index}`, "system");
+    };
+
+    // System Logger
+    function logger(text, type = "info") {
+      const now = new Date();
+      const timeStr = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0');
+      
+      const logLine = document.createElement("div");
+      logLine.className = "console-log-line";
+      
+      const stamp = document.createElement("span");
+      stamp.className = "log-timestamp";
+      stamp.textContent = `[${timeStr}]`;
+      
+      const txt = document.createElement("span");
+      txt.className = `log-text ${type}`;
+      txt.textContent = text;
+      
+      logLine.appendChild(stamp);
+      logLine.appendChild(txt);
+      consoleTerminal.appendChild(logLine);
+      consoleTerminal.scrollTop = consoleTerminal.scrollHeight;
+    }
+
+    consoleClearBtn.onclick = () => {
+      consoleTerminal.innerHTML = "";
+      logger("Logs cleared", "system");
+    };
+
+    // Initialize character counter
+    function updateCharCount() {
+      charCounter.textContent = `${textarea.value.length} / 5000`;
+    }
+    textarea.oninput = updateCharCount;
+
+    // Voice Selection
+    voiceBtns.forEach(btn => {
+      btn.onclick = async () => {
+        voiceBtns.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        activeVoice = btn.getAttribute("data-voice");
+        logger(`Loading voice embedding: ${activeVoice}...`, "system");
+        try {
+          activeEmbedding = await loadEmbedding(activeVoice);
+          logger(`Voice ${activeVoice} ready`, "system");
+        } catch (err) {
+          logger(`Voice load error: ${err.message}`, "error");
+        }
+      };
+    });
+
+    // Speed Slider
+    speedSlider.oninput = () => {
+      speedVal.textContent = `${parseFloat(speedSlider.value).toFixed(1)}x`;
+    };
+
+    // Tabbed Workspace Integration detection
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({
+        type: 'toolSelection',
+        url: window.location.pathname.split('/').pop() + window.location.search
+      }, '*');
+    }
+
+    // Hardware Acceleration & Pipeline Loading (delegated to tts-engine.js)
+    async function checkHardwareSupport() {
+      logger("Scanning system hardware capability...", "system");
+      inferenceDevice = await detectDevice();
+      if (inferenceDevice === "webgpu") {
+        statusDot.className = "hardware-dot webgpu";
+        statusText.textContent = "WebGPU Accelerated";
+        logger("WebGPU adapter detected. GPU acceleration ready.", "system");
+      } else {
+        statusDot.className = "hardware-dot";
+        statusText.textContent = "WASM (8 Threads)";
+        logger("WebGPU unavailable. Using WASM with 8 threads.", "warning");
+      }
+    }
+
+    async function getPipeline() {
+      if (ttsPipeline) return ttsPipeline;
+      logger(`Initializing Supertonic TTS on ${inferenceDevice.toUpperCase()}...`, "system");
+      logger("Downloading ~99MB model files. Please wait.", "system");
+      try {
+        ttsPipeline = await initPipeline(inferenceDevice, (data) => {
+          if (data.status === 'download' || data.status === 'progress') {
+            const file = data.file ? data.file.split('/').pop() : 'files';
+            const pct = data.progress ? Math.round(data.progress) : '';
+            logger(`Downloading ${file}${pct ? ': ' + pct + '%' : ''}`, "info");
+          } else if (data.status === 'ready') {
+            const file = data.file ? data.file.split('/').pop() : 'chunk';
+            logger(`Loaded: ${file}`, "system");
+          }
+        });
+        logger("Supertonic TTS Pipeline ready!", "system");
+      } catch (err) {
+        logger(`Pipeline init failed: ${err.message}`, "error");
+        throw err;
+      }
+      return ttsPipeline;
+    }
+
+    // Trigger synthesis
+    synthesizeTrigger.onclick = async () => {
+      const text = textarea.value.trim();
+      if (!text) {
+        logger("Error: Speech text input is empty.", "error");
+        return;
+      }
+
+      synthesizeTrigger.disabled = true;
+      synthesizeTrigger.classList.add("generating");
+      logger("Preparing text representation...", "system");
+
+      try {
+        const pipe = await getPipeline();
+        if (!pipe) throw new Error("Pipeline initialization failed.");
+
+        if (!activeEmbedding) {
+          logger(`Loading voice embedding: ${activeVoice}...`, "system");
+          activeEmbedding = await loadEmbedding(activeVoice);
+        }
+
+        const speed = parseFloat(speedSlider.value);
+        logger(`Synthesizing (Voice: ${activeVoice}, Speed: ${speed}x)...`, "system");
+        const startTime = performance.now();
+
+        const output = await synthesize(pipe, text, activeEmbedding, speed, 5);
+        
+        const endTime = performance.now();
+        const latency = Math.round(endTime - startTime);
+        logger(`Speech synthesized in ${latency}ms!`, "system");
+
+        if (output.audio) {
+          const sr = output.sampling_rate;
+          logger(`Audio: ${sr}Hz mono, ${output.audio.length} samples`, "info");
+
+          activeBlob = audioToWavBlob(output.audio, sr);
+          const audioUrl = URL.createObjectURL(activeBlob);
+
+          audioPlayer.src = audioUrl;
+          audioPlayer.load();
+
+          playerPlayBtn.disabled = false;
+          playerTimeline.disabled = false;
+          playerDownloadBtn.disabled = false;
+          visPlaceholder.style.display = "none";
+
+          playerTimeline.value = 0;
+          playerTimeElapsed.textContent = "0:00";
+          playerTimeTotal.textContent = "0:00";
+
+          logger("Audio loaded in player.", "system");
+        } else {
+          logger("No audio output from model.", "error");
+        }
+      } catch (err) {
+        logger(`Synthesis error: ${err.message}`, "error");
+      } finally {
+        synthesizeTrigger.disabled = false;
+        synthesizeTrigger.classList.remove("generating");
+      }
+    };
+
+    // Canvas Visualizer Logic
+    function initVisualizer() {
+      const canvasCtx = canvas.getContext('2d');
+      canvasCtx.fillStyle = '#111113';
+      canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function setupAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 256;
+        sourceNode = audioCtx.createMediaElementSource(audioPlayer);
+        sourceNode.connect(analyser);
+        analyser.connect(audioCtx.destination);
+      }
+    }
+
+    function startVisualizer() {
+      setupAudioContext();
+      const canvasCtx = canvas.getContext('2d');
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+
+      function draw() {
+        animationFrameId = requestAnimationFrame(draw);
+        analyser.getByteFrequencyData(dataArray);
+
+        canvasCtx.fillStyle = '#111113';
+        canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const barWidth = (canvas.width / bufferLength) * 1.5;
+        let barHeight;
+        let x = 0;
+
+        for (let i = 0; i < bufferLength; i++) {
+          barHeight = dataArray[i] * 0.35; // Scale height appropriately
+          canvasCtx.fillStyle = '#6c5ce7'; // Solid Purple var(--accent)
+          canvasCtx.fillRect(x, canvas.height - barHeight, barWidth - 2, barHeight);
+          x += barWidth;
+        }
+      }
+      draw();
+    }
+
+    function stopVisualizer() {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+      // Return visualizer to pure dark background
+      initVisualizer();
+    }
+
+    // Audio Playback UI bindings
+    playerPlayBtn.onclick = () => {
+      if (audioPlayer.paused) {
+        audioPlayer.play();
+        playerPlayBtn.innerHTML = `
+          <svg style="width: 18px; height: 18px;" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path>
+          </svg>
+        `;
+        startVisualizer();
+      } else {
+        audioPlayer.pause();
+        playerPlayBtn.innerHTML = `
+          <svg style="width: 18px; height: 18px;" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M8 5v14l11-7z"></path>
+          </svg>
+        `;
+        stopVisualizer();
+      }
+    };
+
+    audioPlayer.onended = () => {
+      playerPlayBtn.innerHTML = `
+        <svg style="width: 18px; height: 18px;" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M8 5v14l11-7z"></path>
+        </svg>
+      `;
+      stopVisualizer();
+      playerTimeline.value = 0;
+      playerTimeElapsed.textContent = "0:00";
+    };
+
+    audioPlayer.onloadedmetadata = () => {
+      playerTimeTotal.textContent = formatTime(audioPlayer.duration);
+      playerTimeline.max = Math.floor(audioPlayer.duration);
+    };
+
+    audioPlayer.ontimeupdate = () => {
+      playerTimeElapsed.textContent = formatTime(audioPlayer.currentTime);
+      if (!isDraggingTimeline) {
+        playerTimeline.value = Math.floor(audioPlayer.currentTime);
+      }
+    };
+
+    let isDraggingTimeline = false;
+    playerTimeline.onmousedown = () => { isDraggingTimeline = true; };
+    playerTimeline.onmouseup = () => { isDraggingTimeline = false; };
+    playerTimeline.onchange = () => {
+      audioPlayer.currentTime = playerTimeline.value;
+    };
+
+    // Volume adjustment
+    playerVolume.oninput = () => {
+      audioPlayer.volume = playerVolume.value / 100;
+    };
+
+    // File Download trigger
+    playerDownloadBtn.onclick = () => {
+      if (!activeBlob) return;
+      const downloadUrl = URL.createObjectURL(activeBlob);
+      const a = document.createElement("a");
+      a.href = downloadUrl;
+      const cleanFileName = `supertonic_speech_${activeVoice}_${Math.round(performance.now())}.wav`;
+      a.download = cleanFileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      logger(`Downloaded WAV: ${cleanFileName}`, "system");
+    };
+
+    // Load initial capabilities on startup
+    await checkHardwareSupport();
+    initVisualizer();
+    loadSampleText(1);
+    // Pre-load default voice (M1) embedding
+    try {
+      activeEmbedding = await loadEmbedding("M1");
+      logger("Default voice M1 loaded", "system");
+    } catch (e) {
+      logger("Pre-load default voice failed: " + e.message, "warning");
+    }
+
+  </script>
+</body>
+</html>
