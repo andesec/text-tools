@@ -320,13 +320,13 @@
 
 		.tts-speak-btn {
 			position: absolute;
-			right: 0;
+			right: 8px;
 			top: 50%;
 			transform: translateY(-50%);
-			width: 40px;
-			height: 40px;
+			width: 32px;
+			height: 32px;
 			border: none;
-			background: var(--bg-surface);
+			background: none;
 			color: var(--text-tertiary);
 			cursor: pointer;
 			display: flex;
@@ -334,9 +334,9 @@
 			justify-content: center;
 			opacity: 0;
 			pointer-events: none;
-			border-radius: 8px 0 0 8px;
+			border-radius: 50%;
 			z-index: 1;
-			transition: opacity var(--transition-fast), background var(--transition-fast);
+			transition: opacity var(--transition-fast), background var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
 			-webkit-tap-highlight-color: transparent;
 		}
 
@@ -360,13 +360,14 @@
 		}
 
 		.tts-speak-btn svg {
-			width: 20px;
-			height: 20px;
+			width: 18px;
+			height: 18px;
 		}
 
 		.tts-speak-btn:hover {
-			background: var(--accent);
-			color: #fff;
+			background: var(--bg-surface-raised);
+			color: var(--accent);
+			transform: translateY(-50%) scale(1.1);
 		}
 
 		.tts-active-block > *:first-child,
@@ -1580,6 +1581,7 @@
 		let speakModeActive = false;
 		let readBlocks = [];
 		let currentBlockIdx = -1;
+		let savedBlockIdx = -1;
 		let isPlaying = false;
 		let isScanning = false;
 		let prefetchCache = new Map(); // blockIdx -> Blob
@@ -1695,7 +1697,7 @@
 				const voice = voiceSelect.value;
 				const speed = parseFloat(speedSelect.value);
 				const embedding = await loadEmbedding(voice);
-				const output = await synthesize(pipe, block.text, embedding, speed, 20);
+				const output = await synthesize(pipe, block.text, embedding, speed, 10);
 				const blob = audioToWavBlob(output.audio, output.sampling_rate);
 				prefetchCache.set(idx, blob);
 				return blob;
@@ -1847,8 +1849,12 @@
 		};
 
 		closeBtn.onclick = () => {
-			stopAll();
-			playerBar.classList.remove('visible');
+			if (speakModeActive) {
+				window.ttsToggleSpeakMode();
+			} else {
+				stopAll();
+				playerBar.classList.remove('visible');
+			}
 		};
 
 		// Invalidate cache when settings change
@@ -1861,6 +1867,7 @@
 			toggleDot.classList.toggle('visible', speakModeActive);
 
 			if (!speakModeActive) {
+				savedBlockIdx = currentBlockIdx;
 				stopAll();
 				playerBar.classList.remove('visible');
 				// Remove wrappers
@@ -1880,6 +1887,15 @@
 					scanBlocks();
 					detectDevice();
 					playerBar.classList.add('visible');
+					if (savedBlockIdx >= 0 && savedBlockIdx < readBlocks.length) {
+						currentBlockIdx = savedBlockIdx;
+						setBlockActive(currentBlockIdx);
+						const txt = readBlocks[currentBlockIdx].text;
+						setBarText(txt.slice(0, 100) + (txt.length > 100 ? '…' : ''), `Block ${currentBlockIdx + 1} of ${readBlocks.length}`);
+						ppBtn.disabled = false;
+						prevBtn.disabled = currentBlockIdx === 0;
+						nextBtn.disabled = false;
+					}
 				}, 100);
 			}
 		};

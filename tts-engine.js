@@ -170,7 +170,7 @@ export async function synthesize(pipe, text, embedding, speed, steps) {
     if (sentence.trim().length === 0) continue;
     const output = await pipe(sentence, {
       speaker_embeddings: embedding,
-      num_inference_steps: steps || 20,
+      num_inference_steps: steps || 10,
       speed: speed || 1.0,
     });
     if (output && output.audio) {

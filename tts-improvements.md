@@ -45,8 +45,8 @@ To prevent attention collapse, we split long texts into individual chunks using 
 2. Second pass scans each sentence: if it exceeds a strict `MAX_CHUNK = 60` characters, it breaks it at comma boundaries and groups them into smaller, safer chunks.
 3. These chunks are synthesized independently, and their waveforms are concatenated with a brief silence buffer (`0.2` seconds) in between to sound completely natural.
 
-### 3. Increasing Inference Steps to 20
-To eliminate non-deterministic word skipping and stabilize duration predictions, the default `num_inference_steps` was increased from `5` to `20`. The callers in both `tts.html` and `mdv.html` were updated to pass `20` (or omit the argument to fall back to the new default of `20` defined in the engine). This provides high-fidelity, highly reliable speech synthesis without random drops.
+### 3. Increasing Inference Steps to 10
+To eliminate non-deterministic word skipping and stabilize duration predictions, the default `num_inference_steps` was set to `10`. The callers in both `tts.html` and `mdv.html` were updated to pass `10` (or omit the argument to fall back to the new default of `10` defined in the engine). This provides the optimal balance of fast client-side synthesis speed and high pronunciation/retention reliability.
 
 ---
 
@@ -157,7 +157,7 @@ export async function synthesize(pipe, text, embedding, speed, steps) {
     if (sentence.trim().length === 0) continue;
     const output = await pipe(sentence, {
       speaker_embeddings: embedding,
-      num_inference_steps: steps || 20,
+      num_inference_steps: steps || 10,
       speed: speed || 1.0,
     });
     if (output && output.audio) {
