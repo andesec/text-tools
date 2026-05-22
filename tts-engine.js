@@ -115,18 +115,72 @@ function normalizeTextForTTS(text) {
   processed = processed.replace(/\s+,/g, ',');
   processed = processed.replace(/\s+\?/g, '?');
   processed = processed.replace(/\s+\!/g, '!');
-  
   return processed.trim();
+}
+
+function splitIntoSentences(text) {
+  if (!text) return [];
+  const regex = /[^.!?]+(?:[.!?]+(?:\s+|$)|$)/g;
+  const matches = text.match(regex);
+  if (!matches) return [text];
+  return matches.map(s => s.trim()).filter(s => s.length > 0);
 }
 
 export async function synthesize(pipe, text, embedding, speed, steps) {
   const cleanedText = normalizeTextForTTS(text);
-  const result = await pipe(cleanedText, {
-    speaker_embeddings: embedding,
-    num_inference_steps: steps || 5,
-    speed: speed || 1.0,
-  });
-  return result;
+  const sentences = splitIntoSentences(cleanedText);
+  
+  if (sentences.length === 0) {
+    return { audio: new Float32Array(0), sampling_rate: 44100 };
+  }
+
+  const results = [];
+  let samplingRate = 44100;
+
+  for (const sentence of sentences) {
+    if (sentence.trim().length === 0) continue;
+    const output = await pipe(sentence, {
+      speaker_embeddings: embedding,
+      num_inference_steps: steps || 5,
+      speed: speed || 1.0,
+    });
+    if (output && output.audio) {
+      results.push(output.audio);
+      if (output.sampling_rate) {
+        samplingRate = output.sampling_rate;
+      }
+    }
+  }
+
+  if (results.length === 0) {
+    return { audio: new Float32Array(0), sampling_rate: samplingRate };
+  }
+
+  // Concatenate audio arrays with a brief silence in between sentences
+  const silenceDuration = 0.2; // seconds
+  const silenceLength = Math.round(samplingRate * silenceDuration);
+  const silenceBuffer = new Float32Array(silenceLength);
+
+  let totalLength = 0;
+  for (let i = 0; i < results.length; i++) {
+    totalLength += results[i].length;
+    if (i < results.length - 1) {
+      totalLength += silenceLength;
+    }
+  }
+
+  const combinedAudio = new Float32Array(totalLength);
+  let offset = 0;
+  for (let i = 0; i < results.length; i++) {
+    combinedAudio.set(results[i], offset);
+    offset += results[i].length;
+    if (i < results.length - 1) {
+      combinedAudio.set(silenceBuffer, offset);
+      offset += silenceLength;
+    }
+  }
+
+  return { audio: combinedAudio, sampling_rate: samplingRate };
 }
 
 export function audioToWavBlob(float32, sampleRate) {
