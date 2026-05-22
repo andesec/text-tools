@@ -124,10 +124,35 @@ function normalizeTextForTTS(text) {
 
 function splitIntoSentences(text) {
   if (!text) return [];
+  // First pass: split on sentence-ending punctuation
   const regex = /[^.!?]+(?:[.!?]+(?:\s+|$)|$)/g;
   const matches = text.match(regex);
   if (!matches) return [text];
-  return matches.map(s => s.trim()).filter(s => s.length > 0);
+  const sentences = matches.map(s => s.trim()).filter(s => s.length > 0);
+
+  // Second pass: break long sentences at comma boundaries
+  const MAX_CHUNK = 80;
+  const result = [];
+  for (const sentence of sentences) {
+    if (sentence.length <= MAX_CHUNK) {
+      result.push(sentence);
+      continue;
+    }
+    // Split at commas, then re-group into chunks under MAX_CHUNK
+    const parts = sentence.split(/,\s*/);
+    let current = parts[0];
+    for (let i = 1; i < parts.length; i++) {
+      const candidate = current + ', ' + parts[i];
+      if (candidate.length > MAX_CHUNK && current.length > 0) {
+        result.push(current);
+        current = parts[i];
+      } else {
+        current = candidate;
+      }
+    }
+    if (current.length > 0) result.push(current);
+  }
+  return result;
 }
 
 export async function synthesize(pipe, text, embedding, speed, steps) {
