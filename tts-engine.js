@@ -91,8 +91,12 @@ function normalizeTextForTTS(text) {
   // 3. Replace colons and semicolons with commas for natural pauses
   processed = processed.replace(/[:;]/g, ',');
   
-  // 4. Remove all forms of apostrophes/single quotes to prevent adjacent word skipping
+  // 4. Normalize internal apostrophes (contractions/possessives) to standard ASCII apostrophe
+  processed = processed.replace(/([A-Za-z])['’‘`\u02BC]([A-Za-z])/g, "$1__APOSTROPHE__$2");
+  // Remove all other standalone single quotes/apostrophes
   processed = processed.replace(/['’‘`\u02BC]/g, '');
+  // Restore internal apostrophes as standard ASCII apostrophe
+  processed = processed.replace(/__APOSTROPHE__/g, "'");
   
   // 5. Remove double quotes
   processed = processed.replace(/["“”]/g, '');
