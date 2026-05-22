@@ -1739,7 +1739,7 @@
 				const voice = voiceSelect.value;
 				const speed = parseFloat(speedSelect.value);
 				const embedding = await loadEmbedding(voice);
-				const output = await synthesize(pipe, block.text, embedding, speed, 5);
+				const output = await synthesize(pipe, block.text, embedding, speed, 20);
 				const blob = audioToWavBlob(output.audio, output.sampling_rate);
 				prefetchCache.set(idx, blob);
 				return blob;

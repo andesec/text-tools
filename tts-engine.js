@@ -131,7 +131,7 @@ function splitIntoSentences(text) {
   const sentences = matches.map(s => s.trim()).filter(s => s.length > 0);
 
   // Second pass: break long sentences at comma boundaries
-  const MAX_CHUNK = 80;
+  const MAX_CHUNK = 60;
   const result = [];
   for (const sentence of sentences) {
     if (sentence.length <= MAX_CHUNK) {
@@ -170,7 +170,7 @@ export async function synthesize(pipe, text, embedding, speed, steps) {
     if (sentence.trim().length === 0) continue;
     const output = await pipe(sentence, {
       speaker_embeddings: embedding,
-      num_inference_steps: steps || 5,
+      num_inference_steps: steps || 20,
       speed: speed || 1.0,
     });
     if (output && output.audio) {

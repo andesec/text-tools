@@ -960,7 +960,7 @@
         logger(`Synthesizing (Voice: ${activeVoice}, Speed: ${speed}x)...`, "system");
         const startTime = performance.now();
 
-        const output = await synthesize(pipe, text, activeEmbedding, speed, 5);
+        const output = await synthesize(pipe, text, activeEmbedding, speed, 20);
         
         const endTime = performance.now();
         const latency = Math.round(endTime - startTime);
