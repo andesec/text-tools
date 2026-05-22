@@ -132,6 +132,35 @@
 		<!-- Bottom Row: Secondary Toolbar (Responsive) -->
 		<div class="app-header-toolbar">
 			<div class="flex items-center gap-2 shrink-0">
+				<button id="source-view-btn" onclick="revertToSource()" class="hidden btn btn-sm"
+					style="color: var(--warning);">Source</button>
+				<div class="relative" id="dropdown-tools">
+					<button id="tools-menu-btn" class="btn btn-sm">
+						<span>Tools</span>
+						<svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
+							</path>
+						</svg>
+					</button>
+					<div id="tools-menu-dropdown"
+						class="absolute left-0 mt-1 w-48 bg-[var(--bg-surface-raised)] border border-[var(--border-default)] rounded-lg shadow-xl hidden z-[100]">
+						<button onclick="transform('cleanJSON')"
+							class="w-full text-left px-4 py-2 hover:bg-[var(--bg-surface-hover)] text-xs"
+							style="color: var(--success);">Fix/Clean JSON</button>
+						<button onclick="transform('escapeJSON')"
+							class="w-full text-left px-4 py-2 hover:bg-[var(--bg-surface-hover)] text-xs"
+							style="color: var(--info);">Escape JSON String</button>
+						<button onclick="transform('unescapeJSON')"
+							class="w-full text-left px-4 py-2 hover:bg-[var(--bg-surface-hover)] text-xs"
+							style="color: var(--info);">Unescape JSON String</button>
+					</div>
+				</div>
+				<button id="toggle-view-btn" class="btn btn-sm">
+					<span id="toggle-text">Tree</span>
+				</button>
+			</div>
+
+			<div class="flex items-center gap-2 shrink-0">
 				<div class="relative" id="dropdown-instance">
 					<button id="instance-menu-btn" class="btn btn-sm">
 						<span id="instance-label">JSON 1</span>
@@ -141,7 +170,7 @@
 						</svg>
 					</button>
 					<div id="instance-menu-dropdown"
-						class="absolute left-0 sm:right-0 sm:left-auto mt-1 w-32 bg-[var(--bg-surface-raised)] border border-[var(--border-default)] rounded-lg shadow-xl hidden z-[100]">
+						class="absolute right-0 mt-1 w-32 bg-[var(--bg-surface-raised)] border border-[var(--border-default)] rounded-lg shadow-xl hidden z-[100]">
 						<button onclick="switchInstance(0)"
 							class="w-full text-left px-4 py-2 hover:bg-[var(--bg-surface-hover)] text-xs instance-btn"
 							data-instance="0">JSON 1</button>
@@ -158,35 +187,6 @@
 				<button onclick="transform('resolveNewlines')" class="btn btn-sm"
 					style="color: var(--accent-text);">Resolve</button>
 				<button onclick="toggleWrap()" id="wrap-toggle-btn" class="btn btn-sm font-bold">W</button>
-			</div>
-
-			<div class="flex items-center gap-2 shrink-0">
-				<button id="source-view-btn" onclick="revertToSource()" class="hidden btn btn-sm"
-					style="color: var(--warning);">Source</button>
-				<div class="relative" id="dropdown-tools">
-					<button id="tools-menu-btn" class="btn btn-sm">
-						<span>Tools</span>
-						<svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
-							</path>
-						</svg>
-					</button>
-					<div id="tools-menu-dropdown"
-						class="absolute right-0 mt-1 w-48 bg-[var(--bg-surface-raised)] border border-[var(--border-default)] rounded-lg shadow-xl hidden z-[100]">
-						<button onclick="transform('cleanJSON')"
-							class="w-full text-left px-4 py-2 hover:bg-[var(--bg-surface-hover)] text-xs"
-							style="color: var(--success);">Fix/Clean JSON</button>
-						<button onclick="transform('escapeJSON')"
-							class="w-full text-left px-4 py-2 hover:bg-[var(--bg-surface-hover)] text-xs"
-							style="color: var(--info);">Escape JSON String</button>
-						<button onclick="transform('unescapeJSON')"
-							class="w-full text-left px-4 py-2 hover:bg-[var(--bg-surface-hover)] text-xs"
-							style="color: var(--info);">Unescape JSON String</button>
-					</div>
-				</div>
-				<button id="toggle-view-btn" class="btn btn-sm">
-					<span id="toggle-text">Tree</span>
-				</button>
 			</div>
 		</div>
 	</header>
@@ -351,6 +351,8 @@
 		let sourceJSON = null; // Store the original JSON when in resolved view
 		let viewMode = "editor"; // 'editor' or 'tree'
 		let lineWrap = true;
+		let currentOffsetMap = null;
+		let currentTreeText = null;
 
 		let buildTreeTimer = null;
 		function debouncedBuildTree(text) {
@@ -719,14 +721,19 @@
 			const renderTo = [treeRoot, treeMobile];
 			renderTo.forEach(r => r.innerHTML = "");
 			if (!text || text.trim() === "") {
+				currentOffsetMap = null;
+				currentTreeText = null;
 				renderTo.forEach(r => r.innerHTML = empty);
 				return;
 			}
 			try {
 				const data = safeJsonParse(text);
-				const offsetMap = buildOffsetMap(text);
-				renderTo.forEach(r => r.appendChild(renderNode(null, data, true, null, [], offsetMap)));
+				currentTreeText = text;
+				currentOffsetMap = buildOffsetMap(text);
+				renderTo.forEach(r => r.appendChild(renderNode(null, data, true, null, [], currentOffsetMap)));
 			} catch (e) {
+				currentOffsetMap = null;
+				currentTreeText = null;
 				const errHtml = `<div style="color:var(--danger);padding:1rem;border:1px solid var(--danger);border-radius:8px;">
 					<div style="margin-bottom:4px;font-weight:600;">Invalid JSON</div>
 					<div style="font-size:11px;font-family:var(--font-mono);color:var(--text-secondary);">${e.message}</div>
@@ -831,36 +838,50 @@
 
 			content.onclick = (e) => {
 				e.stopPropagation();
-				if (offsetMap && offsetMap.has(pathKey) && editor) {
-					const offset = offsetMap.get(pathKey);
-					// Compute end of the value in the doc
-					const doc = editor.state.doc;
-					const text = doc.toString();
-					let end = offset;
-					// Scan forward to find end of value token
-					if (text[offset] === '"') {
-						end++;
-						while (end < text.length && text[end] !== '"') {
-							if (text[end] === '\\') end++;
-							end++;
-						}
-						end++; // include closing quote
-					} else if (text[offset] === '{' || text[offset] === '[') {
-						end = offset + 1; // just place cursor at open bracket
-					} else {
-						// number / boolean / null — scan to delimiter
-						while (end < text.length && /[^,\]\}\s]/.test(text[end])) end++;
-					}
-					editor.dispatch({
-						selection: { anchor: offset, head: end },
-						effects: EditorView.scrollIntoView(offset, { y: 'center' })
-					});
-					editor.focus();
+				if (!editor) return;
 
-					// Flash the tree node for visual feedback
-					node.classList.add('tree-node-active');
-					setTimeout(() => node.classList.remove('tree-node-active'), 600);
+				// Always use the freshest offset map for the current editor text
+				const editorText = editor.state.doc.toString();
+				let activeMap = currentOffsetMap;
+				if (!activeMap || currentTreeText !== editorText) {
+					try {
+						activeMap = buildOffsetMap(editorText);
+						currentOffsetMap = activeMap;
+						currentTreeText = editorText;
+					} catch (err) { return; }
 				}
+
+				if (!activeMap.has(pathKey)) return;
+
+				const offset = activeMap.get(pathKey);
+				if (offset < 0 || offset >= editorText.length) return;
+
+				let end = offset;
+				// Scan forward to find end of value token
+				if (editorText[offset] === '"') {
+					end++;
+					while (end < editorText.length && editorText[end] !== '"') {
+						if (editorText[end] === '\\') end++;
+						end++;
+					}
+					end++; // include closing quote
+				} else if (editorText[offset] === '{' || editorText[offset] === '[') {
+					end = offset + 1; // just place cursor at open bracket
+				} else {
+					// number / boolean / null — scan to delimiter
+					while (end < editorText.length && /[^,\]\}\s]/.test(editorText[end])) end++;
+				}
+
+				// Focus first, then dispatch to ensure scroll works
+				editor.focus();
+				editor.dispatch({
+					selection: { anchor: offset, head: end },
+					scrollIntoView: true
+				});
+
+				// Flash the tree node for visual feedback
+				node.classList.add('tree-node-active');
+				setTimeout(() => node.classList.remove('tree-node-active'), 600);
 			};
 
 			return node;

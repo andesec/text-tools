@@ -888,7 +888,9 @@
 		</main>
 	</div>
 	<!-- ── close main flex row ──? -->
-	<footer id="app-footer" class="shrink-0 text-center py-2 text-[11px] text-gray-400 border-t border-[var(--border-default)] bg-[var(--bg-surface)]"></footer>
+	<footer id="app-footer" class="shrink-0 flex items-center justify-center gap-3 py-2 text-[11px] text-gray-400 border-t border-[var(--border-default)] bg-[var(--bg-surface)]">
+		<span id="footer-file-info"></span>
+	</footer>
 	<!--
     Comment System UI
     -->
@@ -1057,7 +1059,27 @@
 				updateOutline();
 				Prism.highlightAllUnder(contentArea);
 				if (window.MdvComments) MdvComments.applyHighlights();
+				updateFooterInfo();
 			}
+		}
+
+		function formatSize(bytes) {
+			if (bytes < 1024) return bytes + ' B';
+			if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+			return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+		}
+
+		function updateFooterInfo() {
+			const el = document.getElementById('footer-file-info');
+			if (!el || !editor) return;
+			const text = editor.state.doc.toString();
+			const bytes = new TextEncoder().encode(text).length;
+			const lines = editor.state.doc.lines;
+			const parts = [];
+			if (currentFileName) parts.push(currentFileName);
+			parts.push(formatSize(bytes));
+			parts.push(lines + ' line' + (lines !== 1 ? 's' : ''));
+			el.textContent = parts.join(' · ');
 		}
 
 		function updateOutline() {
