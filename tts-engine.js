@@ -78,8 +78,50 @@ export function clearPipeline() {
   pipelineLoadPromise = null;
 }
 
+function normalizeTextForTTS(text) {
+  if (!text) return "";
+  let processed = text;
+  
+  // 1. Normalize em-dashes and en-dashes to a comma for natural pausing
+  processed = processed.replace(/[\u2013\u2014]/g, ', ');
+  
+  // 2. Replace hyphens with spaces to prevent word bonding
+  processed = processed.replace(/-/g, ' ');
+  
+  // 3. Replace colons and semicolons with commas for natural pauses
+  processed = processed.replace(/[:;]/g, ',');
+  
+  // 4. Remove all forms of apostrophes/single quotes to prevent adjacent word skipping
+  processed = processed.replace(/['’‘`\u02BC]/g, '');
+  
+  // 5. Remove double quotes
+  processed = processed.replace(/["“”]/g, '');
+  
+  // 6. Replace parentheses/brackets with commas/spaces for pacing
+  processed = processed.replace(/[()\[\]{}]/g, ' , ');
+  
+  // 7. Clean up slashes, underscores, and other non-standard punctuation
+  processed = processed.replace(/[\/\\#@_*~+]/g, ' ');
+  
+  // 8. Collapse multiple spaces
+  processed = processed.replace(/\s+/g, ' ');
+  
+  // 9. Collapse multiple commas and clean up comma spacing
+  processed = processed.replace(/,+/g, ',');
+  processed = processed.replace(/\s*,\s*/g, ', ');
+  
+  // 10. Clean up space before punctuation
+  processed = processed.replace(/\s+\./g, '.');
+  processed = processed.replace(/\s+,/g, ',');
+  processed = processed.replace(/\s+\?/g, '?');
+  processed = processed.replace(/\s+\!/g, '!');
+  
+  return processed.trim();
+}
+
 export async function synthesize(pipe, text, embedding, speed, steps) {
-  const result = await pipe(text, {
+  const cleanedText = normalizeTextForTTS(text);
+  const result = await pipe(cleanedText, {
     speaker_embeddings: embedding,
     num_inference_steps: steps || 5,
     speed: speed || 1.0,
