@@ -836,59 +836,15 @@
 				<div class="sidebar-panel-body">
 					<div id="file-list" class="flex-1 overflow-y-auto p-2 space-y-0.5">
 						<div class="text-[var(--text-tertiary)] text-xs italic p-8 text-center">Open files to begin.
-						</div>
-					</div>
 				</div>
 			</div>
-
-			<div class="sidebar-resizer" data-resizer="0"></div>
-
-			<!-- Outline Panel -->
-			<div id="outline-panel" class="sidebar-panel">
-				<div class="sidebar-panel-header" data-panel="outline">
-					<svg class="sidebar-panel-caret" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-					</svg>
-					<span class="sidebar-panel-title">Outline</span>
-				</div>
-				<div class="sidebar-panel-body">
-					<div id="outline-list" class="flex-1 overflow-y-auto p-2 space-y-0.5 no-scrollbar">
-						<div class="text-[var(--text-tertiary)] text-xs italic p-8 text-center">Select a document.</div>
-					</div>
-				</div>
-			</div>
-
-			<div class="sidebar-resizer" data-resizer="1"></div>
-
-			<!-- Comments Panel -->
-			<div id="sidebar-comments-panel" class="sidebar-panel">
-				<div class="sidebar-panel-header" data-panel="sidebar-comments">
-					<svg class="sidebar-panel-caret" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-					</svg>
-					<span class="sidebar-panel-title">Comments</span>
-					<span id="sidebar-comment-count" class="sidebar-panel-badge"></span>
-				</div>
-				<div class="sidebar-panel-body">
-					<div id="sidebar-comments-list" class="flex-1 overflow-y-auto p-2 space-y-0.5 no-scrollbar">
-						<div class="text-[var(--text-tertiary)] text-xs italic p-8 text-center">No comments yet.</div>
-					</div>
-				</div>
-			</div>
-		</aside>
-
-		<main class="flex-1 overflow-hidden bg-[var(--bg-root)] relative">
-			<div id="editor-container" class="w-full h-full bg-[var(--bg-surface)] px-0 sm:px-4 py-1 sm:py-4">
-				<div id="editor" class="h-full border border-[var(--border-default)] rounded-lg overflow-hidden">
-				</div>
-			</div>
-			<article id="content"
-				class="prose dark:prose-invert hidden bg-[var(--bg-surface)] p-4 sm:p-8 md:p-16 h-full border-x border-transparent sm:border-[var(--border-default)] overflow-y-auto overflow-x-hidden w-full">
-			</article>
-		</main>
+		</div>
 	</div>
-
-	<!-- Comment System UI -->
+	<!-- ── close main flex row ──? -->
+	<footer id="app-footer" class="shrink-0 text-center py-2 text-[11px] text-gray-400 border-t border-[var(--border-default)] bg-[var(--bg-surface)]"></footer>
+	<!--
+    Comment System UI
+    -->
 	<button id="comment-bubble" class="comment-bubble-btn"> Comment</button>
 
 	<div id="comment-panel" class="comment-panel">
@@ -1958,6 +1914,7 @@
 			}, '*');
 		}
 	</script>
+	<script src="footer.js"></script>
 </body>
 
 </html>
