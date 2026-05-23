@@ -440,6 +440,38 @@
 			} catch(e) {}
 		}
 
+		function updateTabTitle() {
+			const text = editor ? editor.state.doc.toString() : "";
+			let title = currentFileName || "JSON Viewer";
+			
+			try {
+				const trimmed = text.trim();
+				if (trimmed && (trimmed.startsWith("{") || trimmed.startsWith("["))) {
+					const data = JSON.parse(trimmed);
+					if (data && typeof data === 'object') {
+						let found = null;
+						if (data.title !== undefined) found = data.title;
+						else if (data.heading !== undefined) found = data.heading;
+						else if (data.main !== undefined) found = data.main;
+						
+						if (found !== null && found !== undefined) {
+							const valStr = typeof found === 'object' ? JSON.stringify(found) : String(found).trim();
+							if (valStr) {
+								title = valStr;
+							}
+						}
+					}
+				}
+			} catch (e) {
+				// Ignore parse errors
+			}
+			
+			document.title = title;
+			if (window.parent && window.parent !== window) {
+				window.parent.postMessage({ type: 'titleChange', title: title }, '*');
+			}
+		}
+
 		loadJsvState();
 
 		// Initialize CodeMirror
@@ -468,6 +500,7 @@
 						instances[currentInstance].content = content;
 						debouncedBuildTree(content);
 						saveJsvState();
+						updateTabTitle();
 					}
 				})
 			];
@@ -538,6 +571,7 @@
 			// Load new instance content
 			const isJson = currentFileName.toLowerCase().endsWith(".json");
 			initEditor(instances[index].content, isJson ? "json" : "javascript");
+			updateTabTitle();
 
 			if (isJson || !instances[index].content.trim() || instances[index].content.trim().startsWith("{") || instances[index].content.trim().startsWith("[")) {
 				buildTree(instances[index].content);
@@ -590,6 +624,7 @@
 
 			const isJson = name.toLowerCase().endsWith(".json");
 			initEditor(text, isJson ? "json" : "javascript");
+			updateTabTitle();
 
 			if (isJson || !text.trim() || text.trim().startsWith("{") || text.trim().startsWith("[")) {
 				buildTree(text);
@@ -640,78 +675,180 @@
 			return cleaned;
 		}
 
+		function tokenize(text) {
+			const tokens = [];
+			let i = 0;
+			while (i < text.length) {
+				// Skip whitespace
+				if (/\s/.test(text[i])) {
+					i++;
+					continue;
+				}
+				// Skip single-line comments
+				if (text[i] === '/' && text[i+1] === '/') {
+					i += 2;
+					while (i < text.length && text[i] !== '\n' && text[i] !== '\r') i++;
+					continue;
+				}
+				// Skip multi-line comments
+				if (text[i] === '/' && text[i+1] === '*') {
+					i += 2;
+					while (i < text.length && !(text[i] === '*' && text[i+1] === '/')) i++;
+					if (i < text.length) i += 2;
+					continue;
+				}
+
+				// Single character tokens
+				if (text[i] === '{' || text[i] === '}' || text[i] === '[' || text[i] === ']' || text[i] === ':' || text[i] === ',') {
+					tokens.push({ type: text[i], value: text[i], start: i, end: i + 1 });
+					i++;
+					continue;
+				}
+
+				// String tokens (double quoted)
+				if (text[i] === '"') {
+					const start = i;
+					i++;
+					while (i < text.length && text[i] !== '"') {
+						if (text[i] === '\\') i += 2;
+						else i++;
+					}
+					if (i < text.length) i++;
+					const value = text.slice(start, i);
+					tokens.push({ type: 'string', value: value, start, end: i });
+					continue;
+				}
+
+				// String tokens (single quoted)
+				if (text[i] === "'") {
+					const start = i;
+					i++;
+					while (i < text.length && text[i] !== "'") {
+						if (text[i] === '\\') i += 2;
+						else i++;
+					}
+					if (i < text.length) i++;
+					const value = text.slice(start, i);
+					tokens.push({ type: 'string', value: value, start, end: i });
+					continue;
+				}
+
+				// Identifier / Word / Number
+				if (/[a-zA-Z0-9_\-\.\+]/.test(text[i])) {
+					const start = i;
+					while (i < text.length && /[a-zA-Z0-9_\-\.\+]/.test(text[i])) i++;
+					const value = text.slice(start, i);
+					tokens.push({ type: 'word', value: value, start, end: i });
+					continue;
+				}
+
+				// Catch-all for any other characters to prevent infinite loops
+				i++;
+			}
+			return tokens;
+		}
+
 		function buildOffsetMap(text) {
 			const map = new Map();
+			const tokens = tokenize(text);
+			let tokenIndex = 0;
+
+			function peek() {
+				return tokens[tokenIndex] || null;
+			}
+
+			function consume() {
+				return tokens[tokenIndex++];
+			}
+
 			const path = [];
-			let i = 0;
-
-			function skipWhitespace() {
-				while (i < text.length && /\s/.test(text[i])) i++;
-			}
-
-			function readString() {
-				const start = i;
-				i++;
-				while (i < text.length && text[i] !== '"') {
-					if (text[i] === '\\') i += 2;
-					else i++;
-				}
-				if (i < text.length) i++;
-				return text.slice(start, i);
-			}
 
 			function parseValue() {
-				skipWhitespace();
-				const start = i;
-				map.set(JSON.stringify(path), start);
+				const tok = peek();
+				if (!tok) return;
 
-				if (text[i] === '"') {
-					readString();
-				} else if (text[i] === '{') {
-					i++;
-					skipWhitespace();
+				// Save the start offset of the current value/structure
+				map.set(JSON.stringify(path), tok.start);
+
+				if (tok.type === '{') {
+					consume(); // consume '{'
 					let first = true;
-					while (i < text.length && text[i] !== '}') {
+					while (true) {
+						const nextTok = peek();
+						if (!nextTok || nextTok.type === '}') break;
+
 						if (!first) {
-							if (text[i] === ',') i++;
-							skipWhitespace();
+							if (nextTok.type === ',') {
+								consume(); // consume ','
+							}
 						}
 						first = false;
-						skipWhitespace();
-						if (text[i] === '"') {
-							const keyStr = readString();
-							const key = JSON.parse(keyStr);
-							skipWhitespace();
-							if (text[i] === ':') i++;
-							path.push(key);
-							parseValue();
-							path.pop();
+
+						const keyTok = peek();
+						if (!keyTok || keyTok.type === '}') break;
+
+						// key can be a string or a word (unquoted key)
+						let key = '';
+						if (keyTok.type === 'string') {
+							// Strip enclosing quotes and parse
+							const rawStr = consume().value;
+							try {
+								key = JSON.parse(rawStr.startsWith("'") ? `"${rawStr.slice(1, -1).replace(/"/g, '\\"')}"` : rawStr);
+							} catch (e) {
+								key = rawStr.slice(1, -1);
+							}
+						} else if (keyTok.type === 'word') {
+							key = consume().value;
 						} else {
-							i++;
+							// Fallback to prevent infinite loop
+							consume();
+							continue;
 						}
+
+						const colonTok = peek();
+						if (colonTok && colonTok.type === ':') {
+							consume(); // consume ':'
+						}
+
+						path.push(key);
+						parseValue();
+						path.pop();
 					}
-					if (i < text.length && text[i] === '}') i++;
-				} else if (text[i] === '[') {
-					i++;
-					skipWhitespace();
+					if (peek() && peek().type === '}') {
+						consume(); // consume '}'
+					}
+				} else if (tok.type === '[') {
+					consume(); // consume '['
 					let index = 0;
-					while (i < text.length && text[i] !== ']') {
-						if (index > 0) {
-							if (text[i] === ',') i++;
-							skipWhitespace();
+					let first = true;
+					while (true) {
+						const nextTok = peek();
+						if (!nextTok || nextTok.type === ']') break;
+
+						if (!first) {
+							if (nextTok.type === ',') {
+								consume(); // consume ','
+							}
 						}
+						first = false;
+
+						const elementTok = peek();
+						if (!elementTok || elementTok.type === ']') break;
+
 						path.push(index);
 						parseValue();
 						path.pop();
 						index++;
 					}
-					if (i < text.length && text[i] === ']') i++;
+					if (peek() && peek().type === ']') {
+						consume(); // consume ']'
+					}
 				} else {
-					while (i < text.length && /[^,\]\}\s]/.test(text[i])) i++;
+					// String, word (number, boolean, null, etc.)
+					consume();
 				}
 			}
 
-			skipWhitespace();
 			parseValue();
 			return map;
 		}
@@ -840,21 +977,35 @@
 				e.stopPropagation();
 				if (!editor) return;
 
+				console.log('[TREE-NAV] Click on pathKey:', pathKey);
+
 				// Always use the freshest offset map for the current editor text
 				const editorText = editor.state.doc.toString();
 				let activeMap = currentOffsetMap;
 				if (!activeMap || currentTreeText !== editorText) {
 					try {
+						console.log('[TREE-NAV] Rebuilding offset map (text changed)');
 						activeMap = buildOffsetMap(editorText);
 						currentOffsetMap = activeMap;
 						currentTreeText = editorText;
-					} catch (err) { return; }
+					} catch (err) {
+						console.error('[TREE-NAV] Failed to build offset map:', err);
+						return;
+					}
 				}
 
-				if (!activeMap.has(pathKey)) return;
+				if (!activeMap.has(pathKey)) {
+					console.warn('[TREE-NAV] pathKey not found in map:', pathKey);
+					console.log('[TREE-NAV] Available keys:', [...activeMap.keys()]);
+					return;
+				}
 
 				const offset = activeMap.get(pathKey);
-				if (offset < 0 || offset >= editorText.length) return;
+				console.log('[TREE-NAV] offset:', offset, 'char:', JSON.stringify(editorText[offset]), 'docLen:', editorText.length);
+				if (offset < 0 || offset >= editorText.length) {
+					console.error('[TREE-NAV] offset out of bounds');
+					return;
+				}
 
 				let end = offset;
 				// Scan forward to find end of value token
@@ -866,18 +1017,21 @@
 					}
 					end++; // include closing quote
 				} else if (editorText[offset] === '{' || editorText[offset] === '[') {
-					end = offset + 1; // just place cursor at open bracket
+					end = offset + 1;
 				} else {
-					// number / boolean / null — scan to delimiter
 					while (end < editorText.length && /[^,\]\}\s]/.test(editorText[end])) end++;
 				}
 
-				// Focus first, then dispatch to ensure scroll works
-				editor.focus();
+				console.log('[TREE-NAV] Dispatching selection anchor:', offset, 'head:', end);
+
+				// Dispatch selection + scroll, then focus in next microtask
+				// to prevent focus() from overriding the scrollIntoView
 				editor.dispatch({
 					selection: { anchor: offset, head: end },
+					effects: EditorView.scrollIntoView(offset, { y: 'center' }),
 					scrollIntoView: true
 				});
+				requestAnimationFrame(() => editor.focus());
 
 				// Flash the tree node for visual feedback
 				node.classList.add('tree-node-active');
@@ -1207,6 +1361,7 @@
 			sourceJSON = null; // Clear source JSON
 			sourceBtn.classList.add("hidden"); // Hide source button
 			initEditor("", "json");
+			updateTabTitle();
 			if (window.innerWidth < 768 && document.body.classList.contains("mobile-sidebar-active")) toggleSidebar();
 		};
 
@@ -1240,6 +1395,7 @@
 					url: window.location.pathname.split('/').pop() + window.location.search
 				}, '*');
 			}
+			updateTabTitle();
 		})();
 	</script>
 	<script src="footer.js"></script>

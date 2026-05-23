@@ -1012,6 +1012,26 @@
 			return localStorage.getItem(MDV_STORAGE_KEY) || "";
 		}
 
+		function updateTabTitle() {
+			const text = editor ? editor.state.doc.toString() : "";
+			let title = currentFileName || "Untitled.md";
+			
+			const trimmed = text.trimStart();
+			if (trimmed.startsWith('# ')) {
+				const lineEnd = trimmed.indexOf('\n');
+				const firstLine = lineEnd === -1 ? trimmed : trimmed.substring(0, lineEnd);
+				const heading = firstLine.substring(2).trim();
+				if (heading) {
+					title = heading.length > 30 ? heading.substring(0, 30) + '...' : heading;
+				}
+			}
+			
+			document.title = title;
+			if (window.parent && window.parent !== window) {
+				window.parent.postMessage({ type: 'titleChange', title: title }, '*');
+			}
+		}
+
 		// Initialize CodeMirror
 		function initEditor(initialValue = "") {
 			if (editor) {
@@ -1037,6 +1057,7 @@
 					if (update.docChanged) {
 						updatePreview();
 						saveMdvState();
+						updateTabTitle();
 					}
 				})
 			];
@@ -1292,6 +1313,7 @@
 			// Initialize editor with current text
 			initEditor(text);
 			updatePreview();
+			updateTabTitle();
 
 			if (window.innerWidth < 1024) {
 				isEditing = false;
@@ -1636,6 +1658,7 @@
 		// Initial setup
 		initEditor(loadMdvState());
 		updateViewMode();
+		updateTabTitle();
 	</script>
 
 	<!-- TTS Reader Module -->

@@ -242,7 +242,22 @@
                   t.assignedName = `${toolInfo.name}-${num}`;
                   t.icon = toolInfo.icon;
                 }
-                newTitle = t.assignedName;
+                const defaultTitles = [
+                  'Markdown Explorer', 
+                  'JSON Viewer', 
+                  'New Tab', 
+                  'Tool', 
+                  'Text Tools - Andesec', 
+                  'Select a Tool',
+                  'Diff Tool — Text Tools',
+                  'UTV - URI & Base64 Utility',
+                  'Encryption/Decryption Utility - Andesec Text Tools',
+                  'PDF Splitter - Andesec',
+                  'Supertonic TTS Player - Andesec'
+                ];
+                if (defaultTitles.includes(newTitle)) {
+                  newTitle = t.assignedName;
+                }
               } else {
                 t.assignedName = null;
                 t.icon = null;
@@ -263,6 +278,7 @@
                 const textNode = document.createTextNode(newTitle);
                 titleEl.appendChild(textNode);
               }
+              updateBrowserTitle();
               saveState();
             }
           } catch(e) {
@@ -281,7 +297,17 @@
         }
       });
       
+      updateBrowserTitle();
       saveState();
+    }
+
+    function updateBrowserTitle() {
+      const activeTab = tabs.find(t => t.id === activeTabId);
+      if (activeTab) {
+        document.title = `${activeTab.title} - Tabbed Workspace - Andesec`;
+      } else {
+        document.title = 'Tabbed Workspace - Andesec';
+      }
     }
 
     function renderTabs() {
@@ -321,7 +347,9 @@
 
     window.addEventListener('message', (event) => {
       const data = event.data;
-      if (data && data.type === 'toolSelection') {
+      if (!data) return;
+
+      if (data.type === 'toolSelection') {
         // Find which iframe sent the message
         const iframe = Array.from(document.querySelectorAll('.workspace-iframe')).find(
           f => f.contentWindow === event.source
@@ -361,7 +389,36 @@
           }
           const textNode = document.createTextNode(t.title);
           titleEl.appendChild(textNode);
+          titleEl.title = t.title;
         }
+        updateBrowserTitle();
+        saveState();
+      } else if (data.type === 'titleChange') {
+        const iframe = Array.from(document.querySelectorAll('.workspace-iframe')).find(
+          f => f.contentWindow === event.source
+        );
+        if (!iframe) return;
+        
+        const id = parseInt(iframe.id.replace('iframe-', ''));
+        const t = tabs.find(x => x.id === id);
+        if (!t) return;
+        
+        t.title = data.title;
+        
+        const titleEl = document.getElementById(`tab-title-${id}`);
+        if (titleEl) {
+          titleEl.innerHTML = '';
+          if (t.icon) {
+            const iconSpan = document.createElement('span');
+            iconSpan.style.marginRight = '6px';
+            iconSpan.textContent = t.icon;
+            titleEl.appendChild(iconSpan);
+          }
+          const textNode = document.createTextNode(t.title);
+          titleEl.appendChild(textNode);
+          titleEl.title = t.title;
+        }
+        updateBrowserTitle();
         saveState();
       }
     });
