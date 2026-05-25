@@ -42,6 +42,25 @@
     #tabs-container::-webkit-scrollbar {
       display: none;
     }
+
+    .workspace-redirect-toggle {
+      margin-left: auto;
+      margin-right: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    .workspace-redirect-toggle input {
+      width: 1rem;
+      height: 1rem;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -52,6 +71,10 @@
       </svg>
     </a>
     <div id="tabs-container"></div>
+    <label class="workspace-redirect-toggle">
+      <input type="checkbox" id="workspaceRedirectToggle">
+      Always open workspace
+    </label>
     <div class="workspace-add-tab" id="add-tab-btn" title="New Tab">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
@@ -65,6 +88,7 @@
   <script>
     const MAX_TABS = 10;
     const STORAGE_KEY = 'andesec_workspace_tabs';
+    const WORKSPACE_REDIRECT_KEY = 'text_tools_always_open_workspace';
     const NEW_TAB_URL = 'tools.html';
     
     let tabs = [];
@@ -74,6 +98,7 @@
     const tabsContainer = document.getElementById('tabs-container');
     const contentContainer = document.getElementById('workspace-content');
     const addTabBtn = document.getElementById('add-tab-btn');
+    const workspaceRedirectToggle = document.getElementById('workspaceRedirectToggle');
 
     const TOOL_MAP = {
       'mdv.html': { name: 'Markdown', icon: '📝' },
@@ -97,6 +122,12 @@
     }
 
     function init() {
+      if (workspaceRedirectToggle) {
+        workspaceRedirectToggle.checked = localStorage.getItem(WORKSPACE_REDIRECT_KEY) === 'true';
+        workspaceRedirectToggle.addEventListener('change', () => {
+          localStorage.setItem(WORKSPACE_REDIRECT_KEY, workspaceRedirectToggle.checked ? 'true' : 'false');
+        });
+      }
       loadState();
       
       if (tabs.length === 0) {

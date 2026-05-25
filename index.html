@@ -25,6 +25,30 @@
       text-align: center;
     }
 
+    .top-toggle {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-lg);
+      padding: 0.7rem 0.9rem;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      box-shadow: var(--shadow-sm);
+      user-select: none;
+    }
+
+    .top-toggle input {
+      width: 1.1rem;
+      height: 1.1rem;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
     h1 {
       color: var(--text-primary);
       font-size: 3rem;
@@ -129,6 +153,10 @@
 </head>
 
 <body>
+  <label class="top-toggle">
+    <input type="checkbox" id="workspaceRedirectToggle">
+    Always open workspace
+  </label>
   <div class="container">
     <h1>Text Tools</h1>
     <p class="subtitle">A collection of tools to edit, view, and format your text</p>
@@ -200,6 +228,26 @@
       <p>Made with ❤️ by <a href="https://github.com/andesec" target="_blank" rel="noopener">Andesec</a></p>
     </footer>
   </div>
+  <script>
+    const WORKSPACE_REDIRECT_KEY = 'text_tools_always_open_workspace';
+    const workspaceRedirectToggle = document.getElementById('workspaceRedirectToggle');
+
+    const isInsideWorkspaceFrame = window.parent && window.parent !== window;
+
+    if (!isInsideWorkspaceFrame && localStorage.getItem(WORKSPACE_REDIRECT_KEY) === 'true') {
+      window.location.href = 'workspace.html';
+    }
+
+    if (workspaceRedirectToggle) {
+      workspaceRedirectToggle.checked = localStorage.getItem(WORKSPACE_REDIRECT_KEY) === 'true';
+      workspaceRedirectToggle.addEventListener('change', () => {
+        localStorage.setItem(WORKSPACE_REDIRECT_KEY, workspaceRedirectToggle.checked ? 'true' : 'false');
+        if (workspaceRedirectToggle.checked) {
+          window.location.href = 'workspace.html';
+        }
+      });
+    }
+  </script>
   <script src="footer.js"></script>
 </body>
 

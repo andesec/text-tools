@@ -1001,15 +1001,44 @@
 		const MDV_STORAGE_KEY = window.name && window.name.startsWith('tab_') 
 			? `mdv_state_${window.name}` 
 			: 'mdv_state_default';
+		const MDV_LEGACY_MARKDOWN_KEY = `${MDV_STORAGE_KEY}_markdown`;
+
+		function getCurrentComments() {
+			if (window.MdvComments && typeof MdvComments.getComments === "function") {
+				return MdvComments.getComments() || [];
+			}
+			return [];
+		}
 
 		function saveMdvState() {
-			if (editor) {
-				localStorage.setItem(MDV_STORAGE_KEY, editor.state.doc.toString());
-			}
+			if (!editor) return;
+
+			const state = {
+				markdown: editor.state.doc.toString(),
+				comments: getCurrentComments()
+			};
+
+			localStorage.setItem(MDV_STORAGE_KEY, JSON.stringify(state));
+			localStorage.setItem(MDV_LEGACY_MARKDOWN_KEY, state.markdown);
 		}
 
 		function loadMdvState() {
-			return localStorage.getItem(MDV_STORAGE_KEY) || "";
+			const raw = localStorage.getItem(MDV_STORAGE_KEY);
+			if (!raw) return "";
+
+			try {
+				const state = JSON.parse(raw);
+				if (state && typeof state === "object") {
+					if (window.MdvComments && typeof MdvComments.setComments === "function") {
+						MdvComments.setComments(Array.isArray(state.comments) ? state.comments : []);
+					}
+					return typeof state.markdown === "string" ? state.markdown : "";
+				}
+			} catch (e) {
+				return raw;
+			}
+
+			return "";
 		}
 
 		function updateTabTitle() {
@@ -1533,6 +1562,7 @@
 							const parsed = MdvComments.parseFromMarkdown(text);
 							text = parsed.markdown;
 							MdvComments.setComments(parsed.comments);
+							saveMdvState();
 						}
 						if (!editor) {
 							initEditor(text);
@@ -2014,6 +2044,8 @@
 	<script src="mdv-comments.js"></script>
 	<script>
 		MdvComments.init();
+		loadMdvState();
+		updatePreview();
 		if (window.parent && window.parent !== window) {
 			window.parent.postMessage({
 				type: 'toolSelection',
