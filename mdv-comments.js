@@ -19,8 +19,8 @@
 		parseFromMarkdown,
 		renderSidebarComments,
 		getComments: () => comments,
-		setComments: (c) => { comments = c; renderSidebarComments(); },
-		clearComments: () => { comments = []; renderSidebarComments(); },
+		setComments: (c) => { comments = c; renderSidebarComments(); updateBadge(); },
+		clearComments: () => { comments = []; renderSidebarComments(); updateBadge(); if (window.saveMdvState) window.saveMdvState(); },
 		toast,
 	};
 
@@ -133,6 +133,9 @@
 		applyHighlights();
 		updateBadge();
 		renderSidebarComments();
+		if (window.saveMdvState) {
+			window.saveMdvState();
+		}
 	}
 
 	function deleteComment(id) {
@@ -141,6 +144,9 @@
 		updateBadge();
 		renderSidebarComments();
 		toast("Comment removed");
+		if (window.saveMdvState) {
+			window.saveMdvState();
+		}
 	}
 
 	// ── Highlight Application ──────────────────────
