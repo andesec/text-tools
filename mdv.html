@@ -640,7 +640,7 @@
 					class="hidden" />
 				<div class="save-dropdown-wrapper" id="open-dropdown-wrapper">
 					<button id="open-btn"
-						class="open-main-btn btn btn-gradient-blue btn-sm sm:px-4 sm:py-2 sm:text-sm shadow-sm hover:shadow-md transition-all transform active:scale-95">
+						class="btn btn-gradient-blue btn-sm sm:px-4 sm:py-2 sm:text-sm shadow-sm hover:shadow-md transition-all transform active:scale-95">
 						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
 						</svg>
@@ -1310,6 +1310,32 @@
 			fileListContainer.appendChild(btn);
 		}
 
+		function cleanMarkdownQuotesAndBackticks(text) {
+			if (typeof text !== "string") return text;
+			let t = text.trim();
+			let changed = true;
+			while (changed) {
+				changed = false;
+				if (t.startsWith('"') && t.endsWith('"')) {
+					t = t.slice(1, -1).trim();
+					changed = true;
+				}
+				if (t.startsWith('```') && t.endsWith('```')) {
+					t = t.slice(3, -3).trim();
+					// Remove language tag at the beginning if any, e.g. "markdown\n" or "javascript\n"
+					const firstNewLine = t.indexOf('\n');
+					if (firstNewLine !== -1) {
+						const firstLine = t.slice(0, firstNewLine).trim();
+						if (/^[a-zA-Z0-9_-]+$/.test(firstLine)) {
+							t = t.slice(firstNewLine + 1).trim();
+						}
+					}
+					changed = true;
+				}
+			}
+			return t;
+		}
+
 		async function displayFile(name, element) {
 			const item = loadedFiles.get(name);
 			if (!item) return;
@@ -1324,6 +1350,7 @@
 			}
 
 			let text = await (file.text ? file.text() : readFileAsText(file));
+			text = cleanMarkdownQuotesAndBackticks(text);
 			currentFileName = name;
 			currentFileHandle = handle;
 
@@ -1541,6 +1568,7 @@
 
 		if (isFileSystemApiSupported) {
 			document.getElementById("btn-text").textContent = "Directory";
+			openBtn.classList.add("open-main-btn");
 			if (openChevron) openChevron.classList.remove("hidden");
 		}
 
@@ -1573,6 +1601,7 @@
 							MdvComments.setComments(parsed.comments);
 							saveMdvState();
 						}
+						text = cleanMarkdownQuotesAndBackticks(text);
 						if (!editor) {
 							initEditor(text);
 						} else {
@@ -1596,6 +1625,29 @@
 		}
 
 		fileInput.onchange = (e) => handleFileSelect(e.target.files);
+
+		if (editorEl) {
+			editorEl.addEventListener("paste", (e) => {
+				const text = (e.clipboardData || window.clipboardData).getData('text');
+				if (text) {
+					const cleaned = cleanMarkdownQuotesAndBackticks(text);
+					if (cleaned !== text) {
+						e.preventDefault();
+						if (editor) {
+							const transaction = editor.state.update({
+								changes: editor.state.selection.ranges.map(range => ({
+									from: range.from,
+									to: range.to,
+									insert: cleaned
+								})),
+								selection: { anchor: editor.state.selection.main.from + cleaned.length }
+							});
+							editor.dispatch(transaction);
+						}
+					}
+				}
+			});
+		}
 
 		// ── Sidebar Panel Toggle & Resize ──────────────────
 		(function () {

@@ -960,7 +960,7 @@
 				const valSpan = document.createElement("span");
 				const type = value === null ? "null" : typeof value;
 				valSpan.className = `json-value-${type}`;
-				valSpan.textContent = type === "string" ? `"${value}"` : String(value);
+				valSpan.textContent = type === "string" ? (value.length > 200 ? `"${value.substring(0, 200)}..."` : `"${value}"`) : String(value);
 				content.appendChild(valSpan);
 
 				// Type badge
