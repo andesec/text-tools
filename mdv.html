@@ -1244,8 +1244,17 @@
 				}
 			},
 			renderer(token) {
+				// Repair common LaTeX commands that can be corrupted before rendering.
+				// Scope this to math only so normal text and intentional tabs are untouched.
+				const repairedText = token.text
+					// \text and \times can become a tab followed by ext/imes when markdown
+					// passes through a JS string literal.
+					.replace(/\t(?=(?:ext|imes)\b)/g, "\\t")
+					// \mathbf can arrive as plain mathbf when an upstream parser strips the
+					// backslash. Only repair the command form immediately before `{...}`.
+					.replace(/(^|[^\\\w])mathbf(?=\s*\{)/g, "$1\\mathbf");
 				try {
-					return katex.renderToString(token.text, {
+					return katex.renderToString(repairedText, {
 						displayMode: token.displayMode,
 						throwOnError: false
 					});
