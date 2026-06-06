@@ -1082,6 +1082,35 @@
 					".ͼ1 .cm-typeName": { fontWeight: "500 !important" },
 					".cm-gutters": { backgroundColor: "var(--bg-surface)", borderRightColor: "var(--border-subtle)", color: "var(--text-tertiary)" }
 				}),
+				EditorView.domEventHandlers({
+					paste(event, view) {
+						const text = (event.clipboardData || window.clipboardData).getData('text');
+						if (text) {
+							let cleaned = text;
+							if (window.MdvComments) {
+								const parsed = MdvComments.parseFromMarkdown(cleaned);
+								cleaned = parsed.markdown;
+								if (parsed.comments && parsed.comments.length > 0) {
+									MdvComments.setComments(parsed.comments);
+									saveMdvState();
+								}
+							}
+							cleaned = cleanMarkdownQuotesAndBackticks(cleaned);
+							
+							event.preventDefault();
+							const transaction = view.state.update({
+								changes: view.state.selection.ranges.map(range => ({
+									from: range.from,
+									to: range.to,
+									insert: cleaned
+								})),
+								selection: { anchor: view.state.selection.main.from + cleaned.length }
+							});
+							view.dispatch(transaction);
+							return true;
+						}
+					}
+				}),
 				EditorView.updateListener.of((update) => {
 					if (update.docChanged) {
 						updatePreview();
@@ -1178,6 +1207,13 @@
 						h.scrollIntoView({ behavior: "smooth", block: "start" });
 						break;
 					}
+				}
+			}
+			// Close sidebar on mobile devices to reveal the heading
+			if (window.innerWidth < 768) {
+				const closeBtn = document.getElementById("close-sidebar");
+				if (closeBtn && document.body.classList.contains("mobile-sidebar-active")) {
+					closeBtn.click();
 				}
 			}
 		};
@@ -1626,28 +1662,7 @@
 
 		fileInput.onchange = (e) => handleFileSelect(e.target.files);
 
-		if (editorEl) {
-			editorEl.addEventListener("paste", (e) => {
-				const text = (e.clipboardData || window.clipboardData).getData('text');
-				if (text) {
-					const cleaned = cleanMarkdownQuotesAndBackticks(text);
-					if (cleaned !== text) {
-						e.preventDefault();
-						if (editor) {
-							const transaction = editor.state.update({
-								changes: editor.state.selection.ranges.map(range => ({
-									from: range.from,
-									to: range.to,
-									insert: cleaned
-								})),
-								selection: { anchor: editor.state.selection.main.from + cleaned.length }
-							});
-							editor.dispatch(transaction);
-						}
-					}
-				}
-			});
-		}
+
 
 		// ── Sidebar Panel Toggle & Resize ──────────────────
 		(function () {

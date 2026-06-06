@@ -469,9 +469,17 @@
 			if (toggleBtn) toggleBtn.click();
 			// Wait for preview to render before scrolling
 			setTimeout(() => scrollToCommentMark(comment), 120);
-			return;
+		} else {
+			scrollToCommentMark(comment);
 		}
-		scrollToCommentMark(comment);
+
+		// Close sidebar on mobile devices to reveal the comment/preview
+		if (window.innerWidth < 768) {
+			const closeBtn = document.getElementById("close-sidebar");
+			if (closeBtn && document.body.classList.contains("mobile-sidebar-active")) {
+				closeBtn.click();
+			}
+		}
 	}
 
 	function scrollToCommentMark(comment) {
