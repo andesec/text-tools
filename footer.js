@@ -22,13 +22,15 @@ function buildFooterLinks() {
 }
 
 (function () {
-	const existing = document.querySelector('footer');
-	if (existing) {
-		const target = existing.querySelector('p') || existing;
-		if (target.textContent.trim() || target.children.length > 0) {
-			target.appendChild(document.createTextNode(' \u00b7 '));
-		}
-		target.appendChild(buildFooterLinks());
+	const footers = document.querySelectorAll('footer');
+	if (footers.length > 0) {
+		footers.forEach((existing) => {
+			const target = existing.querySelector('p') || existing;
+			if (target.textContent.trim()) {
+				target.appendChild(document.createTextNode(' \u00b7 '));
+			}
+			target.appendChild(buildFooterLinks());
+		});
 		return;
 	}
 

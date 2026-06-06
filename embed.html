@@ -1035,21 +1035,21 @@ iframe.contentWindow.postMessage(<span class="tok-key">{</span> <span class="tok
 	<script src="footer.js"></script>
 	<script>
 		// ── Copy buttons ────────────────────────────────────────────────────
-		document.querySelectorAll('.copy-btn').forEach(btn =&gt; {
-			btn.addEventListener('click', async () =&gt; {
+		document.querySelectorAll('.copy-btn').forEach(btn => {
+			btn.addEventListener('click', async () => {
 				const block = btn.closest('.code-block');
 				const code = block.querySelector('pre code').innerText;
 				try {
 					await navigator.clipboard.writeText(code);
 					btn.textContent = 'Copied';
 					btn.classList.add('copied');
-					setTimeout(() =&gt; {
+					setTimeout(() => {
 						btn.textContent = 'Copy';
 						btn.classList.remove('copied');
 					}, 1400);
 				} catch (e) {
 					btn.textContent = 'Failed';
-					setTimeout(() =&gt; (btn.textContent = 'Copy'), 1400);
+					setTimeout(() => (btn.textContent = 'Copy'), 1400);
 				}
 			});
 		});
@@ -1084,9 +1084,9 @@ iframe.contentWindow.postMessage(<span class="tok-key">{</span> <span class="tok
 			}
 
 			function whenReady() {
-				return new Promise((resolve) =&gt; {
+				return new Promise((resolve) => {
 					function onMsg(e) {
-						if (e.data?.type === 'toolSelection' &amp;&amp; e.source === frame.contentWindow) {
+						if (e.data?.type === 'toolSelection' && e.source === frame.contentWindow) {
 							window.removeEventListener('message', onMsg);
 							resolve();
 						}
@@ -1099,7 +1099,7 @@ iframe.contentWindow.postMessage(<span class="tok-key">{</span> <span class="tok
 				});
 			}
 
-			window.addEventListener('message', (e) =&gt; {
+			window.addEventListener('message', (e) => {
 				if (e.source !== frame.contentWindow) return;
 				if (e.data?.type === 'loadContentAck') {
 					setStatus(`✓ loaded “${e.data.filename}” as ${e.data.format}`, true);
@@ -1108,13 +1108,13 @@ iframe.contentWindow.postMessage(<span class="tok-key">{</span> <span class="tok
 				}
 			});
 
-			(async () =&gt; {
+			(async () => {
 				setStatus('waiting for iframe…');
 				await whenReady();
 				setStatus('iframe ready');
 			})();
 
-			sendBtn.addEventListener('click', async () =&gt; {
+			sendBtn.addEventListener('click', async () => {
 				let content, filename;
 				if (kind === 'pdf') {
 					const file = document.getElementById(FILES[prefix]).files[0];
@@ -1134,7 +1134,7 @@ iframe.contentWindow.postMessage(<span class="tok-key">{</span> <span class="tok
 			});
 
 			if (resetBtn) {
-				resetBtn.addEventListener('click', () =&gt; {
+				resetBtn.addEventListener('click', () => {
 					frame.contentWindow.postMessage({
 						type: 'loadContent',
 						filename: kind === 'pdf' ? 'document.pdf' : `empty.${kind === 'mdv' ? 'md' : 'json'}`,
@@ -1147,7 +1147,7 @@ iframe.contentWindow.postMessage(<span class="tok-key">{</span> <span class="tok
 
 			// Enable PDF send button when a file is chosen
 			if (kind === 'pdf') {
-				document.getElementById(FILES[prefix]).addEventListener('change', (e) =&gt; {
+				document.getElementById(FILES[prefix]).addEventListener('change', (e) => {
 					sendBtn.disabled = !e.target.files[0];
 				});
 			}
@@ -1158,7 +1158,7 @@ iframe.contentWindow.postMessage(<span class="tok-key">{</span> <span class="tok
 		bindDemo('pdf', 'pdf');
 
 		// ── Tool selection announcement ─────────────────────────────────────
-		if (window.parent &amp;&amp; window.parent !== window) {
+		if (window.parent && window.parent !== window) {
 			window.parent.postMessage({
 				type: 'toolSelection',
 				url: 'embed.html'
