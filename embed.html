@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Embed Text Tools — Andesec</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="theme.css">
+	<style>
+		html, body {
+			background: var(--bg-root);
+			color: var(--text-primary);
+			font-family: var(--font-sans);
+			-webkit-font-smoothing: antialiased;
+		}
+
+		body {
+			margin: 0;
+			min-height: 100vh;
+			display: flex;
+			flex-direction: column;
+		}
+
+		/* ── Header ── */
+		.docs-header {
+			background: var(--bg-surface);
+			border-bottom: 1px solid var(--border-default);
+			padding: var(--space-4) var(--space-6);
+			display: flex;
+			align-items: center;
+			gap: var(--space-3);
+			position: sticky;
+			top: 0;
+			z-index: 50;
+			backdrop-filter: blur(8px);
+		}
+
+		.docs-header h1 {
+			margin: 0;
+			font-size: 1.05rem;
+			font-weight: 600;
+			letter-spacing: -0.01em;
+		}
+
+		.docs-header .badge {
+			font-size: 0.7rem;
+			font-weight: 600;
+			padding: 2px 8px;
+			background: var(--accent-muted);
+			color: var(--accent-text);
+			border-radius: 999px;
+			text-transform: uppercase;
+			letter-spacing: 0.04em;
+		}
+
+		.docs-header .home-link {
+			margin-left: auto;
+			color: var(--text-secondary);
+			text-decoration: none;
+			font-size: 0.85rem;
+			padding: 6px 12px;
+			border-radius: var(--radius-sm);
+			transition: background var(--transition-fast), color var(--transition-fast);
+		}
+
+		.docs-header .home-link:hover {
+			background: var(--bg-surface-hover);
+			color: var(--text-primary);
+		}
+
+		/* ── Layout ── */
+		.docs-shell {
+			display: flex;
+			flex: 1;
+			min-height: 0;
+		}
+
+		.docs-nav {
+			width: 240px;
+			border-right: 1px solid var(--border-default);
+			background: var(--bg-surface);
+			padding: var(--space-5) var(--space-3);
+			position: sticky;
+			top: 57px;
+			height: calc(100vh - 57px);
+			overflow-y: auto;
+			flex-shrink: 0;
+		}
+
+		.docs-nav h3 {
+			font-size: 0.7rem;
+			font-weight: 700;
+			color: var(--text-tertiary);
+			text-transform: uppercase;
+			letter-spacing: 0.06em;
+			margin: var(--space-4) 0 var(--space-2) var(--space-2);
+		}
+
+		.docs-nav h3:first-child {
+			margin-top: 0;
+		}
+
+		.docs-nav a {
+			display: block;
+			padding: 6px 10px;
+			color: var(--text-secondary);
+			text-decoration: none;
+			font-size: 0.85rem;
+			border-radius: var(--radius-sm);
+			transition: all var(--transition-fast);
+			line-height: 1.4;
+		}
+
+		.docs-nav a:hover {
+			background: var(--bg-surface-hover);
+			color: var(--text-primary);
+		}
+
+		.docs-main {
+			flex: 1;
+			padding: var(--space-6) var(--space-6) 6rem;
+			max-width: 920px;
+			width: 100%;
+			margin: 0 auto;
+		}
+
+		/* ── Prose ── */
+		.docs-main h2 {
+			font-size: 1.6rem;
+			font-weight: 700;
+			letter-spacing: -0.02em;
+			margin: 3rem 0 var(--space-3);
+			padding-top: 1rem;
+			border-top: 1px solid var(--border-default);
+			scroll-margin-top: 80px;
+		}
+
+		.docs-main h2:first-of-type {
+			margin-top: 0;
+			padding-top: 0;
+			border-top: none;
+		}
+
+		.docs-main h3 {
+			font-size: 1.1rem;
+			font-weight: 600;
+			margin: 2rem 0 var(--space-2);
+			scroll-margin-top: 80px;
+		}
+
+		.docs-main p {
+			color: var(--text-secondary);
+			line-height: 1.7;
+			font-size: 0.95rem;
+			margin: 0 0 1rem;
+		}
+
+		.docs-main p strong {
+			color: var(--text-primary);
+			font-weight: 600;
+		}
+
+		.docs-main a {
+			color: var(--accent-text);
+			text-decoration: none;
+		}
+
+		.docs-main a:hover {
+			text-decoration: underline;
+		}
+
+		.docs-main ul, .docs-main ol {
+			color: var(--text-secondary);
+			line-height: 1.7;
+			padding-left: 1.5rem;
+		}
+
+		.docs-main li {
+			margin-bottom: 0.4rem;
+		}
+
+		.docs-main li code {
+			font-size: 0.85em;
+		}
+
+		.docs-main .lede {
+			font-size: 1.05rem;
+			color: var(--text-secondary);
+			line-height: 1.6;
+			margin-bottom: 2rem;
+		}
+
+		/* ── Code blocks ── */
+		.code-block {
+			position: relative;
+			margin: var(--space-3) 0 var(--space-4);
+			background: var(--code-bg);
+			border: 1px solid var(--border-default);
+			border-radius: var(--radius-md);
+			overflow: hidden;
+		}
+
+		.code-block-header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			padding: 6px 10px 6px 14px;
+			background: var(--bg-toolbar);
+			border-bottom: 1px solid var(--border-default);
+			font-size: 0.7rem;
+			font-weight: 600;
+			color: var(--text-tertiary);
+			text-transform: uppercase;
+			letter-spacing: 0.06em;
+		}
+
+		.copy-btn {
+			background: transparent;
+			border: 1px solid var(--border-default);
+			color: var(--text-secondary);
+			font-size: 0.7rem;
+			font-weight: 500;
+			padding: 3px 9px;
+			border-radius: var(--radius-sm);
+			cursor: pointer;
+			font-family: var(--font-sans);
+			transition: all var(--transition-fast);
+		}
+
+		.copy-btn:hover {
+			background: var(--bg-surface-hover);
+			color: var(--text-primary);
+			border-color: var(--border-strong);
+		}
+
+		.copy-btn.copied {
+			background: var(--success-muted);
+			color: var(--success);
+			border-color: var(--success);
+		}
+
+		.code-block pre {
+			margin: 0;
+			padding: var(--space-4);
+			overflow-x: auto;
+			font-family: var(--font-mono);
+			font-size: 0.82rem;
+			line-height: 1.6;
+			color: var(--text-primary);
+		}
+
+		.code-block pre code {
+			font-family: inherit;
+			background: none;
+			padding: 0;
+			color: inherit;
+		}
+
+		/* Lightweight syntax highlighting */
+		.tok-key { color: var(--code-keyword); }
+		.tok-str { color: var(--code-string); }
+		.tok-num { color: var(--code-number); }
+		.tok-bool { color: var(--code-boolean); }
+		.tok-null { color: var(--code-null); }
+		.tok-com { color: var(--code-comment); font-style: italic; }
+		.tok-fn { color: var(--code-function); }
+		.tok-prop { color: var(--code-property); }
+
+		.inline-code {
+			font-family: var(--font-mono);
+			font-size: 0.85em;
+			background: var(--code-inline-bg);
+			color: var(--code-inline-text);
+			padding: 2px 6px;
+			border-radius: 4px;
+		}
+
+		/* ── Tables ── */
+		.docs-table {
+			width: 100%;
+			border-collapse: collapse;
+			margin: var(--space-3) 0 var(--space-4);
+			font-size: 0.88rem;
+		}
+
+		.docs-table th, .docs-table td {
+			text-align: left;
+			padding: 10px 12px;
+			border-bottom: 1px solid var(--border-default);
+		}
+
+		.docs-table th {
+			font-size: 0.72rem;
+			font-weight: 700;
+			color: var(--text-tertiary);
+			text-transform: uppercase;
+			letter-spacing: 0.05em;
+			background: var(--bg-surface);
+		}
+
+		.docs-table td {
+			color: var(--text-secondary);
+			vertical-align: top;
+		}
+
+		.docs-table td:first-child {
+			color: var(--text-primary);
+			font-weight: 500;
+		}
+
+		.docs-table td code {
+			font-family: var(--font-mono);
+			font-size: 0.85em;
+			color: var(--accent-text);
+		}
+
+		/* ── Callout ── */
+		.callout {
+			display: flex;
+			gap: var(--space-3);
+			padding: var(--space-3) var(--space-4);
+			background: var(--info-muted);
+			border-left: 3px solid var(--info);
+			border-radius: var(--radius-sm);
+			margin: var(--space-3) 0 var(--space-4);
+			font-size: 0.88rem;
+			color: var(--text-primary);
+			line-height: 1.6;
+		}
+
+		.callout.warn {
+			background: var(--warning-muted);
+			border-left-color: var(--warning);
+		}
+
+		.callout.danger {
+			background: var(--danger-muted);
+			border-left-color: var(--danger);
+		}
+
+		.callout .icon {
+			flex-shrink: 0;
+			font-size: 1.1rem;
+			line-height: 1.4;
+		}
+
+		.callout p {
+			margin: 0;
+			color: var(--text-primary);
+		}
+
+		.callout p + p {
+			margin-top: 0.5rem;
+		}
+
+		/* ── Live demo ── */
+		.demo-card {
+			background: var(--bg-surface);
+			border: 1px solid var(--border-default);
+			border-radius: var(--radius-lg);
+			overflow: hidden;
+			margin: var(--space-3) 0 var(--space-5);
+		}
+
+		.demo-toolbar {
+			display: flex;
+			align-items: center;
+			gap: var(--space-2);
+			padding: 10px 12px;
+			background: var(--bg-toolbar);
+			border-bottom: 1px solid var(--border-default);
+			flex-wrap: wrap;
+		}
+
+		.demo-toolbar select,
+		.demo-toolbar input[type="text"] {
+			background: var(--bg-surface-raised);
+			border: 1px solid var(--border-default);
+			border-radius: var(--radius-sm);
+			padding: 6px 10px;
+			color: var(--text-primary);
+			font-family: var(--font-sans);
+			font-size: 0.82rem;
+			outline: none;
+			transition: border-color var(--transition-fast);
+		}
+
+		.demo-toolbar select:focus,
+		.demo-toolbar input[type="text"]:focus,
+		.demo-toolbar input[type="text"]:hover {
+			border-color: var(--accent);
+		}
+
+		.demo-toolbar input[type="text"] {
+			flex: 1;
+			min-width: 180px;
+		}
+
+		.demo-toolbar button {
+			background: var(--accent);
+			color: #fff;
+			border: none;
+			border-radius: var(--radius-sm);
+			padding: 6px 14px;
+			font-size: 0.82rem;
+			font-weight: 600;
+			cursor: pointer;
+			font-family: var(--font-sans);
+			transition: background var(--transition-fast);
+		}
+
+		.demo-toolbar button:hover {
+			background: var(--accent-hover);
+		}
+
+		.demo-toolbar button.secondary {
+			background: transparent;
+			border: 1px solid var(--border-default);
+			color: var(--text-primary);
+		}
+
+		.demo-toolbar button.secondary:hover {
+			border-color: var(--accent);
+			background: var(--bg-surface-hover);
+		}
+
+		.demo-frame {
+			width: 100%;
+			border: none;
+			background: var(--bg-root);
+			display: block;
+		}
+
+		.demo-frame.tall { height: 520px; }
+		.demo-frame.short { height: 360px; }
+
+		.demo-status {
+			font-size: 0.72rem;
+			color: var(--text-tertiary);
+			font-family: var(--font-mono);
+			padding: 6px 12px;
+			background: var(--bg-toolbar);
+			border-top: 1px solid var(--border-default);
+			min-height: 26px;
+		}
+
+		.demo-status .ok { color: var(--success); }
+		.demo-status .err { color: var(--danger); }
+
+		/* ── File picker input ── */
+		.file-input-label {
+			background: transparent;
+			border: 1px dashed var(--border-default);
+			color: var(--text-secondary);
+			border-radius: var(--radius-sm);
+			padding: 6px 12px;
+			font-size: 0.82rem;
+			cursor: pointer;
+			transition: all var(--transition-fast);
+		}
+
+		.file-input-label:hover {
+			border-color: var(--accent);
+			color: var(--text-primary);
+		}
+
+		.file-input-label input { display: none; }
+
+		/* ── Anchor offset ── */
+		.anchor {
+			scroll-margin-top: 80px;
+		}
+
+		/* ── Responsive ── */
+		@media (max-width: 900px) {
+			.docs-shell { flex-direction: column; }
+			.docs-nav {
+				width: 100%;
+				height: auto;
+				position: static;
+				border-right: none;
+				border-bottom: 1px solid var(--border-default);
+				padding: var(--space-3);
+			}
+			.docs-nav h3 { display: inline-block; margin: 0 var(--space-2) 0 0; }
+			.docs-nav h3:not(:first-child) { margin-left: var(--space-3); }
+			.docs-nav a { display: inline-block; margin: 2px; }
+		}
+
+		@media (max-width: 600px) {
+			.docs-main { padding: var(--space-4) var(--space-4) 4rem; }
+			.docs-main h2 { font-size: 1.3rem; }
+			.docs-header h1 { font-size: 0.95rem; }
+		}
+	</style>
+</head>
+<body>
+	<header class="docs-header">
+		<a href="index.html" class="btn-icon" title="Home" style="color:var(--text-secondary);text-decoration:none;display:flex;align-items:center;">
+			<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+			</svg>
+		</a>
+		<h1>Text&nbsp;Tools — Embedding&nbsp;API</h1>
+		<span class="badge">v1</span>
+		<a href="index.html" class="home-link">All tools</a>
+	</header>
+
+	<div class="docs-shell">
+		<nav class="docs-nav" aria-label="Documentation sections">
+			<h3>Getting started</h3>
+			<a href="#overview">Overview</a>
+			<a href="#quickstart">Quick start</a>
+
+			<h3>API</h3>
+			<a href="#message-spec">Message spec</a>
+			<a href="#loading-text">Loading text</a>
+			<a href="#loading-pdf">Loading a PDF</a>
+			<a href="#acks">Acknowledgements</a>
+			<a href="#events">Listening to the iframe</a>
+			<a href="#mismatched">Mismatched payloads</a>
+
+			<h3>Examples</h3>
+			<a href="#full-example">Full example</a>
+			<a href="#try-it">Live demo</a>
+
+			<h3>Reference</h3>
+			<a href="#compatibility">Compatibility</a>
+			<a href="#security">Security</a>
+		</nav>
+
+		<main class="docs-main">
+
+			<h2 id="overview" class="anchor">Overview</h2>
+			<p class="lede">
+				Every tool page (<a href="mdv.html">mdv.html</a>, <a href="jsv.html">jsv.html</a>, <a href="pdf.html">pdf.html</a>)
+				can be embedded as an <span class="inline-code">&lt;iframe&gt;</span> in another web app and driven programmatically
+				with a small <span class="inline-code">postMessage</span> protocol. The parent page sends content; the iframe
+				renders it the same way it would for a user drag-and-drop or paste.
+			</p>
+			<p>
+				There is no SDK, no build step, and no cross-origin server hop — the protocol is plain browser messaging and works
+				identically whether you embed the tools on the same origin, an <span class="inline-code">https://</span> subdomain,
+				or a <span class="inline-code">file://</span> page during local development.
+			</p>
+
+			<div class="callout">
+				<div class="icon">i</div>
+				<p>
+					<strong>Same-origin convenience:</strong> because the tools expose no JS API on
+					<span class="inline-code">window</span>, all communication is via
+					<span class="inline-code">postMessage</span>. This is intentional — it works for
+					<span class="inline-code">cross-origin</span> parents too, as long as the iframe origin is on your allowlist
+					via the message <span class="inline-code">event.origin</span> check.
+				</p>
+			</div>
+
+			<h2 id="quickstart" class="anchor">Quick start</h2>
+			<p>The shortest possible embedding looks like this:</p>
+
+			<div class="code-block">
+				<div class="code-block-header">
+					<span>HTML</span>
+					<button class="copy-btn" data-copy="quickstart-html">Copy</button>
+				</div>
+				<pre><code>&lt;iframe
+	id="mdv"
+	src="mdv.html"
+	style="width:100%; height:600px; border:0;"
+&gt;&lt;/iframe&gt;
+
+&lt;script&gt;
+	const iframe = document.getElementById('mdv');
+
+	// Wait for the iframe to announce itself, then send content.
+	window.addEventListener('message', (e) =&gt; {
+		if (e.data?.type === 'toolSelection' &amp;&amp; e.source === iframe.contentWindow) {
+			iframe.contentWindow.postMessage({
+				type: 'loadContent',
+				filename: 'hello.md',
+				text: '# Hello from the parent!\n\nThis is **markdown**.'
+			}, '*');
+		}
+	});
+&lt;/script&gt;</code></pre>
+			</div>
+
+			<p>
+				That single <span class="inline-code">loadContent</span> message is the entire surface area for sending content.
+				Everything else — opening files, paste, drag-and-drop, save, etc. — works inside the iframe exactly as it does
+				when the page is opened directly.
+			</p>
+
+			<h2 id="message-spec" class="anchor">Message spec</h2>
+
+			<h3>Parent → iframe: <span class="inline-code">loadContent</span></h3>
+			<table class="docs-table">
+				<thead>
+					<tr>
+						<th>Field</th>
+						<th>Type</th>
+						<th>Required</th>
+						<th>Description</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td><code>type</code></td>
+						<td>string</td>
+						<td>yes</td>
+						<td>Must be the literal string <span class="inline-code">"loadContent"</span>.</td>
+					</tr>
+					<tr>
+						<td><code>filename</code></td>
+						<td>string</td>
+						<td>recommended</td>
+						<td>Used as the document title, for the in-page tab title, and (in jsv) to auto-detect JSON vs JS mode by extension. Falls back to <span class="inline-code">"Untitled.md"</span> / <span class="inline-code">"scratchpad-N.json"</span> / <span class="inline-code">"document.pdf"</span>.</td>
+					</tr>
+					<tr>
+						<td><code>text</code></td>
+						<td>string</td>
+						<td>for mdv / jsv</td>
+						<td>The plain-text content to load (Markdown for mdv, JSON/JS for jsv).</td>
+					</tr>
+					<tr>
+						<td><code>bytes</code></td>
+						<td>ArrayBuffer</td>
+						<td>for pdf</td>
+						<td>Raw PDF bytes. <span class="inline-code">postMessage</span> uses structured cloning so an <span class="inline-code">ArrayBuffer</span> from <span class="inline-code">File.arrayBuffer()</span> round-trips without copying or encoding.</td>
+					</tr>
+				</tbody>
+			</table>
+
+			<h3 id="acks">iframe → parent: <span class="inline-code">loadContentAck</span></h3>
+			<p>
+				After a successful load, the iframe posts an acknowledgement back to <span class="inline-code">event.source</span>:
+			</p>
+
+			<div class="code-block">
+				<div class="code-block-header"><span>Shape</span><button class="copy-btn" data-copy="ack-shape">Copy</button></div>
+				<pre><code><span class="tok-key">{</span>
+  <span class="tok-prop">type</span>: <span class="tok-str">"loadContentAck"</span>,
+  <span class="tok-prop">filename</span>: <span class="tok-str">"hello.md"</span>,
+  <span class="tok-prop">format</span>: <span class="tok-str">"markdown"</span>   <span class="tok-com">// or "json" | "javascript" | "pdf"</span>
+<span class="tok-key">}</span></code></pre>
+			</div>
+
+			<p>
+				Use this to chain follow-up actions ("load the next file once the previous one is acknowledged") or to
+				distinguish successful loads from silent drops.
+			</p>
+
+			<h2 id="loading-text" class="anchor">Loading text into <code>mdv.html</code> / <code>jsv.html</code></h2>
+			<p>
+				Send <span class="inline-code">text</span> + <span class="inline-code">filename</span>. The tool will:
+			</p>
+			<ul>
+				<li>Replace the editor contents (re-initialises the CodeMirror editor).</li>
+				<li>Update the in-page title and tab title.</li>
+				<li>Persist the new content to <span class="inline-code">localStorage</span> so a refresh doesn't lose it.</li>
+				<li>Switch to view / preview mode (mdv) or rebuild the JSON tree (jsv).</li>
+				<li>Send back a <span class="inline-code">loadContentAck</span>.</li>
+			</ul>
+
+			<div class="code-block">
+				<div class="code-block-header"><span>Send Markdown to mdv.html</span><button class="copy-btn" data-copy="load-md">Copy</button></div>
+				<pre><code>mdv.contentWindow.postMessage(<span class="tok-key">{</span>
+  <span class="tok-prop">type</span>: <span class="tok-str">"loadContent"</span>,
+  <span class="tok-prop">filename</span>: <span class="tok-str">"README.md"</span>,
+  <span class="tok-prop">text</span>: <span class="tok-str">"# Title\n\nSome *markdown* content."</span>
+<span class="tok-key">}</span>, <span class="tok-str">"*"</span>);</code></pre>
+			</div>
+
+			<div class="code-block">
+				<div class="code-block-header"><span>Send JSON to jsv.html</span><button class="copy-btn" data-copy="load-json">Copy</button></div>
+				<pre><code>jsv.contentWindow.postMessage(<span class="tok-key">{</span>
+  <span class="tok-prop">type</span>: <span class="tok-str">"loadContent"</span>,
+  <span class="tok-prop">filename</span>: <span class="tok-str">"package.json"</span>,
+  <span class="tok-prop">text</span>: <span class="tok-str">'{"name":"my-app","version":"1.0.0"}'</span>
+<span class="tok-key">}</span>, <span class="tok-str">"*"</span>);</code></pre>
+			</div>
+
+			<p>
+				For jsv, the filename extension determines the editor mode:
+				<span class="inline-code">.json</span> → JSON syntax highlighting &amp; tree view,
+				anything else → JavaScript. The tree is also rebuilt automatically for any text that starts with
+				<span class="inline-code">{</span> or <span class="inline-code">[</span> even without the
+				<span class="inline-code">.json</span> extension.
+			</p>
+
+			<h2 id="loading-pdf" class="anchor">Loading a PDF into <code>pdf.html</code></h2>
+			<p>
+				Send <span class="inline-code">bytes</span> (an <span class="inline-code">ArrayBuffer</span>) +
+				<span class="inline-code">filename</span>. The tool will:
+			</p>
+			<ul>
+				<li>Wrap the bytes in a <span class="inline-code">File</span> object and feed the existing upload pipeline.</li>
+				<li>Render page thumbnails.</li>
+				<li>Expose the page-range extraction UI just like a normal drag-and-drop.</li>
+				<li>Send back a <span class="inline-code">loadContentAck</span> with <span class="inline-code">format: "pdf"</span>.</li>
+			</ul>
+
+			<div class="code-block">
+				<div class="code-block-header"><span>Send a PDF file to pdf.html</span><button class="copy-btn" data-copy="load-pdf">Copy</button></div>
+				<pre><code>fileInput.addEventListener(<span class="tok-str">'change'</span>, <span class="tok-key">async</span> (e) =&gt; <span class="tok-key">{</span>
+  <span class="tok-key">const</span> file = e.target.files[<span class="tok-num">0</span>];
+  <span class="tok-key">const</span> buf = <span class="tok-key">await</span> file.arrayBuffer();
+
+  pdf.contentWindow.postMessage(<span class="tok-key">{</span>
+    <span class="tok-prop">type</span>: <span class="tok-str">"loadContent"</span>,
+    <span class="tok-prop">filename</span>: file.name,
+    <span class="tok-prop">bytes</span>: buf
+  <span class="tok-key">}</span>, <span class="tok-str">"*"</span>);
+<span class="tok-key">}</span>);</code></pre>
+			</div>
+
+			<div class="callout">
+				<div class="icon">i</div>
+				<p>
+					<strong>Why ArrayBuffer?</strong> It is the most efficient binary transport that
+					<span class="inline-code">postMessage</span> supports via structured cloning — no base64
+					encoding overhead, no data copies. The browser passes the buffer through directly.
+				</p>
+			</div>
+
+			<h2 id="events" class="anchor">Listening to the iframe</h2>
+			<p>
+				The tools also post messages <em>upward</em> on their own. You can use them to keep a parent UI in sync
+				without polling.
+			</p>
+
+			<table class="docs-table">
+				<thead>
+					<tr>
+						<th>Type</th>
+						<th>When it fires</th>
+						<th>Payload</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td><code>toolSelection</code></td>
+						<td>Once on iframe load.</td>
+						<td><span class="inline-code">{ type, url }</span> — the page's own URL, useful for a host app that picks the right tool.</td>
+					</tr>
+					<tr>
+						<td><code>titleChange</code></td>
+						<td>Whenever the document title changes (mdv picks it up from the first <span class="inline-code"># heading</span>; jsv picks it up from a <span class="inline-code">title</span> / <span class="inline-code">heading</span> / <span class="inline-code">main</span> field in the JSON).</td>
+						<td><span class="inline-code">{ type, title }</span></td>
+					</tr>
+					<tr>
+						<td><code>loadContentAck</code></td>
+						<td>After a successful <span class="inline-code">loadContent</span> round-trip.</td>
+						<td><span class="inline-code">{ type, filename, format }</span></td>
+					</tr>
+				</tbody>
+			</table>
+
+			<p>
+				<strong>Using <code>toolSelection</code> as a "ready" signal.</strong> A common pattern is to wait for
+				this first outbound message before sending any <span class="inline-code">loadContent</span>, which guarantees
+				the iframe's message listener is wired up:
+			</p>
+
+			<div class="code-block">
+				<div class="code-block-header"><span>Wait for iframe ready</span><button class="copy-btn" data-copy="ready-pattern">Copy</button></div>
+				<pre><code><span class="tok-key">const</span> ready = <span class="tok-key">new</span> <span class="tok-fn">Promise</span>((resolve) =&gt; <span class="tok-key">{</span>
+  <span class="tok-key">function</span> <span class="tok-fn">onMessage</span>(e) <span class="tok-key">{</span>
+    <span class="tok-key">if</span> (e.data?.type === <span class="tok-str">'toolSelection'</span> &amp;&amp; e.source === iframe.contentWindow) <span class="tok-key">{</span>
+      window.removeEventListener(<span class="tok-str">'message'</span>, onMessage);
+      resolve();
+    <span class="tok-key">}</span>
+  <span class="tok-key">}</span>
+  window.addEventListener(<span class="tok-str">'message'</span>, onMessage);
+<span class="tok-key">}</span>);
+
+<span class="tok-key">await</span> ready;
+iframe.contentWindow.postMessage(<span class="tok-key">{</span> <span class="tok-prop">type</span>: <span class="tok-str">'loadContent'</span>, <span class="tok-prop">text</span>: <span class="tok-str">'# hi'</span>, <span class="tok-prop">filename</span>: <span class="tok-str">'hi.md'</span> <span class="tok-key">}</span>, <span class="tok-str">'*'</span>);</code></pre>
+			</div>
+
+			<h2 id="mismatched" class="anchor">Mismatched payloads</h2>
+			<p>
+				Each tool is opinionated about what it accepts. If you send the wrong shape, the iframe surfaces an
+				inline toast (or, for mdv, the comments-system toast) and ignores the payload:
+			</p>
+
+			<table class="docs-table">
+				<thead>
+					<tr><th>Sent to</th><th>Wrong payload</th><th>Result</th></tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td><code>mdv.html</code></td>
+						<td><code>bytes</code> only</td>
+						<td>Toast: <em>"mdv.html does not accept PDF bytes — load PDFs in pdf.html"</em></td>
+					</tr>
+					<tr>
+						<td><code>jsv.html</code></td>
+						<td><code>bytes</code> only</td>
+						<td>Red toast: <em>"jsv.html does not accept PDF bytes — load PDFs in pdf.html"</em></td>
+					</tr>
+					<tr>
+						<td><code>pdf.html</code></td>
+						<td><code>text</code> only</td>
+						<td>Red toast: <em>"pdf.html requires binary PDF bytes — use ArrayBuffer for the 'bytes' field"</em></td>
+					</tr>
+				</tbody>
+			</table>
+
+			<div class="callout warn">
+				<div class="icon">!</div>
+				<p>
+					<strong>No exceptions are thrown.</strong> The iframe silently no-ops so a single bad message in a
+					batch never crashes the tool or your host app.
+				</p>
+			</div>
+
+			<h2 id="full-example" class="anchor">Full example</h2>
+			<p>
+				A complete, copy-pasteable host page that wires up all three tools with file pickers and a logging overlay:
+			</p>
+
+			<div class="code-block">
+				<div class="code-block-header"><span>Complete host page</span><button class="copy-btn" data-copy="full-host">Copy</button></div>
+				<pre><code><span class="tok-com">&lt;!doctype html&gt;</span>
+<span class="tok-key">&lt;html&gt;</span>
+<span class="tok-key">&lt;head&gt;</span>
+  <span class="tok-key">&lt;meta</span> <span class="tok-prop">charset</span>=<span class="tok-str">"utf-8"</span><span class="tok-key">&gt;</span>
+  <span class="tok-key">&lt;title&gt;</span>My App<span class="tok-key">&lt;/title&gt;</span>
+  <span class="tok-key">&lt;style&gt;</span>
+    iframe { width: 100%; height: 400px; border: 0; display: block; }
+    section { margin: 1rem 0; }
+    pre { font-family: monospace; font-size: 12px; max-height: 120px; overflow: auto;
+          background: #111; color: #ddd; padding: 8px; border-radius: 4px; }
+  <span class="tok-key">&lt;/style&gt;</span>
+<span class="tok-key">&lt;/head&gt;</span>
+<span class="tok-key">&lt;body&gt;</span>
+
+<span class="tok-key">&lt;section&gt;</span>
+  <span class="tok-key">&lt;h2&gt;</span>Markdown<span class="tok-key">&lt;/h2&gt;</span>
+  <span class="tok-key">&lt;iframe</span> <span class="tok-prop">id</span>=<span class="tok-str">"mdv"</span> <span class="tok-prop">src</span>=<span class="tok-str">"mdv.html"</span><span class="tok-key">&gt;&lt;/iframe&gt;</span>
+<span class="tok-key">&lt;/section&gt;</span>
+
+<span class="tok-key">&lt;section&gt;</span>
+  <span class="tok-key">&lt;h2&gt;</span>JSON<span class="tok-key">&lt;/h2&gt;</span>
+  <span class="tok-key">&lt;iframe</span> <span class="tok-prop">id</span>=<span class="tok-str">"jsv"</span> <span class="tok-prop">src</span>=<span class="tok-str">"jsv.html"</span><span class="tok-key">&gt;&lt;/iframe&gt;</span>
+<span class="tok-key">&lt;/section&gt;</span>
+
+<span class="tok-key">&lt;section&gt;</span>
+  <span class="tok-key">&lt;h2&gt;</span>PDF<span class="tok-key">&lt;/h2&gt;</span>
+  <span class="tok-key">&lt;label&gt;</span>PDF file: <span class="tok-key">&lt;input</span> <span class="tok-prop">type</span>=<span class="tok-str">"file"</span> <span class="tok-prop">accept</span>=<span class="tok-str">"application/pdf"</span> <span class="tok-prop">id</span>=<span class="tok-str">"pdfFile"</span><span class="tok-key">&gt;&lt;/label&gt;</span>
+  <span class="tok-key">&lt;iframe</span> <span class="tok-prop">id</span>=<span class="tok-str">"pdf"</span> <span class="tok-prop">src</span>=<span class="tok-str">"pdf.html"</span><span class="tok-key">&gt;&lt;/iframe&gt;</span>
+<span class="tok-key">&lt;/section&gt;</span>
+
+<span class="tok-key">&lt;section&gt;</span>
+  <span class="tok-key">&lt;h2&gt;</span>Event log<span class="tok-key">&lt;/h2&gt;</span>
+  <span class="tok-key">&lt;pre</span> <span class="tok-prop">id</span>=<span class="tok-str">"log"</span><span class="tok-key">&gt;&lt;/pre&gt;</span>
+<span class="tok-key">&lt;/section&gt;</span>
+
+<span class="tok-key">&lt;script&gt;</span>
+  <span class="tok-key">const</span> log = document.getElementById(<span class="tok-str">'log'</span>);
+  <span class="tok-key">const</span> line = (m) =&gt; log.textContent += <span class="tok-str">`[</span><span class="tok-key">${</span><span class="tok-key">new</span> Date().toISOString()<span class="tok-key">}</span><span class="tok-str">] </span><span class="tok-key">${</span>m<span class="tok-key">}</span><span class="tok-str">\n`</span>;
+
+  <span class="tok-com">// Capture every iframe message</span>
+  window.addEventListener(<span class="tok-str">'message'</span>, (e) =&gt; {
+    <span class="tok-key">if</span> (e.data?.type) line(e.data.type + <span class="tok-str">' '</span> + JSON.stringify(e.data));
+  });
+
+  <span class="tok-com">// Helper: wait for an iframe to announce itself</span>
+  <span class="tok-key">function</span> <span class="tok-fn">whenReady</span>(iframe) {
+    <span class="tok-key">return</span> <span class="tok-key">new</span> Promise((r) =&gt; {
+      <span class="tok-key">function</span> onMsg(e) {
+        <span class="tok-key">if</span> (e.data?.type === <span class="tok-str">'toolSelection'</span> &amp;&amp; e.source === iframe.contentWindow) {
+          window.removeEventListener(<span class="tok-str">'message'</span>, onMsg);
+          r();
+        }
+      }
+      window.addEventListener(<span class="tok-str">'message'</span>, onMsg);
+    });
+  }
+
+  <span class="tok-com">// Send some sample content once each iframe is ready</span>
+  (async () =&gt; {
+    <span class="tok-key">const</span> mdv = document.getElementById(<span class="tok-str">'mdv'</span>);
+    <span class="tok-key">const</span> jsv = document.getElementById(<span class="tok-str">'jsv'</span>);
+    <span class="tok-key">const</span> pdf = document.getElementById(<span class="tok-str">'pdf'</span>);
+
+    <span class="tok-key">await</span> whenReady(mdv);
+    mdv.contentWindow.postMessage({
+      type: <span class="tok-str">'loadContent'</span>,
+      filename: <span class="tok-str">'welcome.md'</span>,
+      text: <span class="tok-str">'# Welcome\n\nSent from the **parent** page.'</span>
+    }, <span class="tok-str">'*'</span>);
+
+    <span class="tok-key">await</span> whenReady(jsv);
+    jsv.contentWindow.postMessage({
+      type: <span class="tok-str">'loadContent'</span>,
+      filename: <span class="tok-str">'sample.json'</span>,
+      text: <span class="tok-str">'{"hello":"world","items":[1,2,3]}'</span>
+    }, <span class="tok-str">'*'</span>);
+
+    <span class="tok-key">await</span> whenReady(pdf);
+    document.getElementById(<span class="tok-str">'pdfFile'</span>).addEventListener(<span class="tok-str">'change'</span>, <span class="tok-key">async</span> (e) =&gt; {
+      <span class="tok-key">const</span> file = e.target.files[0];
+      <span class="tok-key">const</span> buf = <span class="tok-key">await</span> file.arrayBuffer();
+      pdf.contentWindow.postMessage({
+        type: <span class="tok-str">'loadContent'</span>,
+        filename: file.name,
+        bytes: buf
+      }, <span class="tok-str">'*'</span>);
+    });
+  })();
+<span class="tok-key">&lt;/script&gt;</span>
+<span class="tok-key">&lt;/body&gt;</span>
+<span class="tok-key">&lt;/html&gt;</span></code></pre>
+			</div>
+
+			<h2 id="try-it" class="anchor">Live demo</h2>
+			<p>
+				Each card below loads one of the tools in an iframe and ships content to it as soon as it's ready. Pick a
+				PDF from your disk to test <code>pdf.html</code>.
+			</p>
+
+			<div class="demo-card">
+				<div class="demo-toolbar">
+					<span style="font-size:.75rem;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.05em;">mdv.html</span>
+					<select id="mdv-preset">
+						<option value="welcome">welcome.md</option>
+						<option value="lorem">lorem.md</option>
+						<option value="code">code.md</option>
+					</select>
+					<input type="text" id="mdv-custom" placeholder="…or type your own markdown" />
+					<button id="mdv-send">Send</button>
+					<button id="mdv-reset" class="secondary">Clear</button>
+				</div>
+				<iframe id="mdv-frame" class="demo-frame short" src="mdv.html"></iframe>
+				<div class="demo-status" id="mdv-status">awaiting iframe…</div>
+			</div>
+
+			<div class="demo-card">
+				<div class="demo-toolbar">
+					<span style="font-size:.75rem;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.05em;">jsv.html</span>
+					<select id="jsv-preset">
+						<option value="package">package.json</option>
+						<option value="users">users.json</option>
+						<option value="js">script.js</option>
+					</select>
+					<input type="text" id="jsv-custom" placeholder="…or paste JSON / JS" />
+					<button id="jsv-send">Send</button>
+					<button id="jsv-reset" class="secondary">Clear</button>
+				</div>
+				<iframe id="jsv-frame" class="demo-frame short" src="jsv.html"></iframe>
+				<div class="demo-status" id="jsv-status">awaiting iframe…</div>
+			</div>
+
+			<div class="demo-card">
+				<div class="demo-toolbar">
+					<span style="font-size:.75rem;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.05em;">pdf.html</span>
+					<label class="file-input-label">
+						<span>Choose PDF…</span>
+						<input type="file" id="pdf-file" accept="application/pdf" />
+					</label>
+					<button id="pdf-send" disabled>Send to iframe</button>
+				</div>
+				<iframe id="pdf-frame" class="demo-frame tall" src="pdf.html"></iframe>
+				<div class="demo-status" id="pdf-status">awaiting iframe…</div>
+			</div>
+
+			<h2 id="compatibility" class="anchor">Compatibility</h2>
+			<table class="docs-table">
+				<thead>
+					<tr><th>Feature</th><th>Minimum browser</th><th>Notes</th></tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td>Text <code>loadContent</code></td>
+						<td>Any modern browser</td>
+						<td>Plain string — works since IE9.</td>
+					</tr>
+					<tr>
+						<td>Binary <code>loadContent</code></td>
+						<td>Chrome 43+, Firefox 20+, Safari 10.1+</td>
+						<td>Requires <span class="inline-code">postMessage</span> structured-clone support for <span class="inline-code">ArrayBuffer</span>.</td>
+					</tr>
+					<tr>
+						<td>PDF rendering</td>
+						<td>Chrome, Firefox, Safari (latest)</td>
+						<td>Uses <span class="inline-code">pdf.js</span> with a Web Worker; requires SharedArrayBuffer COOP/COEP headers only if you also use the local WASM TTS path.</td>
+					</tr>
+					<tr>
+						<td><code>file://</code> embedding</td>
+						<td>Most browsers</td>
+						<td>Works locally for development. Some browsers block <span class="inline-code">postMessage</span> across <span class="inline-code">file://</span> origins — serve over <span class="inline-code">http://localhost</span> to be safe.</td>
+					</tr>
+				</tbody>
+			</table>
+
+			<h2 id="security" class="anchor">Security notes</h2>
+
+			<div class="callout warn">
+				<div class="icon">!</div>
+				<p>
+					<strong>Validate <code>event.origin</code>.</strong> The examples in this page use
+					<span class="inline-code">"*"</span> for brevity. In a production host you should check
+					<span class="inline-code">e.origin === "https://your-iframe-origin.example.com"</span> (or
+					<span class="inline-code">e.source === iframe.contentWindow</span>) before trusting the message.
+				</p>
+			</div>
+
+			<ul>
+				<li>
+					<strong>Content is sandboxed to the iframe origin.</strong> Your host page never sees the
+					user's content unless you explicitly forward it.
+				</li>
+				<li>
+					<strong>PDFs are parsed entirely client-side</strong> in the iframe using
+					<span class="inline-code">pdf.js</span> + <span class="inline-code">pdf-lib</span>. No bytes ever leave
+					the browser.
+				</li>
+				<li>
+					<strong>Editor state is per-iframe</strong> in <span class="inline-code">localStorage</span> under a
+					per-tab key, so multiple embedded instances of the same tool won't collide.
+				</li>
+			</ul>
+
+		</main>
+	</div>
+
+	<footer style="text-align:center; padding: 1.5rem 1rem; color: var(--text-tertiary); font-size: 0.8rem; border-top: 1px solid var(--border-default);">
+		<p>Made with ❤️ by <a href="https://github.com/andesec" target="_blank" rel="noopener" style="color:var(--accent-text); text-decoration:none;">Andesec</a></p>
+	</footer>
+
+	<script src="footer.js"></script>
+	<script>
+		// ── Copy buttons ────────────────────────────────────────────────────
+		document.querySelectorAll('.copy-btn').forEach(btn =&gt; {
+			btn.addEventListener('click', async () =&gt; {
+				const block = btn.closest('.code-block');
+				const code = block.querySelector('pre code').innerText;
+				try {
+					await navigator.clipboard.writeText(code);
+					btn.textContent = 'Copied';
+					btn.classList.add('copied');
+					setTimeout(() =&gt; {
+						btn.textContent = 'Copy';
+						btn.classList.remove('copied');
+					}, 1400);
+				} catch (e) {
+					btn.textContent = 'Failed';
+					setTimeout(() =&gt; (btn.textContent = 'Copy'), 1400);
+				}
+			});
+		});
+
+		// ── Live demo wiring ────────────────────────────────────────────────
+		const PRESETS = {
+			mdv: {
+				welcome: '# Welcome to mdv.html\n\nThis markdown was **sent from the docs page** via `postMessage`.\n\n- Edit me in the iframe\n- Or send new content from the toolbar above',
+				lorem: '# Lorem Ipsum\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.\n\n## Section\n\n- Ut enim ad minim veniam\n- Quis nostrud exercitation\n- Ullamco laboris nisi',
+				code: '# Code Sample\n\n```javascript\nfunction greet(name) {\n  console.log(`Hello, ${name}!`);\n}\n\ngreet("world");\n```\n\n```python\ndef fib(n):\n    a, b = 0, 1\n    for _ in range(n):\n        yield a\n        a, b = b, a + b\n```'
+			},
+			jsv: {
+				package: '{\n  "name": "text-tools-embed",\n  "version": "1.0.0",\n  "description": "Embeddable text utilities",\n  "main": "index.js",\n  "scripts": {\n    "start": "node index.js",\n    "test": "echo \"no tests yet\""\n  },\n  "dependencies": {}\n}',
+				users: '{\n  "users": [\n    { "id": 1, "name": "Alice", "role": "admin" },\n    { "id": 2, "name": "Bob", "role": "editor" },\n    { "id": 3, "name": "Charlie", "role": "viewer" }\n  ],\n  "total": 3\n}',
+				js: '// A small JavaScript sample\nclass Greeter {\n  constructor(name) {\n    this.name = name;\n  }\n  greet() {\n    return `Hello, ${this.name}!`;\n  }\n}\n\nconst g = new Greeter("world");\nconsole.log(g.greet());'
+			}
+		};
+
+		const FILES = { mdv: 'mdv-preset', jsv: 'jsv-preset', pdf: 'pdf-file' };
+
+		function bindDemo(prefix, kind) {
+			const frame = document.getElementById(`${prefix}-frame`);
+			const status = document.getElementById(`${prefix}-status`);
+			const sendBtn = document.getElementById(`${prefix}-send`);
+			const customInput = document.getElementById(`${prefix}-custom`);
+			const presetSelect = document.getElementById(`${prefix}-preset`);
+			const resetBtn = document.getElementById(`${prefix}-reset`);
+
+			function setStatus(msg, ok) {
+				status.innerHTML = ok === true ? `<span class="ok">${msg}</span>` :
+					ok === false ? `<span class="err">${msg}</span>` : msg;
+			}
+
+			function whenReady() {
+				return new Promise((resolve) =&gt; {
+					function onMsg(e) {
+						if (e.data?.type === 'toolSelection' &amp;&amp; e.source === frame.contentWindow) {
+							window.removeEventListener('message', onMsg);
+							resolve();
+						}
+					}
+					window.addEventListener('message', onMsg);
+					if (frame.contentWindow?.document?.readyState === 'complete') {
+						// already loaded; resolve next tick
+						setTimeout(resolve, 50);
+					}
+				});
+			}
+
+			window.addEventListener('message', (e) =&gt; {
+				if (e.source !== frame.contentWindow) return;
+				if (e.data?.type === 'loadContentAck') {
+					setStatus(`✓ loaded “${e.data.filename}” as ${e.data.format}`, true);
+				} else if (e.data?.type === 'titleChange') {
+					document.title = `Embed docs — ${e.data.title}`;
+				}
+			});
+
+			(async () =&gt; {
+				setStatus('waiting for iframe…');
+				await whenReady();
+				setStatus('iframe ready');
+			})();
+
+			sendBtn.addEventListener('click', async () =&gt; {
+				let content, filename;
+				if (kind === 'pdf') {
+					const file = document.getElementById(FILES[prefix]).files[0];
+					if (!file) { setStatus('choose a PDF first', false); return; }
+					content = await file.arrayBuffer();
+					filename = file.name;
+				} else {
+					filename = `${presetSelect.value}.${kind === 'mdv' ? 'md' : (presetSelect.value === 'js' ? 'js' : 'json')}`;
+					content = customInput.value.trim() || PRESETS[prefix][presetSelect.value];
+				}
+				frame.contentWindow.postMessage({
+					type: 'loadContent',
+					filename,
+					[kind === 'pdf' ? 'bytes' : 'text']: content
+				}, '*');
+				setStatus(`sending “${filename}”…`);
+			});
+
+			if (resetBtn) {
+				resetBtn.addEventListener('click', () =&gt; {
+					frame.contentWindow.postMessage({
+						type: 'loadContent',
+						filename: kind === 'pdf' ? 'document.pdf' : `empty.${kind === 'mdv' ? 'md' : 'json'}`,
+						text: ''
+					}, '*');
+					customInput.value = '';
+					setStatus('cleared', true);
+				});
+			}
+
+			// Enable PDF send button when a file is chosen
+			if (kind === 'pdf') {
+				document.getElementById(FILES[prefix]).addEventListener('change', (e) =&gt; {
+					sendBtn.disabled = !e.target.files[0];
+				});
+			}
+		}
+
+		bindDemo('mdv', 'mdv');
+		bindDemo('jsv', 'jsv');
+		bindDemo('pdf', 'pdf');
+
+		// ── Tool selection announcement ─────────────────────────────────────
+		if (window.parent &amp;&amp; window.parent !== window) {
+			window.parent.postMessage({
+				type: 'toolSelection',
+				url: 'embed.html'
+			}, '*');
+		}
+	</script>
+</body>
+</html>

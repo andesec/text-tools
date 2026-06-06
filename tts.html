@@ -783,7 +783,7 @@
 
   <!-- JS Logic: WebGPU detection, ONNX Runtime Pipeline orchestration -->
   <script type="module">
-    import { detectDevice, initPipeline, loadEmbedding, synthesize, audioToWavBlob, formatTime, clearEmbeddingCache } from './tts-engine.js';
+    import { detectDevice, initPipeline, loadEmbedding, synthesize, audioToWavBlob, formatTime, clearEmbeddingCache, stripMarkdownForTTS } from './tts-engine.js';
 
     // UI Elements
     const statusDot = document.getElementById("hardware-status-dot");
@@ -937,8 +937,8 @@
 
     // Trigger synthesis
     synthesizeTrigger.onclick = async () => {
-      const text = textarea.value.trim();
-      if (!text) {
+      const rawText = textarea.value.trim();
+      if (!rawText) {
         logger("Error: Speech text input is empty.", "error");
         return;
       }
@@ -954,6 +954,12 @@
         if (!activeEmbedding) {
           logger(`Loading voice embedding: ${activeVoice}...`, "system");
           activeEmbedding = await loadEmbedding(activeVoice);
+        }
+
+        // Strip markdown syntax before synthesis so pasted markdown reads naturally
+        const text = stripMarkdownForTTS(rawText);
+        if (text !== rawText) {
+          logger(`Markdown stripped: ${rawText.length} → ${text.length} chars`, "info");
         }
 
         const speed = parseFloat(speedSlider.value);

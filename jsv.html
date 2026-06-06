@@ -1397,6 +1397,52 @@
 			}
 			updateTabTitle();
 		})();
+
+		// ── postMessage API: receive content from parent frame ─────────────
+		window.addEventListener('message', function (event) {
+			const msg = event.data;
+			if (!msg || msg.type !== 'loadContent') return;
+
+			// Binary payload: jsv.html is a text/JSON editor and does not
+			// render PDFs. Surface a red toast and bail.
+			if (msg.bytes && !(typeof msg.text === 'string' && msg.text.length > 0)) {
+				toast('jsv.html does not accept PDF bytes — load PDFs in pdf.html');
+				copyToast.style.background = '#ef4444';
+				setTimeout(() => { copyToast.style.opacity = '0'; setTimeout(() => copyToast.style.background = '#333', 300); }, 3000);
+				return;
+			}
+
+			const text = typeof msg.text === 'string' ? msg.text : '';
+			const filename = typeof msg.filename === 'string' ? msg.filename : `scratchpad-${currentInstance + 1}.json`;
+
+			// Update state
+			currentFileName = filename;
+			sourceJSON = null;
+			sourceBtn.classList.add('hidden');
+			instances[currentInstance].content = text;
+			instances[currentInstance].fileName = filename;
+
+			// Auto-detect language from filename extension
+			const isJson = filename.toLowerCase().endsWith('.json');
+			const lang = isJson ? 'json' : 'javascript';
+			initEditor(text, lang);
+			updateTabTitle();
+			saveJsvState();
+
+			// Rebuild tree for JSON-shaped content; otherwise show the
+			// existing "not JSON" hint used in displayFile()
+			const trimmed = text.trim();
+			if (isJson || !trimmed || trimmed.startsWith('{') || trimmed.startsWith('[')) {
+				buildTree(text);
+			} else {
+				treeRoot.innerHTML = '<div class="text-gray-400 p-8 text-center italic">Not currently showing tree for non-JSON content.</div>';
+			}
+
+			// Acknowledge back to sender
+			if (event.source) {
+				event.source.postMessage({ type: 'loadContentAck', filename: filename, format: lang }, event.origin || '*');
+			}
+		});
 	</script>
 	<script src="dylen-shorthand.js"></script>
 	<script src="footer.js"></script>

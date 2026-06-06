@@ -582,6 +582,8 @@
         </div>
     </div>
 
+    <div id="postmsg-toast" style="display:none; position:fixed; bottom:1.5rem; left:50%; transform:translateX(-50%); background:#333; color:#fff; padding:.75rem 1.25rem; border-radius:8px; font-size:.9rem; z-index:2000; opacity:0; transition:opacity .25s; pointer-events:none;"></div>
+
     <script>
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('file-input');
@@ -886,6 +888,46 @@
                 modal.style.display = 'none';
             }
         }
+
+        // ── Inline toast (for postMessage errors) ─────────────────────────
+        const postMsgToastEl = document.getElementById('postmsg-toast');
+        function postMsgToast(msg, isError) {
+            if (!postMsgToastEl) { console.warn(msg); return; }
+            postMsgToastEl.textContent = msg;
+            postMsgToastEl.style.background = isError ? '#ef4444' : '#333';
+            postMsgToastEl.style.opacity = '1';
+            postMsgToastEl.style.display = 'block';
+            setTimeout(() => {
+                postMsgToastEl.style.opacity = '0';
+                setTimeout(() => { postMsgToastEl.style.display = 'none'; }, 250);
+            }, 3000);
+        }
+
+        // ── postMessage API: receive content from parent frame ─────────────
+        window.addEventListener('message', function (event) {
+            const msg = event.data;
+            if (!msg || msg.type !== 'loadContent') return;
+
+            // Text-only payload: pdf.html is a binary PDF tool. Surface a
+            // toast and bail.
+            if (!msg.bytes) {
+                postMsgToast('pdf.html requires binary PDF bytes — use ArrayBuffer for the "bytes" field', true);
+                return;
+            }
+
+            const bytes = msg.bytes;
+            const filename = typeof msg.filename === 'string' && msg.filename ? msg.filename : 'document.pdf';
+
+            // Wrap the ArrayBuffer in a File and feed the existing upload
+            // pipeline (preview + ranges). handleFile() expects a File-like
+            // with .type, .name, .size, .arrayBuffer().
+            const file = new File([bytes], filename, { type: 'application/pdf' });
+            handleFile(file);
+
+            if (event.source) {
+                event.source.postMessage({ type: 'loadContentAck', filename: filename, format: 'pdf' }, event.origin || '*');
+            }
+        });
 
         if (window.parent && window.parent !== window) {
             window.parent.postMessage({

@@ -2125,6 +2125,46 @@
 				url: window.location.pathname.split('/').pop() + window.location.search
 			}, '*');
 		}
+
+		// ── postMessage API: receive content from parent frame ─────────────
+		window.addEventListener('message', function (event) {
+			const msg = event.data;
+			if (!msg || msg.type !== 'loadContent') return;
+
+			// Binary payload: mdv.html is a markdown editor and does not
+			// render PDFs. Surface a toast and bail.
+			if (msg.bytes && !(typeof msg.text === 'string' && msg.text.length > 0)) {
+				const warn = 'mdv.html does not accept PDF bytes — load PDFs in pdf.html';
+				if (window.MdvComments && typeof window.MdvComments.toast === 'function') {
+					window.MdvComments.toast(warn);
+				} else {
+					console.warn(warn);
+				}
+				return;
+			}
+
+			const text = typeof msg.text === 'string' ? msg.text : '';
+			const filename = typeof msg.filename === 'string' ? msg.filename : 'Untitled.md';
+
+			// Update state
+			currentFileName = filename;
+
+			// Reinitialise editor with new content
+			initEditor(text);
+			updatePreview();
+			updateTabTitle();
+			saveMdvState();
+
+			// Switch to view mode if currently editing
+			if (window.isEditing) {
+				document.getElementById('toggle-edit-btn').click();
+			}
+
+			// Acknowledge back to sender
+			if (event.source) {
+				event.source.postMessage({ type: 'loadContentAck', filename: filename, format: 'markdown' }, event.origin || '*');
+			}
+		});
 	</script>
 	<script src="footer.js"></script>
 </body>
