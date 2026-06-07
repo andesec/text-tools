@@ -233,6 +233,18 @@
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
 					</svg>
 					<span class="sidebar-panel-title">Tree View</span>
+					<div class="tree-header-actions">
+						<button class="btn-icon tree-action" onclick="expandAllTree()" title="Expand all nodes" aria-label="Expand all">
+							<svg class="tree-action-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4h4M20 8V4h-4M4 16v4h4M20 16v4h-4"></path>
+							</svg>
+						</button>
+						<button class="btn-icon tree-action" onclick="collapseAllTree()" title="Collapse all nodes" aria-label="Collapse all">
+							<svg class="tree-action-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 4v4H5M15 4v4h4M9 20v-4H5M15 20v-4h4"></path>
+							</svg>
+						</button>
+					</div>
 				</div>
 				<div class="sidebar-panel-body">
 					<div id="sidebar-tree-container" class="sidebar-tree-container no-scrollbar">
@@ -257,6 +269,18 @@
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
 					</svg>
 					<span>Tree View</span>
+					<div class="tree-header-actions">
+						<button class="btn-icon tree-action" onclick="expandAllTree()" title="Expand all nodes" aria-label="Expand all">
+							<svg class="tree-action-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4h4M20 8V4h-4M4 16v4h4M20 16v4h-4"></path>
+							</svg>
+						</button>
+						<button class="btn-icon tree-action" onclick="collapseAllTree()" title="Collapse all nodes" aria-label="Collapse all">
+							<svg class="tree-action-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 4v4H5M15 4v4h4M9 20v-4H5M15 20v-4h4"></path>
+							</svg>
+						</button>
+					</div>
 				</div>
 				<div class="bottom-tree-body">
 					<div id="tree-container" class="bottom-tree-container no-scrollbar">
@@ -1148,6 +1172,22 @@
 			}
 		};
 
+		// Expand/Collapse all nodes across both tree views (desktop + mobile)
+		const forEachTreeNode = (mutator) => {
+			[treeRoot, treeMobile].forEach(root => {
+				if (!root) return;
+				root.querySelectorAll('.json-node').forEach(mutator);
+			});
+		};
+
+		window.expandAllTree = () => {
+			forEachTreeNode(node => node.classList.remove('collapsed'));
+		};
+
+		window.collapseAllTree = () => {
+			forEachTreeNode(node => node.classList.add('collapsed'));
+		};
+
 
 		// ── Sidebar Panel Toggle & Resize ──────────────────
 		(function () {
@@ -1159,7 +1199,7 @@
 			panels.forEach(panel => {
 				const header = panel.querySelector('.sidebar-panel-header');
 				header.addEventListener('click', (e) => {
-					if (e.target.closest('#close-sidebar')) return;
+					if (e.target.closest('#close-sidebar, .tree-action')) return;
 					panel.classList.toggle('collapsed');
 				});
 			});
@@ -1244,7 +1284,8 @@
 			const bottomResizer = document.getElementById('bottom-resizer');
 			const editorContainer = document.getElementById('editor-container');
 
-			bottomHeader.addEventListener('click', () => {
+			bottomHeader.addEventListener('click', (e) => {
+				if (e.target.closest('.tree-action')) return;
 				const isCollapsed = bottomPanel.classList.toggle('collapsed');
 				toggleText.textContent = isCollapsed ? 'Tree' : 'Tree ✓';
 				if (isCollapsed) {

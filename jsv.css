@@ -391,6 +391,29 @@ body {
 	padding: 12px;
 }
 
+/* ── Tree header action buttons (Expand all / Collapse all) ── */
+.tree-header-actions {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	margin-left: auto;
+}
+
+.tree-header-actions .btn-icon {
+	padding: 4px;
+	border-radius: 4px;
+}
+
+.tree-header-actions .tree-action-icon {
+	width: 14px;
+	height: 14px;
+}
+
+.tree-header-actions .btn-icon:hover {
+	background: var(--bg-surface-hover);
+	color: var(--text-primary);
+}
+
 /* ── Bottom Tree Panel (mobile only) ── */
 .bottom-tree-panel {
 	display: none; /* hidden on desktop */
