@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PDF → Markdown — Andesec</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ["Inter", "sans-serif"] } } } }</script>
+    <script src="vendor/pdf-lib.min.js"></script>
+    <script src="vendor/pdf.min.js"></script>
+    <script src="vendor/jszip.min.js"></script>
+    <link rel="stylesheet" href="theme.css">
+    <link rel="stylesheet" href="pdf2md.css">
+</head>
+
+<body>
+    <!-- ── Header (mdv.html pattern) ── -->
+    <header class="app-header">
+        <div class="app-header-row">
+            <div class="flex items-center gap-2">
+                <a href="index.html" class="btn-icon" title="Home">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
+                        </path>
+                    </svg>
+                </a>
+                <div class="p-1.5 rounded-lg shadow-sm"
+                    style="background: linear-gradient(to bottom right, #0ea5e9, #0284c7);">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M14 2v6h6M16 13H8M16 17H8M10 9H8"></path>
+                    </svg>
+                </div>
+                <h1 class="text-sm font-bold uppercase tracking-tight sm:text-lg sm:normal-case">PDF → Markdown</h1>
+            </div>
+            <div class="flex items-center gap-1.5">
+                <button id="new-pdf-btn" class="btn btn-sm hidden" title="Start over with a new PDF">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    <span class="hidden sm:inline">New PDF</span>
+                </button>
+            </div>
+        </div>
+        <div class="app-header-toolbar">
+            <div class="flex items-center gap-2">
+                <button id="sidebar-toggle-btn" class="btn btn-sm" title="Toggle settings sidebar">☰ Settings</button>
+                <span id="page-count-badge" class="badge" style="display:none">0 Pages</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span id="progress-inline"
+                    style="display:none;font-size:var(--font-size-xs);color:var(--text-tertiary);"></span>
+                <button id="convert-btn" class="btn btn-primary btn-sm" style="display:none">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M14 2v6h6M16 13H8M16 17H8M10 9H8"></path>
+                    </svg>
+                    Convert
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ── Main Layout: Sidebar + Content ── -->
+    <div class="app-main">
+        <div id="mobile-sidebar-backdrop"></div>
+
+        <!-- Settings Sidebar -->
+        <aside id="settings-sidebar" class="app-sidebar">
+            <div class="sidebar-panel">
+                <div class="sidebar-panel-header" data-panel="conversion">
+                    <svg class="sidebar-panel-caret" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                    <span class="sidebar-panel-title">Conversion</span>
+                </div>
+                <div class="sidebar-panel-body">
+                    <div class="sidebar-settings-list">
+                        <label class="sidebar-setting">
+                            <div class="sidebar-setting-info">
+                                <span class="sidebar-setting-label">Extract Images</span>
+                                <span class="sidebar-setting-desc">Save as separate PNGs</span>
+                            </div>
+                            <span class="toggle">
+                                <input type="checkbox" id="opt-extract-images" checked>
+                                <span class="toggle-slider"></span>
+                            </span>
+                        </label>
+                        <label class="sidebar-setting">
+                            <div class="sidebar-setting-info">
+                                <span class="sidebar-setting-label">Headers/Footers</span>
+                                <span class="sidebar-setting-desc" id="hf-auto-status">Auto-detecting…</span>
+                            </div>
+                            <span class="toggle">
+                                <input type="checkbox" id="opt-include-hf">
+                                <span class="toggle-slider"></span>
+                            </span>
+                        </label>
+                        <label class="sidebar-setting">
+                            <div class="sidebar-setting-info">
+                                <span class="sidebar-setting-label">Page Separators</span>
+                                <span class="sidebar-setting-desc">--- between pages</span>
+                            </div>
+                            <span class="toggle">
+                                <input type="checkbox" id="opt-page-seps" checked>
+                                <span class="toggle-slider"></span>
+                            </span>
+                        </label>
+                        <label class="sidebar-setting">
+                            <div class="sidebar-setting-info">
+                                <span class="sidebar-setting-label">Table of Contents</span>
+                                <span class="sidebar-setting-desc">From headings</span>
+                            </div>
+                            <span class="toggle">
+                                <input type="checkbox" id="opt-toc">
+                                <span class="toggle-slider"></span>
+                            </span>
+                        </label>
+                        <div class="sidebar-setting">
+                            <div class="sidebar-setting-info">
+                                <span class="sidebar-setting-label">Image Quality</span>
+                                <span class="sidebar-setting-desc">Export resolution</span>
+                            </div>
+                            <select id="opt-image-quality" class="sidebar-select">
+                                <option value="2">2x</option>
+                                <option value="3" selected>3x</option>
+                                <option value="4">4x</option>
+                            </select>
+                        </div>
+                        <div class="sidebar-setting">
+                            <div class="sidebar-setting-info">
+                                <span class="sidebar-setting-label">Min Image Size</span>
+                                <span class="sidebar-setting-desc">Skip below (px)</span>
+                            </div>
+                            <select id="opt-min-image" class="sidebar-select">
+                                <option value="10">10</option>
+                                <option value="20" selected>20</option>
+                                <option value="50">50</option>
+                                <option value="0">All</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-resizer" data-resizer="0"></div>
+
+            <!-- HF Patterns Panel -->
+            <div id="hf-panel" class="sidebar-panel collapsed">
+                <div class="sidebar-panel-header" data-panel="hf">
+                    <svg class="sidebar-panel-caret" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                    <span class="sidebar-panel-title">Headers &amp; Footers</span>
+                    <span id="hf-count-badge" class="sidebar-panel-badge" style="display:none"></span>
+                </div>
+                <div class="sidebar-panel-body">
+                    <div id="hf-patterns" class="sidebar-hf-list"></div>
+                </div>
+            </div>
+
+            <div class="sidebar-resizer" data-resizer="1"></div>
+
+            <!-- Pages Panel (vertical thumbnails) -->
+            <div id="pages-panel" class="sidebar-panel collapsed">
+                <div class="sidebar-panel-header" data-panel="pages">
+                    <svg class="sidebar-panel-caret" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                    <span class="sidebar-panel-title">Pages</span>
+                </div>
+                <div class="sidebar-panel-body">
+                    <div id="sidebar-thumb-list" class="sidebar-thumb-list"></div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main id="main-content">
+            <!-- Upload Zone -->
+            <div id="drop-zone" class="upload-area">
+                <span class="upload-icon">📑</span>
+                <p class="upload-text">Drag and drop a PDF here or <b>browse files</b></p>
+                <input type="file" id="file-input" accept=".pdf">
+            </div>
+
+            <!-- File Info Bar -->
+            <div id="file-info" class="file-info glass">
+                <div class="file-details">
+                    <span class="file-icon">📄</span>
+                    <div>
+                        <div id="file-name" class="file-name">document.pdf</div>
+                        <div id="file-size" class="file-meta">0 MB</div>
+                    </div>
+                </div>
+                <div id="page-count" class="badge">0 Pages</div>
+            </div>
+
+            <!-- Progress (inline) -->
+            <div id="progress-section" class="progress-section">
+                <div class="progress-bar-wrap">
+                    <div id="progress-bar" class="progress-bar"></div>
+                </div>
+                <p id="progress-text" class="progress-text"></p>
+            </div>
+
+            <!-- Output Section (compact header + always-open iframe) -->
+            <div id="output-section" class="output-section glass">
+                <div class="output-header"
+                    style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                    <span style="font-size:var(--font-size-sm);font-weight:600;">Markdown Preview</span>
+                    <div
+                        style="display:flex;align-items:center;gap:8px;font-size:var(--font-size-xs);color:var(--text-tertiary);">
+                        <span id="stat-pages">0 pp</span>·
+                        <span id="stat-images">0 img</span>·
+                        <span id="stat-tables">0 tbl</span>·
+                        <span id="stat-size">0 KB</span>
+                    </div>
+                    <button id="download-btn" class="btn btn-success btn-sm">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                        </svg>
+                        Download ZIP
+                    </button>
+                </div>
+                <iframe id="md-preview-iframe" class="md-preview-iframe" src="mdv.html"></iframe>
+            </div>
+        </main>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="pdf2md.js?v=5"></script>
+    <script src="footer.js"></script>
+</body>
+
+</html>

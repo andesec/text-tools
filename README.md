@@ -15,6 +15,7 @@ A collection of lightweight, **fully client-side** tools to edit, view, and form
 | 🔊 **Supertonic TTS** | Convert text to high-quality speech **entirely in the browser** using WebGPU, with a WASM fallback. |
 | 📋 **JSON Viewer** | View, format, and explore JSON data with an interactive tree viewer. Supports multiple JSON instances. |
 | 📄 **PDF Splitter** | Split PDF files into smaller documents based on custom page ranges. Private and fast, runs in the browser. |
+| 📑 **PDF → Markdown** | Convert PDFs to clean Markdown with extracted images. Auto-detects headers, footers, tables, and lists. |
 | ⚡ **Diff Tool** | Compare two files or text snippets side-by-side with character-level highlighting, move detection, and a live symbol outline. |
 | 🔐 **Base64 & URI** | Encode and decode Base64 strings and URIs, with support for special characters. |
 | 🔑 **Encryption Utility** | Decrypt payloads with custom keys and IVs. One-click handoff to the JSON viewer for decrypted results. |
@@ -68,6 +69,9 @@ text-tools/
 ├── tts.html           # Supertonic text-to-speech UI
 ├── tts-engine.js      # TTS engine (WebGPU + WASM)
 ├── pdf.html           # PDF splitter
+├── pdf2md.html        # PDF → Markdown converter
+├── pdf2md.css         # PDF → Markdown styles
+├── pdf2md.js          # PDF → Markdown conversion engine
 ├── diff.html          # Diff tool
 ├── diff2.html         # Alternative diff UI
 ├── utv.html           # Base64 / URI tool
@@ -86,6 +90,7 @@ text-tools/
 - **Markdown:** rendered client-side with a small custom renderer.
 - **JSON:** parsed natively and rendered into an interactive tree.
 - **PDF:** parsed and split in-browser using `pdf-lib`.
+- **PDF → Markdown:** text extraction and image capture via `pdf.js`, ZIP bundling via `JSZip`.
 - **Diff:** character-level diffing with move detection.
 
 ## License
