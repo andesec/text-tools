@@ -2288,7 +2288,14 @@
 			// is a common mistake that causes the browser to silently drop
 			// contentChange / loadContentAck / titleChange messages when
 			// the host sets it to the iframe's own origin.
-			const parentOrigin = event.origin || '*';
+			// event.origin can be the string "null" (when the sender is a
+			// file:// page or sandboxed iframe), the empty string, or null.
+			// None of those are valid postMessage targetOrigin values —
+			// window.parent.postMessage(payload, "null") throws.
+			let parentOrigin = event.origin;
+			if (!parentOrigin || parentOrigin === 'null' || parentOrigin === 'null://null') {
+				parentOrigin = '*';
+			}
 			if (msg.options?.targetOrigin && msg.options.targetOrigin !== '*' && parentOrigin !== '*' && msg.options.targetOrigin !== parentOrigin) {
 				syncPostMessage({
 					type: 'error',
@@ -2325,6 +2332,10 @@
 			// Use the parent's origin (event.origin) as the targetOrigin,
 			// not syncTargetOrigin — the loadContentAck goes to event.source
 			// (the parent), and must be addressed to the parent's origin.
+			let ackOrigin = event.origin;
+			if (!ackOrigin || ackOrigin === 'null' || ackOrigin === 'null://null') {
+				ackOrigin = '*';
+			}
 			syncVersion++;
 			const replyVersion = syncVersion;
 			if (event.source) {
@@ -2333,7 +2344,7 @@
 					filename: filename,
 					format: 'markdown',
 					version: replyVersion
-				}, event.origin || '*');
+				}, ackOrigin);
 			}
 
 			// Show visual feedback for successful load
