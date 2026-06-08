@@ -810,9 +810,25 @@
     // Returns an array of { lines: string[][], startY, endY }.
 
     function detectGridTables(items) {
+        console.log('[grid] detectGridTables called with', items.length, 'items');
         // Filter to text items with non-empty strings
         const txtItems = items.filter(it => it.str && it.str.trim() && it.transform && it.transform.length >= 6);
-        if (txtItems.length < 6) return [];
+        console.log('[grid] after filter:', txtItems.length, 'non-empty text items');
+        if (txtItems.length === 0) {
+            console.log('[grid] BAIL: no text items');
+            return [];
+        }
+        if (txtItems.length < 6) {
+            console.log('[grid] BAIL: fewer than 6 items');
+            return [];
+        }
+        // Log first 3 items so we can see the actual shape
+        console.log('[grid] first 3 items:', txtItems.slice(0, 3).map(it => ({
+            str: it.str.slice(0, 30),
+            x: it.transform[4]?.toFixed(1),
+            y: it.transform[5]?.toFixed(1),
+            w: it.width?.toFixed(1)
+        })));
         console.log('[pdf2md] detectGridTables: processing', txtItems.length, 'text items');
 
         // Sort by Y descending (top of page first)
@@ -974,6 +990,75 @@
             }
             return md.join('\n');
         });
+    }
+
+    // Replace the broken "joined as paragraphs" cell text in a struct
+    // tree page with grid-detected tables, preserving all other content
+    // (prose, headings, etc.) in their original order.
+    //
+    // Strategy: find each `### Table: ...` heading (or similar). The
+    // broken-as-paragraphs cell text is the long block of single-item
+    // lines between this heading and the next heading. Replace that
+    // region with the next grid table(s). If multiple grid tables were
+    // detected, they go in their natural order, separated by blank
+    // lines.
+    function replaceTableRegionInStructMd(structMd, gridTables) {
+        if (!structMd || !gridTables || gridTables.length === 0) return structMd;
+        const tableMd = gridTablesToMarkdown(gridTables);
+        if (tableMd.length === 0) return structMd;
+
+        const lines = structMd.split('\n');
+        const TABLE_HEADING_RE = /^\s*#{1,6}\s+.*\btable\b/i;
+        const HEADING_RE = /^\s*#{1,6}\s+/;
+
+        // Find indices of all headings and the table-bearing ones.
+        const headingIdxs = [];
+        for (let i = 0; i < lines.length; i++) {
+            if (HEADING_RE.test(lines[i])) headingIdxs.push(i);
+        }
+        const tableHeadingIdxs = headingIdxs.filter(i => TABLE_HEADING_RE.test(lines[i]));
+
+        // For each table-bearing heading, find the next heading. The
+        // region between the table-heading+1 and the next heading is
+        // the "joined as paragraphs" cell text. Replace it with the
+        // first grid table.
+        const linesToRemove = new Set();
+        const replacement = new Map(); // line index → grid table markdown
+        let tableIdx = 0;
+        for (const thIdx of tableHeadingIdxs) {
+            const nextIdx = headingIdxs.find(h => h > thIdx);
+            const endIdx = nextIdx !== undefined ? nextIdx : lines.length;
+            // Find the first non-empty line after the heading.
+            let contentStart = thIdx + 1;
+            while (contentStart < endIdx && !lines[contentStart].trim()) contentStart++;
+            // Mark content lines for removal.
+            for (let i = contentStart; i < endIdx; i++) linesToRemove.add(i);
+            // Map the table-heading line index to the replacement markdown.
+            if (tableIdx < tableMd.length) {
+                replacement.set(thIdx, tableMd[tableIdx]);
+                tableIdx++;
+            }
+        }
+
+        // Rebuild the markdown.
+        const out = [];
+        for (let i = 0; i < lines.length; i++) {
+            if (linesToRemove.has(i)) continue;
+            out.push(lines[i]);
+            // After a table heading, insert the replacement (if any).
+            if (replacement.has(i)) {
+                out.push('');
+                out.push(replacement.get(i));
+            }
+        }
+
+        // Append any remaining grid tables at the very end of the page
+        // (this shouldn't normally happen, but it's a safety net).
+        let result = out.join('\n');
+        if (tableIdx < tableMd.length) {
+            result = result.trimEnd() + '\n\n' + tableMd.slice(tableIdx).join('\n\n') + '\n';
+        }
+        return result;
     }
 
     // Splice grid-detected tables into a struct-tree markdown page.
@@ -1174,40 +1259,54 @@
 
             if (structMd) {
                 usedStructTree = true;
-                // Always try the grid detector on pages with struct-tree
-                // output. The detector is conservative (returns [] if it
-                // can't find at least 2 multi-cell lines with a stable
-                // column count), so it won't false-positive on prose pages.
-                // This catches two cases the struct tree walker misses:
-                //   1. "Table" role with no TR/TD children — walker falls
-                //      through to "join as paragraphs", producing flat text.
-                //   2. "Table: Vocabulary Table" emitted as a plain paragraph
-                //      (not a heading), so heading-based regex checks miss it.
                 let finalPageMd = structMd;
+                // Run the grid detector and replace the broken "joined as
+                // paragraphs" cell text that the struct tree walker emits
+                // when a "Table" role has no proper TR/TD children. We do
+                // this by finding the "### Table:" heading, then looking
+                // for the first heading after it — the cell text between
+                // those two anchors is the broken Table role content. We
+                // replace that region with the grid-detected tables. All
+                // other content (including prose sections like "Language
+                // Notes") is preserved verbatim in the original order.
                 try {
                     const tcForGrid = await page.getTextContent();
                     const gridTables = detectGridTables(tcForGrid.items);
                     console.log('[pdf2md] Page', i, 'grid detector found', gridTables.length, 'tables');
                     if (gridTables.length > 0) {
-                        const before = finalPageMd.length;
-                        finalPageMd = spliceGridTablesIntoStructMd(structMd, gridTables);
-                        console.log('[pdf2md] Page', i, 'splice changed length:', before, '→', finalPageMd.length);
+                        finalPageMd = replaceTableRegionInStructMd(structMd, gridTables);
                     }
                 } catch (e) {
                     console.warn('[pdf2md] Grid detector failed for page', i, e);
                 }
                 allPageLines.push({
-                    lines: finalPageMd.split('\n').filter(l => l.trim()),
+                    // Use the raw finalPageMd (a string), not a filtered
+                    // list of lines, so blank lines between tables are
+                    // preserved when assembled.
+                    lines: finalPageMd.split('\n'),
                     pageNum: i,
                     images: [],
-                    structMode: true
+                    structMode: true,
+                    rawMd: finalPageMd
                 });
             } else {
                 try {
                     const tc = await page.getTextContent();
-                    const lines = reconstructLines(tc, pageHeight, !opts.includeHF, excludedTexts);
-                    const pageMd = linesToMarkdown(lines);
-                    allPageLines.push({ lines: pageMd, pageNum: i, images: [], structMode: false });
+                    // Try the grid detector here too — the heuristic path
+                    // doesn't use it, so without this we'd miss tables
+                    // on pages where the struct tree failed entirely.
+                    const gridTables = detectGridTables(tc.items);
+                    if (gridTables.length > 0) {
+                        const tableMd = gridTablesToMarkdown(gridTables);
+                        const lines = reconstructLines(tc, pageHeight, !opts.includeHF, excludedTexts);
+                        const headingLines = linesToMarkdown(lines).filter(l => /^#{1,6}\s/.test(l));
+                        const pageMd = headingLines.join('\n') + '\n\n' + tableMd.join('\n\n');
+                        allPageLines.push({ lines: pageMd.split('\n').filter(l => l.trim()), pageNum: i, images: [], structMode: false });
+                    } else {
+                        const lines = reconstructLines(tc, pageHeight, !opts.includeHF, excludedTexts);
+                        const pageMd = linesToMarkdown(lines);
+                        allPageLines.push({ lines: pageMd, pageNum: i, images: [], structMode: false });
+                    }
                 } catch (e) {
                     console.warn('[pdf2md] Heuristic conversion failed for page', i, e);
                     allPageLines.push({ lines: ['*[Page ' + i + ' conversion failed]*'], pageNum: i, images: [], structMode: false });
@@ -1247,6 +1346,8 @@
         $('#stat-images').textContent = imgCount;
         $('#stat-tables').textContent = Math.max(0, tableCount) + ' tbl';
         $('#stat-size').textContent = formatBytes(mdSize);
+        console.log('[pdf2md] FINAL markdown (first 2000):', JSON.stringify(md.slice(0, 2000)));
+        console.log('[pdf2md] FINAL markdown (last 2000):', JSON.stringify(md.slice(-2000)));
 
         progressSection.style.display = 'none';
         progressInline.style.display = 'none';
@@ -1424,7 +1525,9 @@
             const headings = [];
             for (const { lines } of allPageLines) {
                 for (const line of lines) {
-                    const m = (typeof line === 'string' ? line : line.text || '').match(/^(#{1,6})\s+(.+)/);
+                    if (typeof line !== 'string') continue;
+                    if (!line.trim()) continue;
+                    const m = line.match(/^(#{1,6})\s+(.+)/);
                     if (m) {
                         const text = m[2]; const slug = text.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
                         headings.push({ level: m[1].length, text, slug });
@@ -1450,7 +1553,11 @@
             }
 
             if (structMode) {
-                sections.push(lines.join('\n'));
+                // Use the raw markdown string to preserve blank-line
+                // separators between tables and headings.
+                const rawMd = allPageLines[pi].rawMd;
+                console.log('[pdf2md] assemble page', pi, 'rawMd first 200:', JSON.stringify((rawMd || '').slice(0, 200)));
+                sections.push(rawMd || lines.join('\n'));
             } else {
                 sections.push(lines.join('\n'));
             }
@@ -1461,11 +1568,8 @@
         }
 
         let md = sections.join('\n');
-        // Stitch multi-page tables BEFORE the newline normalisation so the
-        // '---' page separator is still detectable. This collapses the page
-        // break between the last table of page N and the first table of
-        // page N+1 into a single table when they share the same column count.
-        md = mergeContinuationTables(md);
+        // TEMP: disabled mergeContinuationTables to debug table layout
+        // md = mergeContinuationTables(md);
         md = md.replace(/\n{3,}/g, '\n\n').replace(/[ \t]+$/gm, '');
         return md.trimEnd() + '\n';
     }
