@@ -234,14 +234,18 @@
 					</svg>
 					<span class="sidebar-panel-title">Tree View</span>
 					<div class="tree-header-actions">
-						<button class="btn-icon tree-action" onclick="expandAllTree()" title="Expand all nodes" aria-label="Expand all">
+						<button class="btn-icon tree-action" onclick="expandAllTree()" title="Expand all nodes"
+							aria-label="Expand all">
 							<svg class="tree-action-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4h4M20 8V4h-4M4 16v4h4M20 16v4h-4"></path>
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+									d="M4 8V4h4M20 8V4h-4M4 16v4h4M20 16v4h-4"></path>
 							</svg>
 						</button>
-						<button class="btn-icon tree-action" onclick="collapseAllTree()" title="Collapse all nodes" aria-label="Collapse all">
+						<button class="btn-icon tree-action" onclick="collapseAllTree()" title="Collapse all nodes"
+							aria-label="Collapse all">
 							<svg class="tree-action-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 4v4H5M15 4v4h4M9 20v-4H5M15 20v-4h4"></path>
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+									d="M9 4v4H5M15 4v4h4M9 20v-4H5M15 20v-4h4"></path>
 							</svg>
 						</button>
 					</div>
@@ -270,14 +274,18 @@
 					</svg>
 					<span>Tree View</span>
 					<div class="tree-header-actions">
-						<button class="btn-icon tree-action" onclick="expandAllTree()" title="Expand all nodes" aria-label="Expand all">
+						<button class="btn-icon tree-action" onclick="expandAllTree()" title="Expand all nodes"
+							aria-label="Expand all">
 							<svg class="tree-action-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4h4M20 8V4h-4M4 16v4h4M20 16v4h-4"></path>
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+									d="M4 8V4h4M20 8V4h-4M4 16v4h4M20 16v4h-4"></path>
 							</svg>
 						</button>
-						<button class="btn-icon tree-action" onclick="collapseAllTree()" title="Collapse all nodes" aria-label="Collapse all">
+						<button class="btn-icon tree-action" onclick="collapseAllTree()" title="Collapse all nodes"
+							aria-label="Collapse all">
 							<svg class="tree-action-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 4v4H5M15 4v4h4M9 20v-4H5M15 20v-4h4"></path>
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+									d="M9 4v4H5M15 4v4h4M9 20v-4H5M15 20v-4h4"></path>
 							</svg>
 						</button>
 					</div>
@@ -386,6 +394,76 @@
 			}, 300);
 		}
 
+		// ── Two-way sync state ─────────────────────────────────────────────
+		let syncVersion = 0;           // Monotonically increasing counter
+		let syncTargetOrigin = '*';     // Target origin for outbound messages
+		let syncPendingChange = null;   // Pending contentChange payload
+		let syncDebounceTimer = null;   // Debounce timer for contentChange
+		let _syncLoadingContent = false; // True while loadContent is in flight
+		const SYNC_DEBOUNCE_MS = 300;   // Debounce interval for contentChange
+
+		// Helper: post message to parent with proper origin handling
+		function syncPostMessage(payload) {
+			try {
+				window.parent?.postMessage(payload, syncTargetOrigin);
+			} catch (e) {
+				console.error('[jsv] syncPostMessage failed:', e);
+			}
+		}
+
+		// Flush any pending contentChange immediately (used on unload)
+		function syncFlushImmediate() {
+			if (syncDebounceTimer) {
+				clearTimeout(syncDebounceTimer);
+				syncDebounceTimer = null;
+			}
+			if (syncPendingChange) {
+				syncVersion++;
+				const p = syncPendingChange;
+				syncPendingChange = null;
+				syncPostMessage({
+					type: 'contentChange',
+					text: p.text,
+					filename: p.filename,
+					format: p.format,
+					version: syncVersion,
+					selection: p.selection
+				});
+			}
+		}
+
+		// Schedule a debounced contentChange post
+		function syncScheduleChange(text, selection) {
+			const format = currentFileName?.toLowerCase().endsWith('.json') ? 'json' : 'javascript';
+			syncPendingChange = {
+				text: text,
+				filename: currentFileName || 'scratchpad.json',
+				format: format,
+				selection: selection
+			};
+			clearTimeout(syncDebounceTimer);
+			syncDebounceTimer = setTimeout(() => {
+				if (!syncPendingChange) return;
+				syncVersion++;
+				const p = syncPendingChange;
+				syncPendingChange = null;
+				syncDebounceTimer = null;
+				syncPostMessage({
+					type: 'contentChange',
+					text: p.text,
+					filename: p.filename,
+					format: p.format,
+					version: syncVersion,
+					selection: p.selection
+				});
+			}, SYNC_DEBOUNCE_MS);
+		}
+
+		// Beforeunload: flush any pending changes
+		window.addEventListener('beforeunload', () => {
+			syncFlushImmediate();
+		});
+
 		// Dropdown handling
 		const instanceDropdown = document.getElementById('instance-menu-dropdown');
 		const instanceBtn = document.getElementById('instance-menu-btn');
@@ -433,8 +511,8 @@
 				saveDropdownMenu.classList.remove('visible');
 			}
 		});
-		const JSV_STORAGE_KEY = window.name && window.name.startsWith('tab_') 
-			? `jsv_state_${window.name}` 
+		const JSV_STORAGE_KEY = window.name && window.name.startsWith('tab_')
+			? `jsv_state_${window.name}`
 			: 'jsv_state_default';
 
 		let currentInstance = 0;
@@ -452,7 +530,7 @@
 					if (data.instances) instances = data.instances;
 					if (data.currentInstance !== undefined) currentInstance = data.currentInstance;
 				}
-			} catch(e) {}
+			} catch (e) { }
 		}
 
 		function saveJsvState() {
@@ -461,13 +539,13 @@
 					instances: instances,
 					currentInstance: currentInstance
 				}));
-			} catch(e) {}
+			} catch (e) { }
 		}
 
 		function updateTabTitle() {
 			const text = editor ? editor.state.doc.toString() : "";
 			let title = currentFileName || "JSON Viewer";
-			
+
 			try {
 				const trimmed = text.trim();
 				if (trimmed && (trimmed.startsWith("{") || trimmed.startsWith("["))) {
@@ -477,7 +555,7 @@
 						if (data.title !== undefined) found = data.title;
 						else if (data.heading !== undefined) found = data.heading;
 						else if (data.main !== undefined) found = data.main;
-						
+
 						if (found !== null && found !== undefined) {
 							const valStr = typeof found === 'object' ? JSON.stringify(found) : String(found).trim();
 							if (valStr) {
@@ -489,10 +567,10 @@
 			} catch (e) {
 				// Ignore parse errors
 			}
-			
+
 			document.title = title;
 			if (window.parent && window.parent !== window) {
-				window.parent.postMessage({ type: 'titleChange', title: title }, '*');
+				syncPostMessage({ type: 'titleChange', title: title, version: syncVersion });
 			}
 		}
 
@@ -520,7 +598,13 @@
 				}),
 				EditorView.updateListener.of((update) => {
 					if (update.docChanged) {
+						// Skip changes that originated from our own loadContent
+						if (_syncLoadingContent) return;
+						// Schedule a contentChange (debounced)
 						const content = update.state.doc.toString();
+						const sel = update.state.selection.main;
+						const selection = { from: sel.from, to: sel.to };
+						syncScheduleChange(content, selection);
 						instances[currentInstance].content = content;
 						debouncedBuildTree(content);
 						saveJsvState();
@@ -709,15 +793,15 @@
 					continue;
 				}
 				// Skip single-line comments
-				if (text[i] === '/' && text[i+1] === '/') {
+				if (text[i] === '/' && text[i + 1] === '/') {
 					i += 2;
 					while (i < text.length && text[i] !== '\n' && text[i] !== '\r') i++;
 					continue;
 				}
 				// Skip multi-line comments
-				if (text[i] === '/' && text[i+1] === '*') {
+				if (text[i] === '/' && text[i + 1] === '*') {
 					i += 2;
-					while (i < text.length && !(text[i] === '*' && text[i+1] === '/')) i++;
+					while (i < text.length && !(text[i] === '*' && text[i + 1] === '/')) i++;
 					if (i < text.length) i += 2;
 					continue;
 				}
@@ -1414,7 +1498,7 @@
 			currentFileName = instances[currentInstance].fileName;
 			const isJson = currentFileName.toLowerCase().endsWith(".json");
 			initEditor(instances[currentInstance].content, isJson ? "json" : "javascript");
-			
+
 			if (instances[currentInstance].content.trim()) {
 				buildTree(instances[currentInstance].content);
 			} else {
@@ -1435,6 +1519,14 @@
 					type: 'toolSelection',
 					url: window.location.pathname.split('/').pop() + window.location.search
 				}, '*');
+				// Send ready message after editor is initialized
+				setTimeout(() => {
+					syncPostMessage({
+						type: 'ready',
+						format: currentFileName?.toLowerCase().endsWith('.json') ? 'json' : 'javascript',
+						version: syncVersion
+					});
+				}, 50);
 			}
 			updateTabTitle();
 		})();
@@ -1450,11 +1542,31 @@
 				toast('jsv.html does not accept PDF bytes — load PDFs in pdf.html');
 				copyToast.style.background = '#ef4444';
 				setTimeout(() => { copyToast.style.opacity = '0'; setTimeout(() => copyToast.style.background = '#333', 300); }, 3000);
+				syncPostMessage({
+					type: 'error',
+					code: 'load_failed',
+					message: 'jsv.html does not accept PDF bytes — load PDFs in pdf.html'
+				});
 				return;
 			}
 
 			const text = typeof msg.text === 'string' ? msg.text : '';
 			const filename = typeof msg.filename === 'string' ? msg.filename : `scratchpad-${currentInstance + 1}.json`;
+
+			// Store targetOrigin for outbound messages (default to event.origin)
+			if (msg.options?.targetOrigin) {
+				syncTargetOrigin = msg.options.targetOrigin;
+			} else {
+				syncTargetOrigin = event.origin || '*';
+			}
+
+			// Cancel any pending contentChange (content is being replaced)
+			clearTimeout(syncDebounceTimer);
+			syncDebounceTimer = null;
+			syncPendingChange = null;
+
+			// Set loading flag to skip change events from initEditor
+			_syncLoadingContent = true;
 
 			// Update state
 			currentFileName = filename;
@@ -1479,10 +1591,23 @@
 				treeRoot.innerHTML = '<div class="text-gray-400 p-8 text-center italic">Not currently showing tree for non-JSON content.</div>';
 			}
 
-			// Acknowledge back to sender
+			// Increment version and acknowledge back to sender
+			syncVersion++;
+			const replyVersion = syncVersion;
 			if (event.source) {
-				event.source.postMessage({ type: 'loadContentAck', filename: filename, format: lang }, event.origin || '*');
+				event.source.postMessage({
+					type: 'loadContentAck',
+					filename: filename,
+					format: lang,
+					version: replyVersion
+				}, syncTargetOrigin);
 			}
+
+			// Show visual feedback for successful load
+			toast(`Loaded: ${filename}`);
+
+			// Clear loading flag
+			_syncLoadingContent = false;
 		});
 	</script>
 	<script src="dylen-shorthand.js"></script>

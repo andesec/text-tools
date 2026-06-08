@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -70,7 +71,8 @@
             text-decoration: none;
             font-weight: 500;
             transition: transform 0.2s;
-            padding: 0.5rem 0; /* Better touch area */
+            padding: 0.5rem 0;
+            /* Better touch area */
         }
 
         .back-link:hover {
@@ -98,7 +100,8 @@
             margin-bottom: 2rem;
         }
 
-        .upload-area:hover, .upload-area.drag-over {
+        .upload-area:hover,
+        .upload-area.drag-over {
             border-color: var(--primary);
             background: rgba(79, 195, 247, 0.05);
         }
@@ -124,7 +127,8 @@
 
         /* File Info Bar */
         .file-info {
-            display: none; /* Initially hidden */
+            display: none;
+            /* Initially hidden */
             align-items: center;
             justify-content: space-between;
             padding: 1.25rem;
@@ -134,8 +138,15 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .file-details {
@@ -167,7 +178,8 @@
 
         /* Range List */
         .range-section {
-            display: none; /* Initially hidden */
+            display: none;
+            /* Initially hidden */
             margin-bottom: 3rem;
         }
 
@@ -215,8 +227,15 @@
         }
 
         @keyframes slideIn {
-            from { opacity: 0; transform: translateX(-10px); }
-            to { opacity: 1; transform: translateX(0); }
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
         }
 
         .range-input-wrapper {
@@ -299,7 +318,8 @@
             gap: 1.5rem;
             scrollbar-width: thin;
             scrollbar-color: var(--primary) transparent;
-            -webkit-overflow-scrolling: touch; /* Momentum scroll */
+            -webkit-overflow-scrolling: touch;
+            /* Momentum scroll */
         }
 
         @media (max-width: 480px) {
@@ -354,7 +374,8 @@
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
             border: 1px solid var(--border);
             height: 220px;
-            aspect-ratio: 1 / 1.414; /* A4 aspect ratio */
+            aspect-ratio: 1 / 1.414;
+            /* A4 aspect ratio */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -406,7 +427,9 @@
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         /* Modal Overlay */
@@ -423,7 +446,8 @@
             -webkit-backdrop-filter: blur(12px);
             animation: fadeIn 0.3s ease;
             padding: 1rem;
-            overflow-y: auto; /* Allow scrolling content */
+            overflow-y: auto;
+            /* Allow scrolling content */
         }
 
         .modal-content {
@@ -439,8 +463,15 @@
         }
 
         @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .modal-close {
@@ -500,9 +531,11 @@
             .range-item {
                 grid-template-columns: 1fr;
             }
+
             .download-link {
                 justify-content: center;
             }
+
             header {
                 flex-direction: column;
                 gap: 0.5rem;
@@ -513,12 +546,13 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <header>
             <a href="index.html" class="back-link">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    <path d="M19 12H5M12 19l-7-7 7-7" />
                 </svg>
                 Back to Tools
             </a>
@@ -545,7 +579,8 @@
         <div id="preview-section" class="preview-section">
             <div class="section-header">
                 <h2>Page Preview</h2>
-                <div id="preview-status" class="page-count" style="background: transparent; color: var(--text-muted); padding: 0;">Loading previews...</div>
+                <div id="preview-status" class="page-count"
+                    style="background: transparent; color: var(--text-muted); padding: 0;">Loading previews...</div>
             </div>
             <div id="preview-container" class="preview-container">
                 <div class="preview-loading">
@@ -570,7 +605,7 @@
                 <h2>Extraction Ranges</h2>
                 <button id="add-range-btn" class="add-range-btn">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 5v14M5 12h14"/>
+                        <path d="M12 5v14M5 12h14" />
                     </svg>
                     Add Range
                 </button>
@@ -582,7 +617,9 @@
         </div>
     </div>
 
-    <div id="postmsg-toast" style="display:none; position:fixed; bottom:1.5rem; left:50%; transform:translateX(-50%); background:#333; color:#fff; padding:.75rem 1.25rem; border-radius:8px; font-size:.9rem; z-index:2000; opacity:0; transition:opacity .25s; pointer-events:none;"></div>
+    <div id="postmsg-toast"
+        style="display:none; position:fixed; bottom:1.5rem; left:50%; transform:translateX(-50%); background:#333; color:#fff; padding:.75rem 1.25rem; border-radius:8px; font-size:.9rem; z-index:2000; opacity:0; transition:opacity .25s; pointer-events:none;">
+    </div>
 
     <script>
         const dropZone = document.getElementById('drop-zone');
@@ -611,6 +648,97 @@
         let originalPdfBytes = null;
         let totalPages = 0;
         let cachedPdfJsDoc = null;
+
+        // ── Two-way sync state ─────────────────────────────────────────────
+        let syncVersion = 0;           // Monotonically increasing counter
+        let syncTargetOrigin = '*';     // Target origin for outbound messages
+        let syncPendingChange = null;   // Pending contentChange payload
+        let syncDebounceTimer = null;   // Debounce timer for contentChange
+        const SYNC_DEBOUNCE_MS = 300;   // Debounce interval for contentChange
+
+        // Helper: post message to parent with proper origin handling
+        function syncPostMessage(payload) {
+            try {
+                window.parent?.postMessage(payload, syncTargetOrigin);
+            } catch (e) {
+                console.error('[pdf] syncPostMessage failed:', e);
+            }
+        }
+
+        // Flush any pending contentChange immediately (used on unload)
+        function syncFlushImmediate() {
+            if (syncDebounceTimer) {
+                clearTimeout(syncDebounceTimer);
+                syncDebounceTimer = null;
+            }
+            if (syncPendingChange) {
+                syncVersion++;
+                const p = syncPendingChange;
+                syncPendingChange = null;
+                syncPostMessage({
+                    type: 'contentChange',
+                    filename: p.filename,
+                    format: 'pdf',
+                    version: syncVersion,
+                    selection: p.selection
+                });
+            }
+        }
+
+        // Schedule a debounced contentChange post for page range changes
+        function syncScheduleRangeChange(filename) {
+            syncPendingChange = {
+                filename: filename || 'document.pdf',
+                selection: buildPageSelection()
+            };
+            clearTimeout(syncDebounceTimer);
+            syncDebounceTimer = setTimeout(() => {
+                if (!syncPendingChange) return;
+                syncVersion++;
+                const p = syncPendingChange;
+                syncPendingChange = null;
+                syncDebounceTimer = null;
+                syncPostMessage({
+                    type: 'contentChange',
+                    filename: p.filename,
+                    format: 'pdf',
+                    version: syncVersion,
+                    selection: p.selection
+                });
+            }, SYNC_DEBOUNCE_MS);
+        }
+
+        // Build page-based selection from current ranges
+        function buildPageSelection() {
+            const rangeItems = rangeList.querySelectorAll('.range-item');
+            const ranges = [];
+            rangeItems.forEach(item => {
+                const input = item.querySelector('.range-input');
+                const val = input.value.trim();
+                if (val) {
+                    const parsed = parseRange(val);
+                    if (parsed) {
+                        ranges.push({ from: parsed[0], to: parsed[parsed.length - 1] });
+                    }
+                }
+            });
+            // If no ranges, return all pages as selection
+            if (ranges.length === 0 && totalPages > 0) {
+                return { page: 0, from: 0, to: totalPages - 1 };
+            }
+            // Combine into a single range summary (first and last page with content)
+            if (ranges.length > 0) {
+                const first = ranges[0];
+                const last = ranges[ranges.length - 1];
+                return { page: first.from - 1, from: first.from, to: last.to };
+            }
+            return null;
+        }
+
+        // Beforeunload: flush any pending changes
+        window.addEventListener('beforeunload', () => {
+            syncFlushImmediate();
+        });
 
         // --- File Handling ---
 
@@ -652,9 +780,9 @@
                 originalPdfBytes = await file.arrayBuffer();
                 originalPdfDoc = await PDFLib.PDFDocument.load(originalPdfBytes);
                 totalPages = originalPdfDoc.getPageCount();
-                
+
                 pageCountEl.textContent = totalPages + (totalPages === 1 ? ' Page' : ' Pages');
-                
+
                 // Show UI
                 fileInfo.style.display = 'flex';
                 previewSection.style.display = 'block';
@@ -679,7 +807,7 @@
         function addRangeRow() {
             const row = document.createElement('div');
             row.className = 'range-item';
-            
+
             row.innerHTML = `
                 <div class="range-input-wrapper">
                     <input type="text" class="range-input" placeholder="e.g. 1-3 or 5" value="">
@@ -714,6 +842,8 @@
                         input.classList.remove('invalid');
                     }
                 }
+                // Trigger contentChange on any range input change
+                syncScheduleRangeChange(fileNameEl.textContent);
             };
 
             downloadBtn.onclick = async (e) => {
@@ -729,13 +859,19 @@
                 if (rangeList.children.length === 0) {
                     addRangeRow(); // Always keep at least one
                 }
+                // Trigger contentChange on range removal
+                syncScheduleRangeChange(fileNameEl.textContent);
             };
 
             rangeList.appendChild(row);
             input.focus();
         }
 
-        addRangeBtn.onclick = addRangeRow;
+        addRangeBtn.onclick = () => {
+            addRangeRow();
+            // Trigger contentChange on new range added
+            syncScheduleRangeChange(fileNameEl.textContent);
+        };
 
         // --- Logic ---
 
@@ -776,17 +912,17 @@
                 const subDoc = await PDFLib.PDFDocument.create();
                 const copiedPages = await subDoc.copyPages(originalPdfDoc, pageIndices);
                 copiedPages.forEach((page) => subDoc.addPage(page));
-                
+
                 const pdfBytes = await subDoc.save();
                 const blob = new Blob([pdfBytes], { type: 'application/pdf' });
                 const url = URL.createObjectURL(blob);
-                
+
                 const a = document.createElement('a');
                 a.href = url;
                 const baseName = fileNameEl.textContent.replace(/\.pdf$/i, '');
                 a.download = `${baseName}_pages_${rangeStr}.pdf`;
                 a.click();
-                
+
                 setTimeout(() => URL.revokeObjectURL(url), 100);
             } catch (err) {
                 console.error(err);
@@ -797,7 +933,7 @@
         async function renderPreview(pdfBytes) {
             previewContainer.innerHTML = '';
             previewStatus.textContent = 'Initializing...';
-            
+
             try {
                 if (!cachedPdfJsDoc || (pdfBytes !== originalPdfBytes)) {
                     const loadingTask = pdfjsLib.getDocument({ data: pdfBytes });
@@ -805,13 +941,13 @@
                 }
                 const pdf = cachedPdfJsDoc;
                 const numPages = pdf.numPages;
-                
+
                 previewStatus.textContent = `Rendering 1 of ${numPages}...`;
-                
+
                 for (let i = 1; i <= numPages; i++) {
                     const page = await pdf.getPage(i);
                     const viewport = page.getViewport({ scale: 0.5 });
-                    
+
                     const card = document.createElement('button');
                     card.className = 'page-card';
                     card.type = 'button';
@@ -822,26 +958,26 @@
                         </div>
                         <div class="page-number-badge">Page ${i}</div>
                     `;
-                    
+
                     const canvas = card.querySelector('canvas');
                     const context = canvas.getContext('2d');
                     canvas.height = viewport.height;
                     canvas.width = viewport.width;
-                    
+
                     await page.render({
                         canvasContext: context,
                         viewport: viewport
                     }).promise;
-                    
+
                     card.addEventListener('click', (e) => {
                         e.stopPropagation();
                         showLargePreview(i);
                     });
-                    
+
                     previewContainer.appendChild(card);
                     previewStatus.textContent = `Rendering ${i} of ${numPages}...`;
                 }
-                
+
                 previewStatus.textContent = `${numPages} Pages Loaded`;
             } catch (err) {
                 console.error('Error rendering preview:', err);
@@ -854,23 +990,23 @@
             try {
                 modal.style.display = 'block';
                 modalPageInfo.textContent = `Page ${pageIndex}`;
-                
+
                 if (!cachedPdfJsDoc) return;
                 const pdf = cachedPdfJsDoc;
                 const page = await pdf.getPage(pageIndex);
-                
+
                 // Scale 1.5 for larger but fast preview
                 const viewport = page.getViewport({ scale: 1.5 });
                 const context = modalCanvas.getContext('2d');
-                
+
                 modalCanvas.height = viewport.height;
                 modalCanvas.width = viewport.width;
-                
+
                 await page.render({
                     canvasContext: context,
                     viewport: viewport
                 }).promise;
-                
+
                 // Track state to prevent body scroll if desired (optional)
             } catch (err) {
                 console.error('Error in large preview:', err);
@@ -912,11 +1048,23 @@
             // toast and bail.
             if (!msg.bytes) {
                 postMsgToast('pdf.html requires binary PDF bytes — use ArrayBuffer for the "bytes" field', true);
+                syncPostMessage({
+                    type: 'error',
+                    code: 'load_failed',
+                    message: 'pdf.html requires binary PDF bytes — use ArrayBuffer for the "bytes" field'
+                });
                 return;
             }
 
             const bytes = msg.bytes;
             const filename = typeof msg.filename === 'string' && msg.filename ? msg.filename : 'document.pdf';
+
+            // Store targetOrigin for outbound messages (default to event.origin)
+            if (msg.options?.targetOrigin) {
+                syncTargetOrigin = msg.options.targetOrigin;
+            } else {
+                syncTargetOrigin = event.origin || '*';
+            }
 
             // Wrap the ArrayBuffer in a File and feed the existing upload
             // pipeline (preview + ranges). handleFile() expects a File-like
@@ -924,9 +1072,20 @@
             const file = new File([bytes], filename, { type: 'application/pdf' });
             handleFile(file);
 
+            // Increment version and acknowledge back to sender
+            syncVersion++;
+            const replyVersion = syncVersion;
             if (event.source) {
-                event.source.postMessage({ type: 'loadContentAck', filename: filename, format: 'pdf' }, event.origin || '*');
+                event.source.postMessage({
+                    type: 'loadContentAck',
+                    filename: filename,
+                    format: 'pdf',
+                    version: replyVersion
+                }, syncTargetOrigin);
             }
+
+            // Show visual feedback for successful load
+            postMsgToast(`Loaded: ${filename}`, false);
         });
 
         if (window.parent && window.parent !== window) {
@@ -934,6 +1093,14 @@
                 type: 'toolSelection',
                 url: window.location.pathname.split('/').pop() + window.location.search
             }, '*');
+            // Send ready message after PDF.js worker is initialized
+            setTimeout(() => {
+                syncPostMessage({
+                    type: 'ready',
+                    format: 'pdf',
+                    version: syncVersion
+                });
+            }, 100);
         }
     </script>
     <script src="footer.js"></script>

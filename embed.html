@@ -1,15 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<title>Embed Text Tools — Andesec</title>
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+	<link
+		href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+		rel="stylesheet">
 	<link rel="stylesheet" href="theme.css">
 	<style>
-		html, body {
+		html,
+		body {
 			background: var(--bg-root);
 			color: var(--text-primary);
 			font-family: var(--font-sans);
@@ -171,7 +175,8 @@
 			text-decoration: underline;
 		}
 
-		.docs-main ul, .docs-main ol {
+		.docs-main ul,
+		.docs-main ol {
 			color: var(--text-secondary);
 			line-height: 1.7;
 			padding-left: 1.5rem;
@@ -259,14 +264,38 @@
 		}
 
 		/* Lightweight syntax highlighting */
-		.tok-key { color: var(--code-keyword); }
-		.tok-str { color: var(--code-string); }
-		.tok-num { color: var(--code-number); }
-		.tok-bool { color: var(--code-boolean); }
-		.tok-null { color: var(--code-null); }
-		.tok-com { color: var(--code-comment); font-style: italic; }
-		.tok-fn { color: var(--code-function); }
-		.tok-prop { color: var(--code-property); }
+		.tok-key {
+			color: var(--code-keyword);
+		}
+
+		.tok-str {
+			color: var(--code-string);
+		}
+
+		.tok-num {
+			color: var(--code-number);
+		}
+
+		.tok-bool {
+			color: var(--code-boolean);
+		}
+
+		.tok-null {
+			color: var(--code-null);
+		}
+
+		.tok-com {
+			color: var(--code-comment);
+			font-style: italic;
+		}
+
+		.tok-fn {
+			color: var(--code-function);
+		}
+
+		.tok-prop {
+			color: var(--code-property);
+		}
 
 		.inline-code {
 			font-family: var(--font-mono);
@@ -285,7 +314,8 @@
 			font-size: 0.88rem;
 		}
 
-		.docs-table th, .docs-table td {
+		.docs-table th,
+		.docs-table td {
 			text-align: left;
 			padding: 10px 12px;
 			border-bottom: 1px solid var(--border-default);
@@ -351,7 +381,7 @@
 			color: var(--text-primary);
 		}
 
-		.callout p + p {
+		.callout p+p {
 			margin-top: 0.5rem;
 		}
 
@@ -433,8 +463,13 @@
 			display: block;
 		}
 
-		.demo-frame.tall { height: 520px; }
-		.demo-frame.short { height: 360px; }
+		.demo-frame.tall {
+			height: 520px;
+		}
+
+		.demo-frame.short {
+			height: 360px;
+		}
 
 		.demo-status {
 			font-size: 0.72rem;
@@ -446,8 +481,13 @@
 			min-height: 26px;
 		}
 
-		.demo-status .ok { color: var(--success); }
-		.demo-status .err { color: var(--danger); }
+		.demo-status .ok {
+			color: var(--success);
+		}
+
+		.demo-status .err {
+			color: var(--danger);
+		}
 
 		/* ── File picker input ── */
 		.file-input-label {
@@ -466,7 +506,9 @@
 			color: var(--text-primary);
 		}
 
-		.file-input-label input { display: none; }
+		.file-input-label input {
+			display: none;
+		}
 
 		/* ── Anchor offset ── */
 		.anchor {
@@ -475,7 +517,10 @@
 
 		/* ── Responsive ── */
 		@media (max-width: 900px) {
-			.docs-shell { flex-direction: column; }
+			.docs-shell {
+				flex-direction: column;
+			}
+
 			.docs-nav {
 				width: 100%;
 				height: auto;
@@ -484,27 +529,49 @@
 				border-bottom: 1px solid var(--border-default);
 				padding: var(--space-3);
 			}
-			.docs-nav h3 { display: inline-block; margin: 0 var(--space-2) 0 0; }
-			.docs-nav h3:not(:first-child) { margin-left: var(--space-3); }
-			.docs-nav a { display: inline-block; margin: 2px; }
+
+			.docs-nav h3 {
+				display: inline-block;
+				margin: 0 var(--space-2) 0 0;
+			}
+
+			.docs-nav h3:not(:first-child) {
+				margin-left: var(--space-3);
+			}
+
+			.docs-nav a {
+				display: inline-block;
+				margin: 2px;
+			}
 		}
 
 		@media (max-width: 600px) {
-			.docs-main { padding: var(--space-4) var(--space-4) 4rem; }
-			.docs-main h2 { font-size: 1.3rem; }
-			.docs-header h1 { font-size: 0.95rem; }
+			.docs-main {
+				padding: var(--space-4) var(--space-4) 4rem;
+			}
+
+			.docs-main h2 {
+				font-size: 1.3rem;
+			}
+
+			.docs-header h1 {
+				font-size: 0.95rem;
+			}
 		}
 	</style>
 </head>
+
 <body>
 	<header class="docs-header">
-		<a href="index.html" class="btn-icon" title="Home" style="color:var(--text-secondary);text-decoration:none;display:flex;align-items:center;">
+		<a href="index.html" class="btn-icon" title="Home"
+			style="color:var(--text-secondary);text-decoration:none;display:flex;align-items:center;">
 			<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-				<path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+				<path stroke-linecap="round" stroke-linejoin="round"
+					d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
 			</svg>
 		</a>
 		<h1>Text&nbsp;Tools — Embedding&nbsp;API</h1>
-		<span class="badge">v1</span>
+		<span class="badge">v1.1</span>
 		<a href="index.html" class="home-link">All tools</a>
 	</header>
 
@@ -521,6 +588,8 @@
 			<a href="#acks">Acknowledgements</a>
 			<a href="#events">Listening to the iframe</a>
 			<a href="#mismatched">Mismatched payloads</a>
+			<a href="#ready-signal">ready signal</a>
+			<a href="#contentchange">contentChange</a>
 
 			<h3>Examples</h3>
 			<a href="#full-example">Full example</a>
@@ -535,14 +604,19 @@
 
 			<h2 id="overview" class="anchor">Overview</h2>
 			<p class="lede">
-				Every tool page (<a href="mdv.html">mdv.html</a>, <a href="jsv.html">jsv.html</a>, <a href="pdf.html">pdf.html</a>)
-				can be embedded as an <span class="inline-code">&lt;iframe&gt;</span> in another web app and driven programmatically
-				with a small <span class="inline-code">postMessage</span> protocol. The parent page sends content; the iframe
+				Every tool page (<a href="mdv.html">mdv.html</a>, <a href="jsv.html">jsv.html</a>, <a
+					href="pdf.html">pdf.html</a>)
+				can be embedded as an <span class="inline-code">&lt;iframe&gt;</span> in another web app and driven
+				programmatically
+				with a small <span class="inline-code">postMessage</span> protocol. The parent page sends content; the
+				iframe
 				renders it the same way it would for a user drag-and-drop or paste.
 			</p>
 			<p>
-				There is no SDK, no build step, and no cross-origin server hop — the protocol is plain browser messaging and works
-				identically whether you embed the tools on the same origin, an <span class="inline-code">https://</span> subdomain,
+				There is no SDK, no build step, and no cross-origin server hop — the protocol is plain browser messaging
+				and works
+				identically whether you embed the tools on the same origin, an <span class="inline-code">https://</span>
+				subdomain,
 				or a <span class="inline-code">file://</span> page during local development.
 			</p>
 
@@ -552,7 +626,8 @@
 					<strong>Same-origin convenience:</strong> because the tools expose no JS API on
 					<span class="inline-code">window</span>, all communication is via
 					<span class="inline-code">postMessage</span>. This is intentional — it works for
-					<span class="inline-code">cross-origin</span> parents too, as long as the iframe origin is on your allowlist
+					<span class="inline-code">cross-origin</span> parents too, as long as the iframe origin is on your
+					allowlist
 					via the message <span class="inline-code">event.origin</span> check.
 				</p>
 			</div>
@@ -588,8 +663,10 @@
 			</div>
 
 			<p>
-				That single <span class="inline-code">loadContent</span> message is the entire surface area for sending content.
-				Everything else — opening files, paste, drag-and-drop, save, etc. — works inside the iframe exactly as it does
+				That single <span class="inline-code">loadContent</span> message is the entire surface area for sending
+				content.
+				Everything else — opening files, paste, drag-and-drop, save, etc. — works inside the iframe exactly as
+				it does
 				when the page is opened directly.
 			</p>
 
@@ -616,7 +693,10 @@
 						<td><code>filename</code></td>
 						<td>string</td>
 						<td>recommended</td>
-						<td>Used as the document title, for the in-page tab title, and (in jsv) to auto-detect JSON vs JS mode by extension. Falls back to <span class="inline-code">"Untitled.md"</span> / <span class="inline-code">"scratchpad-N.json"</span> / <span class="inline-code">"document.pdf"</span>.</td>
+						<td>Used as the document title, for the in-page tab title, and (in jsv) to auto-detect JSON vs
+							JS mode by extension. Falls back to <span class="inline-code">"Untitled.md"</span> / <span
+								class="inline-code">"scratchpad-N.json"</span> / <span
+								class="inline-code">"document.pdf"</span>.</td>
 					</tr>
 					<tr>
 						<td><code>text</code></td>
@@ -628,28 +708,43 @@
 						<td><code>bytes</code></td>
 						<td>ArrayBuffer</td>
 						<td>for pdf</td>
-						<td>Raw PDF bytes. <span class="inline-code">postMessage</span> uses structured cloning so an <span class="inline-code">ArrayBuffer</span> from <span class="inline-code">File.arrayBuffer()</span> round-trips without copying or encoding.</td>
+						<td>Raw PDF bytes. <span class="inline-code">postMessage</span> uses structured cloning so an
+							<span class="inline-code">ArrayBuffer</span> from <span
+								class="inline-code">File.arrayBuffer()</span> round-trips without copying or encoding.
+						</td>
+					</tr>
+					<tr>
+						<td><code>options</code></td>
+						<td>object</td>
+						<td>no</td>
+						<td>Optional settings: <code>targetOrigin</code> (string) — the origin for outbound iframe
+							messages; <code>skipAcks</code> (boolean) — if true, skip <code>loadContentAck</code>;
+							<code>lockFilename</code> (boolean) — if true, user cannot rename the file.</td>
 					</tr>
 				</tbody>
 			</table>
 
 			<h3 id="acks">iframe → parent: <span class="inline-code">loadContentAck</span></h3>
 			<p>
-				After a successful load, the iframe posts an acknowledgement back to <span class="inline-code">event.source</span>:
+				After a successful load, the iframe posts an acknowledgement back to <span
+					class="inline-code">event.source</span>:
 			</p>
 
 			<div class="code-block">
-				<div class="code-block-header"><span>Shape</span><button class="copy-btn" data-copy="ack-shape">Copy</button></div>
+				<div class="code-block-header"><span>Shape</span><button class="copy-btn"
+						data-copy="ack-shape">Copy</button></div>
 				<pre><code><span class="tok-key">{</span>
   <span class="tok-prop">type</span>: <span class="tok-str">"loadContentAck"</span>,
   <span class="tok-prop">filename</span>: <span class="tok-str">"hello.md"</span>,
-  <span class="tok-prop">format</span>: <span class="tok-str">"markdown"</span>   <span class="tok-com">// or "json" | "javascript" | "pdf"</span>
+  <span class="tok-prop">format</span>: <span class="tok-str">"markdown"</span>,  <span class="tok-com">// or "json" | "javascript" | "pdf"</span>
+  <span class="tok-prop">version</span>: <span class="tok-num">5</span>         <span class="tok-com">// monotonic counter, starts at 1 after first load</span>
 <span class="tok-key">}</span></code></pre>
 			</div>
 
 			<p>
 				Use this to chain follow-up actions ("load the next file once the previous one is acknowledged") or to
-				distinguish successful loads from silent drops.
+				distinguish successful loads from silent drops. The <span class="inline-code">version</span> field lets
+				parents track document state and discard out-of-order messages.
 			</p>
 
 			<h2 id="loading-text" class="anchor">Loading text into <code>mdv.html</code> / <code>jsv.html</code></h2>
@@ -659,13 +754,15 @@
 			<ul>
 				<li>Replace the editor contents (re-initialises the CodeMirror editor).</li>
 				<li>Update the in-page title and tab title.</li>
-				<li>Persist the new content to <span class="inline-code">localStorage</span> so a refresh doesn't lose it.</li>
+				<li>Persist the new content to <span class="inline-code">localStorage</span> so a refresh doesn't lose
+					it.</li>
 				<li>Switch to view / preview mode (mdv) or rebuild the JSON tree (jsv).</li>
 				<li>Send back a <span class="inline-code">loadContentAck</span>.</li>
 			</ul>
 
 			<div class="code-block">
-				<div class="code-block-header"><span>Send Markdown to mdv.html</span><button class="copy-btn" data-copy="load-md">Copy</button></div>
+				<div class="code-block-header"><span>Send Markdown to mdv.html</span><button class="copy-btn"
+						data-copy="load-md">Copy</button></div>
 				<pre><code>mdv.contentWindow.postMessage(<span class="tok-key">{</span>
   <span class="tok-prop">type</span>: <span class="tok-str">"loadContent"</span>,
   <span class="tok-prop">filename</span>: <span class="tok-str">"README.md"</span>,
@@ -674,7 +771,8 @@
 			</div>
 
 			<div class="code-block">
-				<div class="code-block-header"><span>Send JSON to jsv.html</span><button class="copy-btn" data-copy="load-json">Copy</button></div>
+				<div class="code-block-header"><span>Send JSON to jsv.html</span><button class="copy-btn"
+						data-copy="load-json">Copy</button></div>
 				<pre><code>jsv.contentWindow.postMessage(<span class="tok-key">{</span>
   <span class="tok-prop">type</span>: <span class="tok-str">"loadContent"</span>,
   <span class="tok-prop">filename</span>: <span class="tok-str">"package.json"</span>,
@@ -696,14 +794,17 @@
 				<span class="inline-code">filename</span>. The tool will:
 			</p>
 			<ul>
-				<li>Wrap the bytes in a <span class="inline-code">File</span> object and feed the existing upload pipeline.</li>
+				<li>Wrap the bytes in a <span class="inline-code">File</span> object and feed the existing upload
+					pipeline.</li>
 				<li>Render page thumbnails.</li>
 				<li>Expose the page-range extraction UI just like a normal drag-and-drop.</li>
-				<li>Send back a <span class="inline-code">loadContentAck</span> with <span class="inline-code">format: "pdf"</span>.</li>
+				<li>Send back a <span class="inline-code">loadContentAck</span> with <span class="inline-code">format:
+						"pdf"</span>.</li>
 			</ul>
 
 			<div class="code-block">
-				<div class="code-block-header"><span>Send a PDF file to pdf.html</span><button class="copy-btn" data-copy="load-pdf">Copy</button></div>
+				<div class="code-block-header"><span>Send a PDF file to pdf.html</span><button class="copy-btn"
+						data-copy="load-pdf">Copy</button></div>
 				<pre><code>fileInput.addEventListener(<span class="tok-str">'change'</span>, <span class="tok-key">async</span> (e) =&gt; <span class="tok-key">{</span>
   <span class="tok-key">const</span> file = e.target.files[<span class="tok-num">0</span>];
   <span class="tok-key">const</span> buf = <span class="tok-key">await</span> file.arrayBuffer();
@@ -741,31 +842,62 @@
 				</thead>
 				<tbody>
 					<tr>
+						<td><code>ready</code></td>
+						<td>Once on iframe load, after editor is initialized.</td>
+						<td><span class="inline-code">{ type, format, version }</span> — recommended as a reliable
+							"ready" signal before sending <code>loadContent</code>.</td>
+					</tr>
+					<tr>
 						<td><code>toolSelection</code></td>
 						<td>Once on iframe load.</td>
-						<td><span class="inline-code">{ type, url }</span> — the page's own URL, useful for a host app that picks the right tool.</td>
+						<td><span class="inline-code">{ type, url }</span> — the page's own URL, useful for a host app
+							that picks the right tool. <em>For new integrations, prefer <code>ready</code> instead.</em>
+						</td>
+					</tr>
+					<tr>
+						<td><code>contentChange</code></td>
+						<td>On every document change (debounced 300ms).</td>
+						<td><span class="inline-code">{ type, text, filename, format, version, selection }</span> —
+							<code>selection</code> is <code>{ from, to }</code>. Parents should discard
+							<code>version &lt;= lastSeenVersion</code>.</td>
+					</tr>
+					<tr>
+						<td><code>formatChange</code></td>
+						<td>When the document format changes (e.g. JSON↔JS toggle in jsv).</td>
+						<td><span class="inline-code">{ type, format, previousFormat }</span></td>
 					</tr>
 					<tr>
 						<td><code>titleChange</code></td>
-						<td>Whenever the document title changes (mdv picks it up from the first <span class="inline-code"># heading</span>; jsv picks it up from a <span class="inline-code">title</span> / <span class="inline-code">heading</span> / <span class="inline-code">main</span> field in the JSON).</td>
-						<td><span class="inline-code">{ type, title }</span></td>
+						<td>Whenever the document title changes (mdv picks it up from the first <span
+								class="inline-code"># heading</span>; jsv picks it up from a <span
+								class="inline-code">title</span> / <span class="inline-code">heading</span> / <span
+								class="inline-code">main</span> field in the JSON).</td>
+						<td><span class="inline-code">{ type, title, version }</span></td>
 					</tr>
 					<tr>
 						<td><code>loadContentAck</code></td>
 						<td>After a successful <span class="inline-code">loadContent</span> round-trip.</td>
-						<td><span class="inline-code">{ type, filename, format }</span></td>
+						<td><span class="inline-code">{ type, filename, format, version }</span></td>
+					</tr>
+					<tr>
+						<td><code>error</code></td>
+						<td>When an operation fails (invalid payload, parse error, etc.).</td>
+						<td><span class="inline-code">{ type, code, message }</span> — codes: <code>load_failed</code>,
+							<code>validation_failed</code>, <code>internal_error</code>.</td>
 					</tr>
 				</tbody>
 			</table>
 
 			<p>
 				<strong>Using <code>toolSelection</code> as a "ready" signal.</strong> A common pattern is to wait for
-				this first outbound message before sending any <span class="inline-code">loadContent</span>, which guarantees
+				this first outbound message before sending any <span class="inline-code">loadContent</span>, which
+				guarantees
 				the iframe's message listener is wired up:
 			</p>
 
 			<div class="code-block">
-				<div class="code-block-header"><span>Wait for iframe ready</span><button class="copy-btn" data-copy="ready-pattern">Copy</button></div>
+				<div class="code-block-header"><span>Wait for iframe ready</span><button class="copy-btn"
+						data-copy="ready-pattern">Copy</button></div>
 				<pre><code><span class="tok-key">const</span> ready = <span class="tok-key">new</span> <span class="tok-fn">Promise</span>((resolve) =&gt; <span class="tok-key">{</span>
   <span class="tok-key">function</span> <span class="tok-fn">onMessage</span>(e) <span class="tok-key">{</span>
     <span class="tok-key">if</span> (e.data?.type === <span class="tok-str">'toolSelection'</span> &amp;&amp; e.source === iframe.contentWindow) <span class="tok-key">{</span>
@@ -788,7 +920,11 @@ iframe.contentWindow.postMessage(<span class="tok-key">{</span> <span class="tok
 
 			<table class="docs-table">
 				<thead>
-					<tr><th>Sent to</th><th>Wrong payload</th><th>Result</th></tr>
+					<tr>
+						<th>Sent to</th>
+						<th>Wrong payload</th>
+						<th>Result</th>
+					</tr>
 				</thead>
 				<tbody>
 					<tr>
@@ -804,7 +940,8 @@ iframe.contentWindow.postMessage(<span class="tok-key">{</span> <span class="tok
 					<tr>
 						<td><code>pdf.html</code></td>
 						<td><code>text</code> only</td>
-						<td>Red toast: <em>"pdf.html requires binary PDF bytes — use ArrayBuffer for the 'bytes' field"</em></td>
+						<td>Red toast: <em>"pdf.html requires binary PDF bytes — use ArrayBuffer for the 'bytes'
+								field"</em></td>
 					</tr>
 				</tbody>
 			</table>
@@ -819,11 +956,13 @@ iframe.contentWindow.postMessage(<span class="tok-key">{</span> <span class="tok
 
 			<h2 id="full-example" class="anchor">Full example</h2>
 			<p>
-				A complete, copy-pasteable host page that wires up all three tools with file pickers and a logging overlay:
+				A complete, copy-pasteable host page that wires up all three tools with file pickers and a logging
+				overlay:
 			</p>
 
 			<div class="code-block">
-				<div class="code-block-header"><span>Complete host page</span><button class="copy-btn" data-copy="full-host">Copy</button></div>
+				<div class="code-block-header"><span>Complete host page</span><button class="copy-btn"
+						data-copy="full-host">Copy</button></div>
 				<pre><code><span class="tok-com">&lt;!doctype html&gt;</span>
 <span class="tok-key">&lt;html&gt;</span>
 <span class="tok-key">&lt;head&gt;</span>
@@ -919,13 +1058,15 @@ iframe.contentWindow.postMessage(<span class="tok-key">{</span> <span class="tok
 
 			<h2 id="try-it" class="anchor">Live demo</h2>
 			<p>
-				Each card below loads one of the tools in an iframe and ships content to it as soon as it's ready. Pick a
+				Each card below loads one of the tools in an iframe and ships content to it as soon as it's ready. Pick
+				a
 				PDF from your disk to test <code>pdf.html</code>.
 			</p>
 
 			<div class="demo-card">
 				<div class="demo-toolbar">
-					<span style="font-size:.75rem;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.05em;">mdv.html</span>
+					<span
+						style="font-size:.75rem;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.05em;">mdv.html</span>
 					<select id="mdv-preset">
 						<option value="welcome">welcome.md</option>
 						<option value="lorem">lorem.md</option>
@@ -941,7 +1082,8 @@ iframe.contentWindow.postMessage(<span class="tok-key">{</span> <span class="tok
 
 			<div class="demo-card">
 				<div class="demo-toolbar">
-					<span style="font-size:.75rem;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.05em;">jsv.html</span>
+					<span
+						style="font-size:.75rem;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.05em;">jsv.html</span>
 					<select id="jsv-preset">
 						<option value="package">package.json</option>
 						<option value="users">users.json</option>
@@ -957,7 +1099,8 @@ iframe.contentWindow.postMessage(<span class="tok-key">{</span> <span class="tok
 
 			<div class="demo-card">
 				<div class="demo-toolbar">
-					<span style="font-size:.75rem;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.05em;">pdf.html</span>
+					<span
+						style="font-size:.75rem;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.05em;">pdf.html</span>
 					<label class="file-input-label">
 						<span>Choose PDF…</span>
 						<input type="file" id="pdf-file" accept="application/pdf" />
@@ -971,7 +1114,11 @@ iframe.contentWindow.postMessage(<span class="tok-key">{</span> <span class="tok
 			<h2 id="compatibility" class="anchor">Compatibility</h2>
 			<table class="docs-table">
 				<thead>
-					<tr><th>Feature</th><th>Minimum browser</th><th>Notes</th></tr>
+					<tr>
+						<th>Feature</th>
+						<th>Minimum browser</th>
+						<th>Notes</th>
+					</tr>
 				</thead>
 				<tbody>
 					<tr>
@@ -982,17 +1129,21 @@ iframe.contentWindow.postMessage(<span class="tok-key">{</span> <span class="tok
 					<tr>
 						<td>Binary <code>loadContent</code></td>
 						<td>Chrome 43+, Firefox 20+, Safari 10.1+</td>
-						<td>Requires <span class="inline-code">postMessage</span> structured-clone support for <span class="inline-code">ArrayBuffer</span>.</td>
+						<td>Requires <span class="inline-code">postMessage</span> structured-clone support for <span
+								class="inline-code">ArrayBuffer</span>.</td>
 					</tr>
 					<tr>
 						<td>PDF rendering</td>
 						<td>Chrome, Firefox, Safari (latest)</td>
-						<td>Uses <span class="inline-code">pdf.js</span> with a Web Worker; requires SharedArrayBuffer COOP/COEP headers only if you also use the local WASM TTS path.</td>
+						<td>Uses <span class="inline-code">pdf.js</span> with a Web Worker; requires SharedArrayBuffer
+							COOP/COEP headers only if you also use the local WASM TTS path.</td>
 					</tr>
 					<tr>
 						<td><code>file://</code> embedding</td>
 						<td>Most browsers</td>
-						<td>Works locally for development. Some browsers block <span class="inline-code">postMessage</span> across <span class="inline-code">file://</span> origins — serve over <span class="inline-code">http://localhost</span> to be safe.</td>
+						<td>Works locally for development. Some browsers block <span
+								class="inline-code">postMessage</span> across <span class="inline-code">file://</span>
+							origins — serve over <span class="inline-code">http://localhost</span> to be safe.</td>
 					</tr>
 				</tbody>
 			</table>
@@ -1016,7 +1167,8 @@ iframe.contentWindow.postMessage(<span class="tok-key">{</span> <span class="tok
 				</li>
 				<li>
 					<strong>PDFs are parsed entirely client-side</strong> in the iframe using
-					<span class="inline-code">pdf.js</span> + <span class="inline-code">pdf-lib</span>. No bytes ever leave
+					<span class="inline-code">pdf.js</span> + <span class="inline-code">pdf-lib</span>. No bytes ever
+					leave
 					the browser.
 				</li>
 				<li>
@@ -1028,8 +1180,10 @@ iframe.contentWindow.postMessage(<span class="tok-key">{</span> <span class="tok
 		</main>
 	</div>
 
-	<footer style="text-align:center; padding: 1.5rem 1rem; color: var(--text-tertiary); font-size: 0.8rem; border-top: 1px solid var(--border-default);">
-		<p>Made with ❤️ by <a href="https://github.com/andesec" target="_blank" rel="noopener" style="color:var(--accent-text); text-decoration:none;">Andesec</a></p>
+	<footer
+		style="text-align:center; padding: 1.5rem 1rem; color: var(--text-tertiary); font-size: 0.8rem; border-top: 1px solid var(--border-default);">
+		<p>Made with ❤️ by <a href="https://github.com/andesec" target="_blank" rel="noopener"
+				style="color:var(--accent-text); text-decoration:none;">Andesec</a></p>
 	</footer>
 
 	<script src="footer.js"></script>
@@ -1166,4 +1320,5 @@ iframe.contentWindow.postMessage(<span class="tok-key">{</span> <span class="tok
 		}
 	</script>
 </body>
+
 </html>

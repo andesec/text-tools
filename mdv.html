@@ -349,6 +349,7 @@
 				opacity: 0.3;
 				pointer-events: auto;
 			}
+
 			.tts-speak-btn:active {
 				opacity: 1;
 				background: var(--accent);
@@ -367,7 +368,7 @@
 			transform: translateY(-50%) scale(1.1);
 		}
 
-		.tts-active-block > *:first-child,
+		.tts-active-block>*:first-child,
 		.tts-active-block {
 			border-left: 2px solid var(--accent) !important;
 			background: var(--bg-surface-raised);
@@ -379,6 +380,7 @@
 				height: 36px;
 				border-radius: 6px 0 0 6px;
 			}
+
 			.tts-speak-btn svg {
 				width: 18px;
 				height: 18px;
@@ -557,7 +559,9 @@
 		}
 
 		@keyframes tts-spin {
-			to { transform: rotate(360deg); }
+			to {
+				transform: rotate(360deg);
+			}
 		}
 
 		.tts-toggle-btn {
@@ -584,25 +588,31 @@
 				padding: var(--space-2) var(--space-2);
 				gap: var(--space-2);
 			}
+
 			.tts-bar-controls {
 				gap: var(--space-1);
 			}
+
 			.tts-bar-btn {
 				width: 36px;
 				height: 36px;
 			}
+
 			.tts-bar-play-btn {
 				width: 40px;
 				height: 40px;
 			}
+
 			.tts-bar-btn svg {
 				width: 16px;
 				height: 16px;
 			}
+
 			.tts-bar-select {
 				padding: 6px 8px;
 				font-size: var(--font-size-xs);
 			}
+
 			.tts-bar-text {
 				font-size: var(--font-size-xs);
 			}
@@ -639,7 +649,8 @@
 					<button id="open-btn"
 						class="btn btn-gradient-blue btn-sm sm:px-4 sm:py-2 sm:text-sm shadow-sm hover:shadow-md transition-all transform active:scale-95">
 						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4">
+							</path>
 						</svg>
 						<span class="hidden sm:inline" id="btn-text">Open</span>
 					</button>
@@ -654,14 +665,16 @@
 						<button class="save-dropdown-item" onclick="openDirectoryPicker()">
 							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-									d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+									d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z">
+								</path>
 							</svg>
 							Open Directory
 						</button>
 						<button class="save-dropdown-item" onclick="openFilePickerFS()">
 							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-									d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+									d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+								</path>
 							</svg>
 							Open File(s)
 						</button>
@@ -778,13 +791,17 @@
 
 			<div id="edit-controls" class="flex items-center gap-2 shrink-0">
 				<!-- TTS Toggle Button -->
-				<button id="tts-toggle-btn" class="btn btn-sm tts-toggle-btn" title="Toggle Read-Aloud mode" onclick="window.ttsToggleSpeakMode && window.ttsToggleSpeakMode()">
-					<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
+				<button id="tts-toggle-btn" class="btn btn-sm tts-toggle-btn" title="Toggle Read-Aloud mode"
+					onclick="window.ttsToggleSpeakMode && window.ttsToggleSpeakMode()">
+					<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+							d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z">
+						</path>
+					</svg>
 					<span class="hidden sm:inline">Read</span>
 					<span class="tts-toggle-dot" id="tts-toggle-dot"></span>
 				</button>
-				<button id="reload-btn" onclick="reloadFile()" title="Reload File from disk"
-					class="btn btn-sm hidden">
+				<button id="reload-btn" onclick="reloadFile()" title="Reload File from disk" class="btn btn-sm hidden">
 					<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
 							d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89H18m0 0V4">
@@ -833,7 +850,8 @@
 				</div>
 				<div class="sidebar-panel-body">
 					<div id="file-list" class="flex-1 overflow-y-auto p-2 space-y-0.5">
-						<div class="text-[var(--text-tertiary)] text-xs italic p-8 text-center">Open files to begin.</div>
+						<div class="text-[var(--text-tertiary)] text-xs italic p-8 text-center">Open files to begin.
+						</div>
 					</div>
 				</div>
 			</div>
@@ -885,7 +903,8 @@
 		</main>
 	</div>
 	<!-- ── close main flex row ──? -->
-	<footer id="app-footer" class="shrink-0 flex items-center justify-center gap-3 py-2 text-[11px] text-gray-400 border-t border-[var(--border-default)] bg-[var(--bg-surface)]">
+	<footer id="app-footer"
+		class="shrink-0 flex items-center justify-center gap-3 py-2 text-[11px] text-gray-400 border-t border-[var(--border-default)] bg-[var(--bg-surface)]">
 		<span id="footer-file-info"></span>
 	</footer>
 	<!--
@@ -912,17 +931,27 @@
 
 	<!-- TTS Floating Player Bar -->
 	<div id="tts-player-bar" role="region" aria-label="Text-to-Speech Player">
-		<div class="tts-bar-progress"><div class="tts-bar-progress-fill" id="tts-progress-fill"></div></div>
+		<div class="tts-bar-progress">
+			<div class="tts-bar-progress-fill" id="tts-progress-fill"></div>
+		</div>
 
 		<div class="tts-bar-controls">
 			<button class="tts-bar-btn" id="tts-prev-btn" title="Previous Block" disabled>
-				<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path></svg>
+				<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+						d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path>
+				</svg>
 			</button>
 			<button class="tts-bar-btn tts-bar-play-btn" id="tts-play-pause-btn" title="Play / Pause" disabled>
-				<svg fill="currentColor" viewBox="0 0 24 24" id="tts-pp-icon"><path d="M8 5v14l11-7z"></path></svg>
+				<svg fill="currentColor" viewBox="0 0 24 24" id="tts-pp-icon">
+					<path d="M8 5v14l11-7z"></path>
+				</svg>
 			</button>
 			<button class="tts-bar-btn" id="tts-next-btn" title="Next Block" disabled>
-				<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
+				<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7">
+					</path>
+				</svg>
 			</button>
 		</div>
 
@@ -954,7 +983,10 @@
 				<option value="2.0">2.0×</option>
 			</select>
 			<button class="tts-bar-btn tts-bar-close-btn" id="tts-close-btn" title="Stop and close">
-				<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+				<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+					</path>
+				</svg>
 			</button>
 		</div>
 	</div>
@@ -994,9 +1026,78 @@
 		var editor = null;
 		let lineWrap = true;
 		let currentFileHandle = null;
+
+		// ── Two-way sync state ─────────────────────────────────────────────
+		let syncVersion = 0;           // Monotonically increasing counter
+		let syncTargetOrigin = '*';     // Target origin for outbound messages
+		let syncPendingChange = null;   // Pending contentChange payload
+		let syncDebounceTimer = null;   // Debounce timer for contentChange
+		let _syncLoadingContent = false; // True while loadContent is in flight
+		const SYNC_DEBOUNCE_MS = 300;   // Debounce interval for contentChange
+
+		// Helper: post message to parent with proper origin handling
+		function syncPostMessage(payload) {
+			try {
+				window.parent?.postMessage(payload, syncTargetOrigin);
+			} catch (e) {
+				console.error('[mdv] syncPostMessage failed:', e);
+			}
+		}
+
+		// Flush any pending contentChange immediately (used on unload)
+		function syncFlushImmediate() {
+			if (syncDebounceTimer) {
+				clearTimeout(syncDebounceTimer);
+				syncDebounceTimer = null;
+			}
+			if (syncPendingChange) {
+				syncVersion++;
+				const p = syncPendingChange;
+				syncPendingChange = null;
+				syncPostMessage({
+					type: 'contentChange',
+					text: p.text,
+					filename: p.filename,
+					format: 'markdown',
+					version: syncVersion,
+					selection: p.selection
+				});
+			}
+		}
+
+		// Schedule a debounced contentChange post
+		function syncScheduleChange(text, selection) {
+			syncPendingChange = {
+				text: text,
+				filename: currentFileName || 'Untitled.md',
+				selection: selection
+			};
+			clearTimeout(syncDebounceTimer);
+			syncDebounceTimer = setTimeout(() => {
+				if (!syncPendingChange) return;
+				syncVersion++;
+				const p = syncPendingChange;
+				syncPendingChange = null;
+				syncDebounceTimer = null;
+				syncPostMessage({
+					type: 'contentChange',
+					text: p.text,
+					filename: p.filename,
+					format: 'markdown',
+					version: syncVersion,
+					selection: p.selection
+				});
+			}, SYNC_DEBOUNCE_MS);
+		}
+
+		// Beforeunload: flush any pending changes
+		window.addEventListener('beforeunload', () => {
+			syncFlushImmediate();
+		});
+
 		const isFileSystemApiSupported = "showDirectoryPicker" in window;
-		const MDV_STORAGE_KEY = window.name && window.name.startsWith('tab_') 
-			? `mdv_state_${window.name}` 
+		const MDV_STORAGE_KEY = window.name && window.name.startsWith('tab_')
+			? `mdv_state_${window.name}`
 			: 'mdv_state_default';
 		const MDV_LEGACY_MARKDOWN_KEY = `${MDV_STORAGE_KEY}_markdown`;
 
@@ -1041,7 +1142,7 @@
 		function updateTabTitle() {
 			const text = editor ? editor.state.doc.toString() : "";
 			let title = currentFileName || "Untitled.md";
-			
+
 			const trimmed = text.trimStart();
 			if (trimmed.startsWith('# ')) {
 				const lineEnd = trimmed.indexOf('\n');
@@ -1051,10 +1152,10 @@
 					title = heading.length > 30 ? heading.substring(0, 30) + '...' : heading;
 				}
 			}
-			
+
 			document.title = title;
 			if (window.parent && window.parent !== window) {
-				window.parent.postMessage({ type: 'titleChange', title: title }, '*');
+				syncPostMessage({ type: 'titleChange', title: title, version: syncVersion });
 			}
 		}
 
@@ -1093,7 +1194,7 @@
 								}
 							}
 							cleaned = cleanMarkdownQuotesAndBackticks(cleaned);
-							
+
 							event.preventDefault();
 							const transaction = view.state.update({
 								changes: view.state.selection.ranges.map(range => ({
@@ -1110,6 +1211,14 @@
 				}),
 				EditorView.updateListener.of((update) => {
 					if (update.docChanged) {
+						// Skip changes that originated from our own loadContent
+						// (initEditor called while _syncLoadingContent is true)
+						if (_syncLoadingContent) return;
+						// Schedule a contentChange (debounced)
+						const text = update.state.doc.toString();
+						const sel = update.state.selection.main;
+						const selection = { from: sel.from, to: sel.to };
+						syncScheduleChange(text, selection);
 						updatePreview();
 						saveMdvState();
 						updateTabTitle();
@@ -1766,11 +1875,11 @@
 
 	<!-- TTS Reader Module -->
 	<script type="module">
-	import { detectDevice as engineDetectDevice, initPipeline, loadEmbedding, synthesize, audioToWavBlob, formatTime, clearEmbeddingCache } from './tts-engine.js';
+		import { detectDevice as engineDetectDevice, initPipeline, loadEmbedding, synthesize, audioToWavBlob, formatTime, clearEmbeddingCache } from './tts-engine.js';
 
-	// ── State ────────────────────────────────────────────────
-	let ttsPipeline = null;
-	let pipelineDevice = 'wasm';
+		// ── State ────────────────────────────────────────────────
+		let ttsPipeline = null;
+		let pipelineDevice = 'wasm';
 
 		let speakModeActive = false;
 		let readBlocks = [];
@@ -1782,21 +1891,21 @@
 		let prefetchQueue = new Set(); // blockIdxes currently being synthesized
 
 		// ── DOM Refs ─────────────────────────────────────────────
-		const playerBar    = document.getElementById('tts-player-bar');
-		const ppBtn        = document.getElementById('tts-play-pause-btn');
-		const prevBtn      = document.getElementById('tts-prev-btn');
-		const nextBtn      = document.getElementById('tts-next-btn');
-		const closeBtn     = document.getElementById('tts-close-btn');
-		const ppIcon       = document.getElementById('tts-pp-icon');
-		const barText      = document.getElementById('tts-bar-block-text');
-		const barLabel     = document.getElementById('tts-bar-block-label');
-		const voiceSelect  = document.getElementById('tts-bar-voice');
-		const speedSelect  = document.getElementById('tts-bar-speed');
-		const spinner      = document.getElementById('tts-spinner');
+		const playerBar = document.getElementById('tts-player-bar');
+		const ppBtn = document.getElementById('tts-play-pause-btn');
+		const prevBtn = document.getElementById('tts-prev-btn');
+		const nextBtn = document.getElementById('tts-next-btn');
+		const closeBtn = document.getElementById('tts-close-btn');
+		const ppIcon = document.getElementById('tts-pp-icon');
+		const barText = document.getElementById('tts-bar-block-text');
+		const barLabel = document.getElementById('tts-bar-block-label');
+		const voiceSelect = document.getElementById('tts-bar-voice');
+		const speedSelect = document.getElementById('tts-bar-speed');
+		const spinner = document.getElementById('tts-spinner');
 		const progressFill = document.getElementById('tts-progress-fill');
-		const audioEl      = document.getElementById('tts-audio-el');
-		const toggleDot    = document.getElementById('tts-toggle-dot');
-		const contentArea  = document.getElementById('content');
+		const audioEl = document.getElementById('tts-audio-el');
+		const toggleDot = document.getElementById('tts-toggle-dot');
+		const contentArea = document.getElementById('content');
 
 		// ── Hardware Detection ────────────────────────────────────
 		async function detectDevice() {
@@ -2053,7 +2162,7 @@
 
 		// Invalidate cache when settings change
 		voiceSelect.onchange = () => { prefetchCache.clear(); };
-		speedSelect.onchange = () => { prefetchCache.clear(); };		
+		speedSelect.onchange = () => { prefetchCache.clear(); };
 
 		// ── Speak Mode Toggle ─────────────────────────────────────
 		window.ttsToggleSpeakMode = function () {
@@ -2119,11 +2228,23 @@
 		MdvComments.init();
 		loadMdvState();
 		updatePreview();
+
+		// ── Two-way sync: send ready message ─────────────────────────────
 		if (window.parent && window.parent !== window) {
+			// Send toolSelection as always (for backward compatibility)
 			window.parent.postMessage({
 				type: 'toolSelection',
 				url: window.location.pathname.split('/').pop() + window.location.search
 			}, '*');
+			// Send ready message after editor is initialized
+			// Use setTimeout to ensure initEditor has completed
+			setTimeout(() => {
+				syncPostMessage({
+					type: 'ready',
+					format: 'markdown',
+					version: syncVersion
+				});
+			}, 50);
 		}
 
 		// ── postMessage API: receive content from parent frame ─────────────
@@ -2140,11 +2261,31 @@
 				} else {
 					console.warn(warn);
 				}
+				syncPostMessage({
+					type: 'error',
+					code: 'load_failed',
+					message: warn
+				});
 				return;
 			}
 
 			const text = typeof msg.text === 'string' ? msg.text : '';
 			const filename = typeof msg.filename === 'string' ? msg.filename : 'Untitled.md';
+
+			// Store targetOrigin for outbound messages (default to event.origin)
+			if (msg.options?.targetOrigin) {
+				syncTargetOrigin = msg.options.targetOrigin;
+			} else {
+				syncTargetOrigin = event.origin || '*';
+			}
+
+			// Cancel any pending contentChange (content is being replaced)
+			clearTimeout(syncDebounceTimer);
+			syncDebounceTimer = null;
+			syncPendingChange = null;
+
+			// Set loading flag to skip change events from initEditor
+			_syncLoadingContent = true;
 
 			// Update state
 			currentFileName = filename;
@@ -2160,11 +2301,35 @@
 				document.getElementById('toggle-edit-btn').click();
 			}
 
-			// Acknowledge back to sender
+			// Increment version and acknowledge back to sender
+			syncVersion++;
+			const replyVersion = syncVersion;
 			if (event.source) {
-				event.source.postMessage({ type: 'loadContentAck', filename: filename, format: 'markdown' }, event.origin || '*');
+				event.source.postMessage({
+					type: 'loadContentAck',
+					filename: filename,
+					format: 'markdown',
+					version: replyVersion
+				}, syncTargetOrigin);
 			}
+
+			// Show visual feedback for successful load
+			if (window.MdvComments && typeof window.MdvComments.toast === 'function') {
+				MdvComments.toast(`Loaded: ${filename}`);
+			}
+
+			// Clear loading flag
+			_syncLoadingContent = false;
 		});
+
+		// ── Visual feedback helper for sync operations ─────────────────
+		function showSyncToast(msg, isError) {
+			if (window.MdvComments && typeof window.MdvComments.toast === 'function') {
+				MdvComments.toast(msg);
+			} else {
+				console.info('[mdv sync] ' + msg);
+			}
+		}
 	</script>
 	<script src="footer.js"></script>
 </body>
