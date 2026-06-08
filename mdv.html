@@ -2293,9 +2293,11 @@
 			// None of those are valid postMessage targetOrigin values —
 			// window.parent.postMessage(payload, "null") throws.
 			let parentOrigin = event.origin;
+			console.log('[mdv-sync-debug] raw event.origin:', JSON.stringify(event.origin), 'type:', typeof event.origin);
 			if (!parentOrigin || parentOrigin === 'null' || parentOrigin === 'null://null') {
 				parentOrigin = '*';
 			}
+			console.log('[mdv-sync-debug] sanitized parentOrigin:', JSON.stringify(parentOrigin));
 			if (msg.options?.targetOrigin && msg.options.targetOrigin !== '*' && parentOrigin !== '*' && msg.options.targetOrigin !== parentOrigin) {
 				syncPostMessage({
 					type: 'error',
@@ -2305,6 +2307,7 @@
 				return;
 			}
 			syncTargetOrigin = parentOrigin;
+			console.log('[mdv-sync-debug] syncTargetOrigin set to:', JSON.stringify(syncTargetOrigin));
 
 			// Cancel any pending contentChange (content is being replaced)
 			clearTimeout(syncDebounceTimer);
