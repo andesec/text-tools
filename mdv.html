@@ -1035,7 +1035,15 @@
 		let _syncLoadingContent = false; // True while loadContent is in flight
 		const SYNC_DEBOUNCE_MS = 300;   // Debounce interval for contentChange
 
-		// Helper: post message to parent with proper origin handling
+		// Helper: post message to parent with proper origin handling.
+		// CRITICAL: always send to event.origin (the parent's origin from the
+		// inbound loadContent), NOT to syncTargetOrigin. The targetOrigin
+		// option in loadContent is meant as a security constraint ("only
+		// accept loadContent from this origin"), not as the outbound target.
+		// Using it as the outbound target causes the browser to silently
+		// drop messages whenever the host sets it to the iframe's own
+		// origin (a common mistake — the host should set it to its own
+		// origin, or omit it entirely).
 		function syncPostMessage(payload) {
 			try {
 				window.parent?.postMessage(payload, syncTargetOrigin);
@@ -2272,12 +2280,24 @@
 			const text = typeof msg.text === 'string' ? msg.text : '';
 			const filename = typeof msg.filename === 'string' ? msg.filename : 'Untitled.md';
 
-			// Store targetOrigin for outbound messages (default to event.origin)
-			if (msg.options?.targetOrigin) {
-				syncTargetOrigin = msg.options.targetOrigin;
-			} else {
-				syncTargetOrigin = event.origin || '*';
+			// Store the PARENT's origin for outbound messages. This is
+			// event.origin — the Origin header of the page that sent this
+			// loadContent. The `targetOrigin` option (if set) is validated
+			// against event.origin as a security constraint, then ignored
+			// for outbound routing. Using the option as the outbound target
+			// is a common mistake that causes the browser to silently drop
+			// contentChange / loadContentAck / titleChange messages when
+			// the host sets it to the iframe's own origin.
+			const parentOrigin = event.origin || '*';
+			if (msg.options?.targetOrigin && msg.options.targetOrigin !== '*' && parentOrigin !== '*' && msg.options.targetOrigin !== parentOrigin) {
+				syncPostMessage({
+					type: 'error',
+					code: 'origin_mismatch',
+					message: 'targetOrigin does not match the sender origin. Refusing to load.'
+				});
+				return;
 			}
+			syncTargetOrigin = parentOrigin;
 
 			// Cancel any pending contentChange (content is being replaced)
 			clearTimeout(syncDebounceTimer);
@@ -2301,7 +2321,10 @@
 				document.getElementById('toggle-edit-btn').click();
 			}
 
-			// Increment version and acknowledge back to sender
+			// Increment version and acknowledge back to sender.
+			// Use the parent's origin (event.origin) as the targetOrigin,
+			// not syncTargetOrigin — the loadContentAck goes to event.source
+			// (the parent), and must be addressed to the parent's origin.
 			syncVersion++;
 			const replyVersion = syncVersion;
 			if (event.source) {
@@ -2310,7 +2333,7 @@
 					filename: filename,
 					format: 'markdown',
 					version: replyVersion
-				}, syncTargetOrigin);
+				}, event.origin || '*');
 			}
 
 			// Show visual feedback for successful load
