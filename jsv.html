@@ -153,6 +153,10 @@
 						<button onclick="transform('unescapeJSON')"
 							class="w-full text-left px-4 py-2 hover:bg-[var(--bg-surface-hover)] text-xs"
 							style="color: var(--info);">Unescape JSON String</button>
+						<div class="save-dropdown-divider"></div>
+						<button onclick="copyJsonAsMarkdown()"
+							class="w-full text-left px-4 py-2 hover:bg-[var(--bg-surface-hover)] text-xs"
+							style="color: var(--accent-text);">Copy as MD</button>
 					</div>
 				</div>
 				<button id="toggle-view-btn" class="btn btn-sm">
@@ -187,6 +191,16 @@
 				<button onclick="transform('resolveNewlines')" class="btn btn-sm"
 					style="color: var(--accent-text);">Resolve</button>
 				<button onclick="toggleWrap()" id="wrap-toggle-btn" class="btn btn-sm font-bold">W</button>
+				<button id="send-to-md-btn" onclick="sendJsonToMarkdown()"
+					class="btn btn-sm shadow-sm hover:shadow-md transition-all"
+					style="background: linear-gradient(to bottom right, #2563eb, #4338ca); color: #fff;"
+					title="Transform JSON to Markdown and open in MD Explorer">
+					<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+							d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+					</svg>
+					<span class="hidden sm:inline">→ MD</span>
+				</button>
 			</div>
 		</div>
 	</header>
@@ -1237,6 +1251,515 @@
 
 		window.copyResolved = () => {
 			// Legacy function
+		};
+
+		// ── JSON → Markdown transformer ─────────────────────────────────────
+		// Walks any JSON value and emits readable markdown. Smart about:
+		//  - top-level title fields (becomes H1)
+		//  - frontmatter (scalar/short fields → bullets at the top)
+		//  - arrays of objects (becomes sections with H2/H3 titles)
+		//  - widget-wrapper pattern: { widgetName: { ... } } (unwraps and
+		//    uses the inner title for the section heading)
+		//  - depth-based heading levels (capped at H6) so we never hit the
+		//    "heading soup" failure mode on deeply nested JSON
+		const J2MD_TITLE_KEYS = ['title', 'name', 'heading', 'label'];
+		const J2MD_META_KEYS = new Set([
+			'study_duration', 'duration_seconds', 'align', 'karut',
+			'keywords', 'lang', 'ai_prompt', 'grader_prompt',
+			'wordlist_csv', 'criteria', 'hint', 'explanation',
+			'structure', 'match', 'id', 'roleplay'
+		]);
+		// Field names that, in a widget config, carry the widget's main
+		// content. We render them as a plain block (no bold label) because
+		// the field name rarely adds meaning when the widget type is
+		// already in the section heading. Note: left_items / right_items
+		// are NOT in this set — the orientation ("left" / "right") is
+		// meaningful for connections exercises, so we keep their labels.
+		const J2MD_NO_LABEL_FIELDS = new Set([
+			'markdown', 'content', 'text', 'html', 'description', 'body',
+			'question', 'q', 'answer', 'a', 'explanation', 'e', 'hint',
+			'prompt', 'rows', 'flow', 'wordlist_csv', 'criteria',
+			'grader_prompt', 'ai_prompt', 'lang', 'structure', 'choices',
+			'fillblank', 'match_pairs'
+		]);
+
+		function j2mdIsScalar(v) {
+			return v === null || v === undefined || typeof v === 'boolean' ||
+				(typeof v !== 'object' && typeof v !== 'string');
+		}
+
+		function j2mdIsShortString(v) {
+			return typeof v === 'string' && v.length < 100 && !v.includes('\n');
+		}
+
+		function j2mdIsPrimitiveArray(v) {
+			// Arrays of scalars and/or strings (any length) render as a
+			// labeled bullet list. Empty arrays are handled at the call
+			// site so the field is omitted entirely.
+			return Array.isArray(v) && v.length > 0 &&
+				v.every(x => j2mdIsScalar(x) || typeof x === 'string');
+		}
+
+		// An object is "small" if every value is a scalar / short string /
+		// primitive array — i.e. it can be inlined into a bullet without
+		// losing readability. Used to render arrays of small config items
+		// (left_items, right_items, criteria, etc.) as bullet lists
+		// instead of as full sections.
+		function j2mdIsSmallObject(obj) {
+			if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return false;
+			const keys = Object.keys(obj);
+			if (keys.length === 0 || keys.length > 6) return false;
+			return keys.every(k => {
+				const v = obj[k];
+				return j2mdIsScalar(v) || j2mdIsShortString(v) || j2mdIsPrimitiveArray(v);
+			});
+		}
+
+		function j2mdRenderObjectList(arr) {
+			return arr.map(v => {
+				const parts = Object.keys(v).map(k => {
+					const val = v[k];
+					if (j2mdIsPrimitiveArray(val)) {
+						return `**${j2mdHumanizeKey(k)}:** ${val.join(', ')}`;
+					}
+					return `**${j2mdHumanizeKey(k)}:** ${val}`;
+				});
+				return `- ${parts.join(' · ')}`;
+			}).join('\n');
+		}
+
+		// Detect an array of arrays-of-primitives that is a natural fit for
+		// a markdown table (all inner arrays same length, ≥ 2 rows).
+		function j2mdIsTable(v) {
+			if (!Array.isArray(v) || v.length < 2) return false;
+			if (!v.every(row => Array.isArray(row))) return false;
+			const colCount = v[0].length;
+			if (colCount === 0) return false;
+			return v.every(row =>
+				row.length === colCount &&
+				row.every(cell => cell === null || ['string', 'number', 'boolean'].includes(typeof cell))
+			);
+		}
+
+		function j2mdRenderTable(arr) {
+			const colCount = arr[0].length;
+			const escape = s => String(s == null ? '' : s)
+				.replace(/\|/g, '\\|')
+				.replace(/\r?\n/g, ' ');
+			const header = `| ${arr[0].map(escape).join(' | ')} |`;
+			const sep = `| ${Array(colCount).fill('---').join(' | ')} |`;
+			const rows = arr.slice(1)
+				.map(row => `| ${row.map(escape).join(' | ')} |`)
+				.join('\n');
+			return [header, sep, rows].join('\n');
+		}
+
+		function j2mdHumanizeKey(key) {
+			return String(key)
+				.replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+				.replace(/[_-]+/g, ' ')
+				.replace(/\s+/g, ' ')
+				.trim()
+				.replace(/\b\w/g, c => c.toUpperCase());
+		}
+
+		function j2mdPickTitle(obj) {
+			if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return null;
+			for (const k of J2MD_TITLE_KEYS) {
+				if (typeof obj[k] === 'string' && obj[k].trim()) return obj[k].trim();
+			}
+			return null;
+		}
+
+		function j2mdStripTitle(obj) {
+			const t = j2mdPickTitle(obj);
+			if (!t) return obj;
+			const out = {};
+			for (const k of Object.keys(obj)) {
+				if (J2MD_TITLE_KEYS.includes(k) && typeof obj[k] === 'string' && obj[k].trim() === t) continue;
+				out[k] = obj[k];
+			}
+			return out;
+		}
+
+		function j2mdIsWidgetWrapper(obj) {
+			if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return false;
+			const keys = Object.keys(obj);
+			if (keys.length !== 1) return false;
+			const v = obj[keys[0]];
+			return v && typeof v === 'object' && !Array.isArray(v);
+		}
+
+		function j2mdUnwrapWidget(obj) {
+			const k = Object.keys(obj)[0];
+			return { key: k, value: obj[k] };
+		}
+
+		function j2mdLooksLikeCode(s) {
+			if (s.length > 150 && /[{};]/.test(s) && /\n/.test(s)) return true;
+			if (/(^|\n)\s*(function|const|let|var|class|import|export|if|for|while|return|def)\b/.test(s)) return true;
+			return false;
+		}
+
+		function j2mdAutoLink(s) {
+			return s.replace(/(https?:\/\/\S+)/g, '[$1]($1)');
+		}
+
+		function j2mdRenderString(s) {
+			if (j2mdLooksLikeCode(s)) return '```\n' + s + '\n```';
+			const linked = j2mdAutoLink(s);
+			return linked.split(/\n\s*\n+/).map(p => p.trim()).filter(Boolean).join('\n\n');
+		}
+
+		function j2mdRenderKeyBlock(key, value, opts) {
+			if (value === null || value === undefined || value === '') return '';
+			if (Array.isArray(value) && value.length === 0) return '';
+			if (typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === 0) return '';
+			const humanKey = j2mdHumanizeKey(key);
+			// Defensive defaults so the heading-level formula never sees NaN
+			// even if a caller forgets to pass these.
+			const depth = opts && opts.depth || 0;
+			const sectionDepth = opts && opts.sectionDepth || 0;
+
+			if (j2mdIsScalar(value)) return `- **${humanKey}:** ${value}`;
+			if (j2mdIsShortString(value)) return `- **${humanKey}:** ${value}`;
+			if (j2mdIsPrimitiveArray(value)) {
+				const items = value.map(v => `  - ${v}`).join('\n');
+				return `**${humanKey}:**\n${items}`;
+			}
+			// Long string → inline bold label + paragraph (avoids "heading
+			// soup" on deeply nested JSON with prose in every leaf).
+			if (typeof value === 'string') {
+				return `**${humanKey}:**\n\n${j2mdRenderString(value)}`;
+			}
+			// Object/array → heading + body. The isTopLevel flag is
+			// set ONLY by j2mdRenderTopLevel on its direct children, so
+			// a top-level array-of-objects becomes H2 (its items become
+			// H3) without double-promoting nested arrays inside
+			// sections or widget configs.
+			const isTopLevelArray = opts.isTopLevel &&
+				Array.isArray(value) && value.length > 0 &&
+				value.every(v => v && typeof v === 'object' && !Array.isArray(v));
+			const headingLevel = isTopLevelArray
+				? Math.min(6, 2)
+				: Math.min(6, sectionDepth + 2 + depth);
+			const body = j2mdToMarkdown(value, { ...opts, depth: depth + 1 });
+			if (!body) return '';
+			return `${'#'.repeat(headingLevel)} ${humanKey}\n\n${body}`;
+		}
+
+		function j2mdRenderWidgetSection(item, opts) {
+			const { key: widgetKey, value: cfg } = j2mdUnwrapWidget(item);
+			const widgetLabel = j2mdHumanizeKey(widgetKey);
+			const title = j2mdPickTitle(cfg);
+			const headingLevel = Math.min(6, opts.sectionDepth + 2);
+
+			const meta = {};
+			const content = {};
+			for (const k of Object.keys(cfg)) {
+				if (J2MD_TITLE_KEYS.includes(k)) continue;
+				if (J2MD_META_KEYS.has(k)) meta[k] = cfg[k];
+				else content[k] = cfg[k];
+			}
+
+			let out = '';
+			const heading = title
+				? (widgetKey && widgetKey.toLowerCase() !== title.toLowerCase()
+					? `${title} _(${widgetLabel})_`
+					: title)
+				: widgetLabel;
+			out += `${'#'.repeat(headingLevel)} ${heading}\n\n`;
+
+			const metaParts = [];
+			if (meta.study_duration != null) metaParts.push(`*Duration: ${meta.study_duration} min*`);
+			if (meta.duration_seconds != null) metaParts.push(`*Duration: ${meta.duration_seconds} sec*`);
+			if (meta.align) metaParts.push(`*Align: ${meta.align}*`);
+			if (meta.lang) metaParts.push(`*Lang: ${meta.lang}*`);
+			if (Array.isArray(meta.karut) && meta.karut.length) metaParts.push(`*KARUT: ${meta.karut.join(', ')}*`);
+			if (Array.isArray(meta.keywords) && meta.keywords.length) metaParts.push(`*Keywords: ${meta.keywords.join(', ')}*`);
+			if (Array.isArray(meta.criteria) && meta.criteria.length) metaParts.push(`*Criteria: ${meta.criteria.length} items*`);
+			if (metaParts.length) out += metaParts.join(' · ') + '\n\n';
+
+			for (const k of Object.keys(content)) {
+				const v = content[k];
+				if (v === null || v === undefined || v === '') continue;
+				// Skip the bold label for fields whose names don't add
+				// meaning inside a widget config (e.g. "markdown" inside a
+				// markdown widget is just the body text).
+				if (J2MD_NO_LABEL_FIELDS.has(k)) {
+					const rendered = j2mdToMarkdown(v, { ...opts, depth: 1 });
+					if (rendered) out += rendered + '\n\n';
+				} else {
+					const block = j2mdRenderKeyBlock(k, v, { ...opts, depth: 1 });
+					if (block) out += block + '\n\n';
+				}
+			}
+			return out.trim();
+		}
+
+		function j2mdRenderSectionItem(item, idx, opts) {
+			if (j2mdIsWidgetWrapper(item)) return j2mdRenderWidgetSection(item, opts);
+			const title = j2mdPickTitle(item);
+			const cleanItem = j2mdStripTitle(item);
+			const headingLevel = Math.min(6, opts.sectionDepth + 2);
+			const heading = title || `Item ${idx + 1}`;
+			const body = j2mdToMarkdown(cleanItem, { ...opts, depth: 1 });
+			if (!body) return `${'#'.repeat(headingLevel)} ${heading}`;
+			return `${'#'.repeat(headingLevel)} ${heading}\n\n${body}`;
+		}
+
+		function j2mdToMarkdown(value, opts) {
+			opts = opts || {};
+			const depth = opts.depth || 0;
+			const sectionDepth = opts.sectionDepth || 0;
+			const seen = opts.seen || new WeakSet();
+
+			if (value === null || value === undefined) return '';
+			if (typeof value === 'object') {
+				if (seen.has(value)) return '_(circular)_';
+				seen.add(value);
+			}
+			if (typeof value === 'boolean') return value ? 'true' : 'false';
+			if (typeof value === 'number') return String(value);
+			if (typeof value === 'string') return j2mdRenderString(value);
+
+			if (Array.isArray(value)) {
+				if (value.length === 0) return '';
+				// Array of arrays with consistent column count → markdown table
+				if (j2mdIsTable(value)) return j2mdRenderTable(value);
+				// Array of objects: either "small" (render as bullet list)
+				// or "rich" (render as named sections).
+				if (value.every(v => v && typeof v === 'object' && !Array.isArray(v))) {
+					if (value.every(j2mdIsSmallObject)) {
+						return j2mdRenderObjectList(value);
+					}
+					const sep = '\n\n---\n\n';
+					return value
+						.map((v, i) => j2mdRenderSectionItem(v, i, { ...opts, sectionDepth: sectionDepth + 1 }))
+						.filter(Boolean)
+						.join(sep);
+				}
+				return value.map(v => {
+					const inner = j2mdToMarkdown(v, { ...opts, depth: depth + 1, sectionDepth });
+					const flat = inner.replace(/\n/g, ' ').trim();
+					return `- ${flat}`;
+				}).join('\n');
+			}
+
+			if (depth === 0) return j2mdRenderTopLevel(value, opts);
+			return j2mdRenderNestedObject(value, opts);
+		}
+
+		function j2mdRenderTopLevel(obj, opts) {
+			const keys = Object.keys(obj);
+			if (keys.length === 0) return '';
+			const titleKey = keys.find(k =>
+				J2MD_TITLE_KEYS.includes(k) && typeof obj[k] === 'string' && obj[k].trim());
+			const title = titleKey ? obj[titleKey].trim() : null;
+
+			// Special case: a top-level object whose only content is a
+			// single array of objects → each item becomes an H2 section
+			// (no "### Sections" wrapper, no frontmatter). Common shape
+			// for course-content JSON, list-of-things, etc. If every item
+			// is "small", render as a bullet list instead.
+			if (!title) {
+				const nonEmptyKeys = keys.filter(k => {
+					const v = obj[k];
+					return !(v === null || v === undefined || v === '' ||
+						(Array.isArray(v) && v.length === 0));
+				});
+				if (nonEmptyKeys.length === 1) {
+					const k = nonEmptyKeys[0];
+					const v = obj[k];
+					if (Array.isArray(v) && v.length > 0 &&
+						v.every(x => x && typeof x === 'object' && !Array.isArray(x))) {
+						if (v.every(j2mdIsSmallObject)) {
+							return j2mdRenderObjectList(v);
+						}
+						return v
+							.map((item, i) => j2mdRenderSectionItem(item, i, { ...opts, sectionDepth: 0 }))
+							.filter(Boolean)
+							.join('\n\n---\n\n')
+							.trim();
+					}
+				}
+			}
+
+			const scalarKeys = keys.filter(k => {
+				if (k === titleKey) return false;
+				const v = obj[k];
+				return j2mdIsScalar(v) || j2mdIsShortString(v) || j2mdIsPrimitiveArray(v);
+			});
+			const complexKeys = keys.filter(k => k !== titleKey && !scalarKeys.includes(k));
+
+			let out = '';
+			if (title) out += `# ${title}\n\n`;
+			if (scalarKeys.length) {
+				const lines = scalarKeys.map(k => {
+					const v = obj[k];
+					if (j2mdIsPrimitiveArray(v)) return `- **${j2mdHumanizeKey(k)}:** ${v.join(', ')}`;
+					return `- **${j2mdHumanizeKey(k)}:** ${v}`;
+				});
+				out += lines.join('\n') + '\n\n';
+			}
+			if (complexKeys.length) {
+				out += complexKeys
+					.map(k => j2mdRenderKeyBlock(k, obj[k], { ...opts, depth: 1, sectionDepth: 0, isTopLevel: true }))
+					.filter(Boolean)
+					.join('\n\n');
+			}
+			return out.trim();
+		}
+
+		function j2mdRenderNestedObject(obj, opts) {
+			const keys = Object.keys(obj);
+			if (keys.length === 0) return '';
+			// Ensure sectionDepth is always set so the heading-level
+			// formula in j2mdRenderKeyBlock never sees NaN.
+			const safeOpts = opts.sectionDepth === undefined
+				? { ...opts, sectionDepth: 0 }
+				: opts;
+			return keys
+				.map(k => j2mdRenderKeyBlock(k, obj[k], safeOpts))
+				.filter(Boolean)
+				.join('\n\n');
+		}
+
+		function j2mdSlugify(s) {
+			return String(s)
+				.toLowerCase()
+				.replace(/[^\w\s-]/g, '')
+				.replace(/[\s_-]+/g, '-')
+				.replace(/^-+|-+$/g, '')
+				.slice(0, 80);
+		}
+
+		// Derive a markdown filename from the JSON's title field, falling
+		// back to the current editor filename (stripped of its .json
+		// extension), and finally to "output.md".
+		function deriveMarkdownFilename(data) {
+			if (data && typeof data === 'object') {
+				const t = j2mdPickTitle(data);
+				if (t) {
+					const slug = j2mdSlugify(t);
+					if (slug) return `${slug}.md`;
+				}
+			}
+			const fn = (currentFileName || '').trim();
+			if (fn && !/^scratchpad-\d+\.json$/i.test(fn)) {
+				return fn.replace(/\.json$/i, '.md');
+			}
+			return 'output.md';
+		}
+
+		function transformJsonToMarkdown() {
+			if (!editor) return null;
+			const content = editor.state.doc.toString();
+			if (!content.trim()) {
+				toast('Editor is empty — nothing to transform.');
+				return null;
+			}
+			let data;
+			try {
+				data = safeJsonParse(content);
+			} catch (e) {
+				copyToast.textContent = 'Invalid JSON: ' + e.message;
+				copyToast.style.background = '#ef4444';
+				copyToast.style.opacity = '1';
+				setTimeout(() => {
+					copyToast.style.opacity = '0';
+					setTimeout(() => copyToast.style.background = '#333', 300);
+				}, 3000);
+				return null;
+			}
+			const markdown = j2mdToMarkdown(data);
+			if (!markdown) {
+				toast('JSON produced empty markdown.');
+				return null;
+			}
+			return { markdown, filename: deriveMarkdownFilename(data) };
+		}
+
+		window.copyJsonAsMarkdown = async function () {
+			const result = transformJsonToMarkdown();
+			if (!result) return;
+			try {
+				await navigator.clipboard.writeText(result.markdown);
+				toast(`Copied ${result.filename} (${result.markdown.length} chars)`);
+			} catch (e) {
+				copyToast.textContent = 'Copy failed: ' + e.message;
+				copyToast.style.background = '#ef4444';
+				copyToast.style.opacity = '1';
+				setTimeout(() => {
+					copyToast.style.opacity = '0';
+					setTimeout(() => copyToast.style.background = '#333', 300);
+				}, 3000);
+			}
+		};
+
+		// Forward the transformed markdown to mdv.html.
+		// - If running inside workspace.html, ask the workspace parent to
+		//   open a new mdv tab and forward the content via loadContent.
+		// - Otherwise, open mdv.html in a new browser tab and post the
+		//   content once it's ready.
+		// - As a bonus, if there's an mdv iframe already mounted somewhere
+		//   in this window (e.g. a sibling preview), post to it directly.
+		window.sendJsonToMarkdown = function () {
+			const result = transformJsonToMarkdown();
+			if (!result) return;
+			const payload = {
+				type: 'loadContent',
+				filename: result.filename,
+				text: result.markdown,
+				options: { lockFilename: true }
+			};
+
+			// 1. Workspace parent (tabbed host) — ask it to open a new tab.
+			if (window.parent && window.parent !== window) {
+				const targetOrigin = syncTargetOrigin && syncTargetOrigin !== '*'
+					? syncTargetOrigin : '*';
+				window.parent.postMessage({
+					type: 'openMdPreview',
+					filename: result.filename,
+					text: result.markdown
+				}, targetOrigin);
+				toast(`Sent to MD (workspace): ${result.filename}`);
+				return;
+			}
+
+			// 2. Sibling mdv iframe already on the page.
+			const sibling = document.querySelector('iframe[src$="mdv.html"], iframe[name^="tab_"][src$="mdv.html"]');
+			if (sibling && sibling.contentWindow) {
+				const trySend = () => {
+					try { sibling.contentWindow.postMessage(payload, '*'); } catch (e) { }
+				};
+				trySend();
+				setTimeout(trySend, 300);
+				setTimeout(trySend, 800);
+				toast(`Sent to MD: ${result.filename}`);
+				return;
+			}
+
+			// 3. Standalone: open mdv.html in a new tab and post on ready.
+			const win = window.open('mdv.html', '_blank');
+			if (!win) {
+				copyToast.textContent = 'Pop-up blocked — allow pop-ups to open MD Explorer.';
+				copyToast.style.background = '#ef4444';
+				copyToast.style.opacity = '1';
+				setTimeout(() => {
+					copyToast.style.opacity = '0';
+					setTimeout(() => copyToast.style.background = '#333', 300);
+				}, 3000);
+				return;
+			}
+			const trySend = () => {
+				try { win.postMessage(payload, '*'); } catch (e) { }
+			};
+			trySend();
+			setTimeout(trySend, 300);
+			setTimeout(trySend, 800);
+			setTimeout(trySend, 1500);
+			toast(`Opened MD Explorer: ${result.filename}`);
 		};
 
 		toggleViewBtn.onclick = () => {

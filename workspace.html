@@ -612,6 +612,53 @@
       const data = event.data;
       if (!data) return;
 
+      // ── openMdPreview: jsv.html asking us to open a new mdv tab ──
+      if (data.type === 'openMdPreview') {
+        // Validate the source is one of our iframes (defence-in-depth)
+        const sourceIframe = Array.from(document.querySelectorAll('.workspace-iframe'))
+          .find(f => f.contentWindow === event.source);
+        if (!sourceIframe) return;
+        if (tabs.length >= MAX_TABS) {
+          alert('Maximum limit of ' + MAX_TABS + ' tabs reached.');
+          return;
+        }
+        const id = tabIdCounter++;
+        const tab = { id, url: 'mdv.html', title: 'New Tab', pendingPreview: { filename: data.filename, text: data.text } };
+        tabs.push(tab);
+        activeTabId = id;
+        saveState();
+        renderTabs();
+        activateTab(id);
+        return;
+      }
+
+      // ── ready: forwarded by mdv.html on iframe load ──
+      // If the source tab has a pendingPreview, ship the markdown now.
+      if (data.type === 'ready' && event.source) {
+        const sourceIframe = Array.from(document.querySelectorAll('.workspace-iframe'))
+          .find(f => f.contentWindow === event.source);
+        if (sourceIframe) {
+          const id = parseInt(sourceIframe.id.replace('iframe-', ''));
+          const t = tabs.find(x => x.id === id);
+          if (t && t.pendingPreview) {
+            const payload = t.pendingPreview;
+            t.pendingPreview = null;
+            const trySend = () => {
+              try { event.source.postMessage({
+                type: 'loadContent',
+                filename: payload.filename,
+                text: payload.text,
+                options: { lockFilename: true }
+              }, '*'); } catch (e) { }
+            };
+            trySend();
+            setTimeout(trySend, 200);
+            setTimeout(trySend, 600);
+            return;
+          }
+        }
+      }
+
       if (data.type === 'toolSelection') {
         // Find which iframe sent the message
         const iframe = Array.from(document.querySelectorAll('.workspace-iframe')).find(
