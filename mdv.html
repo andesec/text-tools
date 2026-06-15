@@ -1350,15 +1350,38 @@
 				return;
 			}
 
-			outlineList.innerHTML = headings.map(h => `
+			outlineList.innerHTML = headings.map((h, i) => `
 				<button 
-					onclick="scrollToHeading(${h.line}, '${h.text.replace(/'/g, "\\'")}')"
+					data-index="${i}"
+					data-line="${h.line}"
+					data-text="${encodeURIComponent(h.text)}"
 					class="outline-item w-full text-left px-3 py-1.5 rounded-md text-[11px] transition-all truncate hover:bg-[var(--bg-surface-hover)]"
 					data-level="${h.level}"
 				>
-					${h.text}
+					${h.text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")}
 				</button>
 			`).join("");
+
+			outlineList.querySelectorAll(".outline-item").forEach(btn => {
+				btn.onclick = () => {
+					const line = parseInt(btn.getAttribute("data-line"), 10);
+					const text = decodeURIComponent(btn.getAttribute("data-text"));
+					scrollToHeading(line, text);
+				};
+			});
+		}
+
+		function stripMarkdown(text) {
+			if (typeof text !== "string") return "";
+			return text
+				.replace(/`([^`]+)`/g, "$1") // inline code
+				.replace(/\*\*([^*]+)\*\*/g, "$1") // bold
+				.replace(/\*([^*]+)\*/g, "$1") // italic
+				.replace(/__([^_]+)__/g, "$1") // bold
+				.replace(/_([^_]+)_/g, "$1") // italic
+				.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") // links
+				.replace(/\\(.)/g, "$1") // escaped characters
+				.trim();
 		}
 
 		window.scrollToHeading = (line, originalText) => {
@@ -1373,8 +1396,10 @@
 				// Find heading in contentArea
 				const headers = contentArea.querySelectorAll("h1, h2, h3, h4, h5, h6");
 				let found = false;
+				const cleanMDText = stripMarkdown(originalText).replace(/\s+/g, " ");
 				for (const h of headers) {
-					if (h.textContent.trim() === originalText) {
+					const cleanHTMLText = h.textContent.trim().replace(/\s+/g, " ");
+					if (cleanHTMLText === cleanMDText) {
 						h.scrollIntoView({ behavior: "smooth", block: "start" });
 						found = true;
 						break;
@@ -1383,7 +1408,8 @@
 				if (!found) {
 					const codeBlocks = contentArea.querySelectorAll("pre");
 					for (const pre of codeBlocks) {
-						if (pre.textContent.includes(originalText)) {
+						const cleanPreText = pre.textContent.replace(/\s+/g, " ");
+						if (cleanPreText.includes(cleanMDText)) {
 							pre.scrollIntoView({ behavior: "smooth", block: "start" });
 							break;
 						}
