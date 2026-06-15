@@ -1831,7 +1831,7 @@
 			}
 
 			resizers.forEach(r => {
-				r.addEventListener('mousedown', (e) => {
+				r.addEventListener('pointerdown', (e) => {
 					const nb = getExpandedNeighbors(r);
 					if (!nb.above || !nb.below) return;
 					activeResizer = r;
@@ -1846,14 +1846,19 @@
 				});
 			});
 
-			document.addEventListener('mousemove', (e) => {
-				if (!activeResizer) return;
-				const delta = e.clientY - startY;
-				resizerAbove.style.flex = `0 0 ${Math.max(40, startAboveH + delta)}px`;
-				resizerBelow.style.flex = `0 0 ${Math.max(40, startBelowH - delta)}px`;
+			document.addEventListener('pointermove', (e) => {
+				if (activeResizer) {
+					const delta = e.clientY - startY;
+					resizerAbove.style.flex = `0 0 ${Math.max(40, startAboveH + delta)}px`;
+					resizerBelow.style.flex = `0 0 ${Math.max(40, startBelowH - delta)}px`;
+				}
+				if (isResizingH) {
+					const newWidth = Math.max(160, Math.min(600, e.clientX));
+					sidebarEl.style.width = `${newWidth}px`;
+				}
 			});
 
-			document.addEventListener('mouseup', () => {
+			document.addEventListener('pointerup', () => {
 				if (activeResizer) {
 					activeResizer = null; resizerAbove = null; resizerBelow = null;
 					document.body.style.cursor = '';
@@ -1864,18 +1869,13 @@
 			// Sidebar width resizing (Horizontal)
 			const hResizer = document.getElementById('sidebar-h-resizer');
 			let isResizingH = false;
-			hResizer.addEventListener('mousedown', (e) => {
+			hResizer.addEventListener('pointerdown', (e) => {
 				isResizingH = true;
 				document.body.style.cursor = 'ew-resize';
 				document.body.classList.add('select-none');
 				e.preventDefault();
 			});
-			document.addEventListener('mousemove', (e) => {
-				if (!isResizingH) return;
-				const newWidth = Math.max(160, Math.min(600, e.clientX));
-				sidebarEl.style.width = `${newWidth}px`;
-			});
-			document.addEventListener('mouseup', () => {
+			document.addEventListener('pointerup', () => {
 				if (isResizingH) {
 					isResizingH = false;
 					document.body.style.cursor = '';
@@ -1907,7 +1907,7 @@
 			let startEditorH = 0;
 			let startPanelH = 0;
 
-			bottomResizer.addEventListener('mousedown', (e) => {
+			bottomResizer.addEventListener('pointerdown', (e) => {
 				if (bottomPanel.classList.contains('collapsed')) return;
 				isResizing = true;
 				startY = e.clientY;
@@ -1918,7 +1918,7 @@
 				e.preventDefault();
 			});
 
-			document.addEventListener('mousemove', (e) => {
+			document.addEventListener('pointermove', (e) => {
 				if (!isResizing) return;
 				const delta = e.clientY - startY;
 				const newEditorH = Math.max(100, startEditorH + delta);
@@ -1927,7 +1927,7 @@
 				bottomPanel.style.flex = `0 0 ${newPanelH}px`;
 			});
 
-			document.addEventListener('mouseup', () => {
+			document.addEventListener('pointerup', () => {
 				if (isResizing) {
 					isResizing = false;
 					document.body.style.cursor = '';

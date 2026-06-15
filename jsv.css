@@ -264,6 +264,7 @@ body {
 }
 
 .sidebar-resizer {
+	position: relative;
 	height: 4px;
 	min-height: 4px;
 	background: var(--border-subtle);
@@ -272,6 +273,18 @@ body {
 	cursor: ns-resize;
 	transition: background-color 0.15s;
 	flex-shrink: 0;
+	touch-action: none;
+}
+
+.sidebar-resizer::after {
+	content: "";
+	position: absolute;
+	top: -10px;
+	bottom: -10px;
+	left: 0;
+	right: 0;
+	cursor: ns-resize;
+	z-index: 10;
 }
 
 .sidebar-resizer:hover,
@@ -281,12 +294,25 @@ body {
 
 /* ── Horizontal Resizer (Sidebar Width) ── */
 .sidebar-h-resizer {
+	position: relative;
 	width: 4px;
 	cursor: ew-resize;
 	background: transparent;
 	transition: background-color 0.2s;
 	z-index: 40;
 	flex-shrink: 0;
+	touch-action: none;
+}
+
+.sidebar-h-resizer::after {
+	content: "";
+	position: absolute;
+	left: -10px;
+	right: -10px;
+	top: 0;
+	bottom: 0;
+	cursor: ew-resize;
+	z-index: 10;
 }
 
 .sidebar-h-resizer:hover,
@@ -483,6 +509,7 @@ body {
 }
 
 .bottom-resizer {
+	position: relative;
 	height: 4px;
 	min-height: 4px;
 	background: var(--border-subtle);
@@ -491,6 +518,18 @@ body {
 	cursor: ns-resize;
 	transition: background-color 0.15s;
 	flex-shrink: 0;
+	touch-action: none;
+}
+
+.bottom-resizer::after {
+	content: "";
+	position: absolute;
+	top: -10px;
+	bottom: -10px;
+	left: 0;
+	right: 0;
+	cursor: ns-resize;
+	z-index: 10;
 }
 
 .bottom-resizer:hover,

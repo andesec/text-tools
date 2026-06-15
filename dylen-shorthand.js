@@ -24,6 +24,8 @@
         terminaldemo: 'terminalDemo',
         codeviewer: 'codeViewer',
         codeeditor: 'codeEditor',
+        codereview: 'codeReview',
+        'code review': 'codeReview',
         dialogue: 'dialogues',
         dialogs: 'dialogues',
         caselets: 'caselet',
@@ -37,7 +39,9 @@
         taskcheck: 'taskCheck',
         task_check: 'taskCheck',
         offscreentask: 'offscreenTask',
-        offscreen_task: 'offscreenTask'
+        offscreen_task: 'offscreenTask',
+        livecall: 'livecall',
+        'live call': 'livecall'
     };
 
     const WIDGET_KEYS = [
@@ -64,6 +68,7 @@
         'interactiveTerminal',
         'terminalDemo',
         'codeViewer',
+        'codeReview',
         'codeEditor',
         'mcqs',
         'fenster',
@@ -72,7 +77,8 @@
         'sequences',
         'pictureProbe',
         'taskCheck',
-        'offscreenTask'
+        'offscreenTask',
+        'livecall'
     ];
 
     const WIDGET_KEY_SET = new Set(WIDGET_KEYS);
@@ -146,17 +152,18 @@
 
         switch (widgetKey) {
             case 'markdown':
-                return [p.title, p.markdown, p.align ?? 'left', valueOrNull(p.id), arrayOrEmpty(p.karut)];
+                return [p.title, p.markdown, p.align ?? 'left', valueOrNull(p.id), arrayOrEmpty(p.karut), arrayOrEmpty(p.keywords)];
 
             case 'illustration':
-                return [p.title, valueOrNull(p.resource_id), p.caption, valueOrNull(p.id), arrayOrEmpty(p.karut)];
+                return [p.title, valueOrNull(p.resource_id), p.caption, valueOrNull(p.id), arrayOrEmpty(p.karut), arrayOrEmpty(p.keywords)];
 
             case 'flipcards':
                 return [
                     p.title,
                     mapArray(p.cards, (card) => [card.front, card.back]),
                     valueOrNull(p.id),
-                    arrayOrEmpty(p.karut)
+                    arrayOrEmpty(p.karut),
+                    arrayOrEmpty(p.keywords)
                 ];
 
             case 'translations':
@@ -164,7 +171,8 @@
                     p.title,
                     mapArray(p.entries, (entry) => [entry.source, entry.target]),
                     valueOrNull(p.id),
-                    arrayOrEmpty(p.karut)
+                    arrayOrEmpty(p.karut),
+                    arrayOrEmpty(p.keywords)
                 ];
 
             case 'fillblank':
@@ -176,7 +184,8 @@
                         item.answer,
                         item.hint,
                         item.explanation,
-                        arrayOrEmpty(item.karut)
+                        arrayOrEmpty(item.karut),
+                        arrayOrEmpty(item.keywords)
                     ]),
                     valueOrNull(p.id)
                 ];
@@ -189,17 +198,19 @@
                     p.lang,
                     p.wordlist_csv,
                     valueOrNull(p.id),
-                    arrayOrEmpty(p.karut)
+                    arrayOrEmpty(p.karut),
+                    arrayOrEmpty(p.keywords)
                 ];
 
             case 'shortAnswer':
                 return [
                     p.title,
-                    p.prompt,
-                    p.lang,
-                    p.wordlist_csv,
-                    valueOrNull(p.id),
-                    arrayOrEmpty(p.karut)
+                    mapArray(p.items, (item) => [
+                        item.prompt,
+                        item.lang,
+                        item.wordlist_csv
+                    ]),
+                    valueOrNull(p.id)
                 ];
 
             case 'audioRecording':
@@ -210,7 +221,8 @@
                         item.duration_seconds,
                         item.criteria,
                         item.grader_prompt,
-                        arrayOrEmpty(item.karut)
+                        arrayOrEmpty(item.karut),
+                        arrayOrEmpty(item.keywords)
                     ]),
                     valueOrNull(p.id)
                 ];
@@ -226,14 +238,15 @@
                         return explanation ? [step.katex, step.explanation] : [step.katex];
                     }),
                     valueOrNull(p.id),
-                    arrayOrEmpty(p.karut)
+                    arrayOrEmpty(p.karut),
+                    arrayOrEmpty(p.keywords)
                 ];
 
             case 'asciiDiagram':
-                return [p.title, p.diagram, valueOrNull(p.id), arrayOrEmpty(p.karut)];
+                return [p.title, p.diagram, valueOrNull(p.id), arrayOrEmpty(p.karut), arrayOrEmpty(p.keywords)];
 
             case 'flowDiagram':
-                return [p.title, p.description, p.code, valueOrNull(p.id), arrayOrEmpty(p.karut)];
+                return [p.title, p.description, p.code, valueOrNull(p.id), arrayOrEmpty(p.karut), arrayOrEmpty(p.keywords)];
 
             case 'interactiveTerminal':
                 return [
@@ -241,7 +254,8 @@
                     mapArray(p.rules, (rule) => [rule.regex, rule.level, rule.output]),
                     mapArray(p.guided, (task) => [task.task_markdown, task.solution_string]),
                     valueOrNull(p.id),
-                    arrayOrEmpty(p.karut)
+                    arrayOrEmpty(p.karut),
+                    arrayOrEmpty(p.keywords)
                 ];
 
             case 'terminalDemo':
@@ -249,7 +263,8 @@
                     p.title,
                     mapArray(p.rules, (rule) => [rule.command, rule.delay_ms, rule.output]),
                     valueOrNull(p.id),
-                    arrayOrEmpty(p.karut)
+                    arrayOrEmpty(p.karut),
+                    arrayOrEmpty(p.keywords)
                 ];
 
             case 'codeViewer':
@@ -259,11 +274,26 @@
                     p.language,
                     valueOrNull(p.highlighted_lines),
                     valueOrNull(p.id),
-                    arrayOrEmpty(p.karut)
+                    arrayOrEmpty(p.karut),
+                    arrayOrEmpty(p.keywords)
+                ];
+
+            case 'codeReview':
+                return [
+                    p.title,
+                    p.code,
+                    p.language,
+                    Array.isArray(p.annotations)
+                        ? p.annotations.map((a) => [a.line, a.text])
+                        : null,
+                    valueOrNull(p.diff_code),
+                    valueOrNull(p.id),
+                    arrayOrEmpty(p.karut),
+                    arrayOrEmpty(p.keywords)
                 ];
 
             case 'codeEditor':
-                return [p.title, valueOrNull(p.resource_id), valueOrNull(p.id), arrayOrEmpty(p.karut)];
+                return [p.title, valueOrNull(p.resource_id), valueOrNull(p.id), arrayOrEmpty(p.karut), arrayOrEmpty(p.keywords)];
 
             case 'swipecards':
                 return [
@@ -273,7 +303,8 @@
                         card.text,
                         card.correct_bucket_index,
                         card.feedback,
-                        arrayOrEmpty(card.karut)
+                        arrayOrEmpty(card.karut),
+                        arrayOrEmpty(card.keywords)
                     ]),
                     valueOrNull(p.id)
                 ];
@@ -286,22 +317,23 @@
                         card.text,
                         card.correct_answer_index,
                         card.feedback,
-                        arrayOrEmpty(card.karut)
+                        arrayOrEmpty(card.karut),
+                        arrayOrEmpty(card.keywords)
                     ]),
                     valueOrNull(p.id)
                 ];
 
             case 'stepFlow':
-                return [p.title, p.flow, valueOrNull(p.id), arrayOrEmpty(p.karut)];
+                return [p.title, p.flow, valueOrNull(p.id), arrayOrEmpty(p.karut), arrayOrEmpty(p.keywords)];
 
             case 'checklist':
-                return [p.title, p.tree, valueOrNull(p.id), arrayOrEmpty(p.karut)];
+                return [p.title, p.tree, valueOrNull(p.id), arrayOrEmpty(p.karut), arrayOrEmpty(p.keywords)];
 
             case 'caselet':
-                return [p.title, p.cards, valueOrNull(p.id), arrayOrEmpty(p.karut)];
+                return [p.title, p.cards, valueOrNull(p.id), arrayOrEmpty(p.karut), arrayOrEmpty(p.keywords)];
 
             case 'roleplay':
-                return [p.title, p.mentor_persona, p.description, valueOrNull(p.id), arrayOrEmpty(p.karut)];
+                return [p.title, p.mentor_persona, p.description, valueOrNull(p.id), arrayOrEmpty(p.karut), arrayOrEmpty(p.keywords)];
 
             case 'dialogues':
                 return [
@@ -316,7 +348,8 @@
                             : [turn.type, turn.text]
                     ),
                     valueOrNull(p.id),
-                    arrayOrEmpty(p.karut)
+                    arrayOrEmpty(p.karut),
+                    arrayOrEmpty(p.keywords)
                 ];
 
             case 'mcqs':
@@ -327,13 +360,14 @@
                         question.c,
                         question.a,
                         question.e,
-                        arrayOrEmpty(question.karut)
+                        arrayOrEmpty(question.karut),
+                        arrayOrEmpty(question.keywords)
                     ]),
                     valueOrNull(p.id)
                 ];
 
             case 'fenster':
-                return [p.title, p.description, valueOrNull(p.resource_id), valueOrNull(p.id), arrayOrEmpty(p.karut)];
+                return [p.title, p.description, valueOrNull(p.resource_id), valueOrNull(p.id), arrayOrEmpty(p.karut), arrayOrEmpty(p.keywords)];
 
             case 'graph':
                 return [
@@ -347,41 +381,52 @@
                         ? p.variables.map((variable) => convertGraphVariable(isPlainObject(variable) ? variable : {}))
                         : null,
                     valueOrNull(p.id),
-                    arrayOrEmpty(p.karut)
+                    arrayOrEmpty(p.karut),
+                    arrayOrEmpty(p.keywords)
                 ];
 
             case 'table':
-                return [p.title, ...arrayOrEmpty(p.rows), valueOrNull(p.id), arrayOrEmpty(p.karut)];
+                return [p.title, arrayOrEmpty(p.rows), valueOrNull(p.id), arrayOrEmpty(p.karut), arrayOrEmpty(p.keywords)];
 
             case 'compare':
                 return [
                     p.title,
-                    ...mapArray(p.rows, (row) => [row.left, row.right]),
+                    mapArray(p.rows, (row) => [row.left, row.right]),
                     valueOrNull(p.id),
-                    arrayOrEmpty(p.karut)
+                    arrayOrEmpty(p.karut),
+                    arrayOrEmpty(p.keywords)
                 ];
 
             case 'connections':
                 return [
                     p.title,
                     p.prompt,
-                    mapArray(p.left_items, (item) => [item.id, item.label]),
+                    mapArray(p.left_items, (item) => [
+                        item.id,
+                        item.match,
+                        item.label,
+                        arrayOrEmpty(item.karut),
+                        arrayOrEmpty(item.keywords)
+                    ]),
                     mapArray(p.right_items, (item) => [item.id, item.label]),
-                    mapArray(p.pairs, (pair) => [pair.left_id, pair.right_id]),
-                    valueOrNull(p.id),
-                    arrayOrEmpty(p.karut)
+                    valueOrNull(p.id)
                 ];
 
             case 'sequences':
                 return [
                     p.title,
                     p.prompt,
-                    mapArray(p.items, (item) => [item.id, item.label, item.explanation]),
+                    mapArray(p.items, (item) => [
+                        item.id,
+                        item.label,
+                        item.explanation,
+                        arrayOrEmpty(item.karut),
+                        arrayOrEmpty(item.keywords)
+                    ]),
                     p.correct_order,
                     arrayOrEmpty(p.hints),
                     p.mode ?? 'list',
-                    valueOrNull(p.id),
-                    arrayOrEmpty(p.karut)
+                    valueOrNull(p.id)
                 ];
 
             case 'pictureProbe':
@@ -393,11 +438,12 @@
                     p.image_source,
                     valueOrNull(p.image_url),
                     valueOrNull(p.id),
-                    arrayOrEmpty(p.karut)
+                    arrayOrEmpty(p.karut),
+                    arrayOrEmpty(p.keywords)
                 ];
 
             case 'taskCheck':
-                return [p.title, p.instructions, p.capture_guidance, valueOrNull(p.id), arrayOrEmpty(p.karut)];
+                return [p.title, p.instructions, p.capture_guidance, valueOrNull(p.id), arrayOrEmpty(p.karut), arrayOrEmpty(p.keywords)];
 
             case 'offscreenTask':
                 return [
@@ -406,7 +452,23 @@
                     p.recommended_approach,
                     p.reflection_prompt,
                     valueOrNull(p.id),
-                    arrayOrEmpty(p.karut)
+                    arrayOrEmpty(p.karut),
+                    arrayOrEmpty(p.keywords)
+                ];
+
+            case 'livecall':
+                return [
+                    p.title,
+                    p.scenario,
+                    p.learner_role,
+                    p.model_role,
+                    p.goal,
+                    p.primary_language,
+                    valueOrNull(p.translation_language),
+                    p.duration_minutes,
+                    valueOrNull(p.id),
+                    arrayOrEmpty(p.karut),
+                    arrayOrEmpty(p.keywords)
                 ];
 
             default:
