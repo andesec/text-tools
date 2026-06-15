@@ -239,6 +239,16 @@
 			}
 		}
 
+		.outline-item {
+			color: var(--text-secondary);
+		}
+		.outline-item[data-level="1"] { padding-left: 0.75rem; }
+		.outline-item[data-level="2"] { padding-left: 1.5rem; }
+		.outline-item[data-level="3"] { padding-left: 2.25rem; }
+		.outline-item[data-level="4"] { padding-left: 3rem; }
+		.outline-item[data-level="5"] { padding-left: 3.75rem; }
+		.outline-item[data-level="6"] { padding-left: 4.5rem; }
+
 		.file-item.active {
 			background-color: var(--accent) !important;
 			color: white !important;
@@ -1282,10 +1292,56 @@
 			const headings = [];
 
 			const lines = text.split("\n");
+			let inCodeBlock = false;
+			let codeBlockLang = "";
+			let currentHeadingLevel = 0;
+			let codeBlockHeadingLevel = 1;
+
 			lines.forEach((line, index) => {
-				const match = line.match(/^(#{1,6})\s+(.+)$/);
-				if (match) {
-					headings.push({ level: match[1].length, text: match[2].trim(), line: index });
+				const trimmed = line.trim();
+				// Check for code fence start/end
+				if (trimmed.startsWith("```") || trimmed.startsWith("~~~")) {
+					if (!inCodeBlock) {
+						inCodeBlock = true;
+						// Extract language
+						const langMatch = trimmed.match(/^[`~]{3,}\s*(\w*)/);
+						codeBlockLang = (langMatch && langMatch[1]) ? langMatch[1] : "code";
+						const blockLevel = Math.min(currentHeadingLevel + 1, 6);
+						headings.push({
+							level: blockLevel,
+							text: `Code (${codeBlockLang})`,
+							line: index
+						});
+						codeBlockHeadingLevel = Math.min(blockLevel + 1, 6);
+					} else {
+						inCodeBlock = false;
+					}
+					return;
+				}
+
+				if (inCodeBlock) {
+					// Check for comments or headings inside the code block
+					const match = line.match(/^(#{1,6})\s+(.+)$/);
+					if (match) {
+						const innerLevel = match[1].length;
+						const absoluteLevel = Math.min(codeBlockHeadingLevel + (innerLevel - 1), 6);
+						headings.push({
+							level: absoluteLevel,
+							text: match[2].trim(),
+							line: index
+						});
+					}
+				} else {
+					const match = line.match(/^(#{1,6})\s+(.+)$/);
+					if (match) {
+						const level = match[1].length;
+						currentHeadingLevel = level;
+						headings.push({
+							level: level,
+							text: match[2].trim(),
+							line: index
+						});
+					}
 				}
 			});
 
@@ -1297,8 +1353,8 @@
 			outlineList.innerHTML = headings.map(h => `
 				<button 
 					onclick="scrollToHeading(${h.line}, '${h.text.replace(/'/g, "\\'")}')"
-					class="w-full text-left px-3 py-1.5 rounded-md text-[11px] transition-all truncate hover:bg-[var(--bg-surface-hover)]"
-					style="padding-left: ${h.level * 0.75}rem; color: var(--text-secondary);"
+					class="outline-item w-full text-left px-3 py-1.5 rounded-md text-[11px] transition-all truncate hover:bg-[var(--bg-surface-hover)]"
+					data-level="${h.level}"
 				>
 					${h.text}
 				</button>
@@ -1316,10 +1372,21 @@
 			} else {
 				// Find heading in contentArea
 				const headers = contentArea.querySelectorAll("h1, h2, h3, h4, h5, h6");
+				let found = false;
 				for (const h of headers) {
 					if (h.textContent.trim() === originalText) {
 						h.scrollIntoView({ behavior: "smooth", block: "start" });
+						found = true;
 						break;
+					}
+				}
+				if (!found) {
+					const codeBlocks = contentArea.querySelectorAll("pre");
+					for (const pre of codeBlocks) {
+						if (pre.textContent.includes(originalText)) {
+							pre.scrollIntoView({ behavior: "smooth", block: "start" });
+							break;
+						}
 					}
 				}
 			}
