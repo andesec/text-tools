@@ -659,21 +659,22 @@
 
         jsvBtn.addEventListener('click', () => {
             const data = resultInput.value;
+            if (!data) return;
 
-            // Create a form to submit via HTTP POST
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = 'jsv.html';
-            form.style.display = 'none';
-
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'content';
-            input.value = data;
-
-            form.appendChild(input);
-            document.body.appendChild(form);
-            form.submit();
+            if (window.parent && window.parent !== window) {
+                window.parent.postMessage({
+                    type: 'openJsvPreview',
+                    filename: 'decrypted.json',
+                    text: data
+                }, '*');
+            } else {
+                try {
+                    localStorage.setItem('jsv_import_data', data);
+                } catch (e) {
+                    console.error('Failed to set localStorage', e);
+                }
+                window.open('jsv.html', '_blank');
+            }
         });
 
         resolveBtn.addEventListener('click', () => {

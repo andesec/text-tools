@@ -612,7 +612,7 @@
       const data = event.data;
       if (!data) return;
 
-      // ── openMdPreview: jsv.html asking us to open a new mdv tab ──
+      // ── openMdPreview: any iframe asking us to open a new mdv tab ──
       if (data.type === 'openMdPreview') {
         // Validate the source is one of our iframes (defence-in-depth)
         const sourceIframe = Array.from(document.querySelectorAll('.workspace-iframe'))
@@ -624,6 +624,25 @@
         }
         const id = tabIdCounter++;
         const tab = { id, url: 'mdv.html', title: 'New Tab', pendingPreview: { filename: data.filename, text: data.text } };
+        tabs.push(tab);
+        activeTabId = id;
+        saveState();
+        renderTabs();
+        activateTab(id);
+        return;
+      }
+
+      // ── openJsvPreview: edu.html asking us to open decrypted data in a jsv tab ──
+      if (data.type === 'openJsvPreview') {
+        const sourceIframe = Array.from(document.querySelectorAll('.workspace-iframe'))
+          .find(f => f.contentWindow === event.source);
+        if (!sourceIframe) return;
+        if (tabs.length >= MAX_TABS) {
+          alert('Maximum limit of ' + MAX_TABS + ' tabs reached.');
+          return;
+        }
+        const id = tabIdCounter++;
+        const tab = { id, url: 'jsv.html', title: 'New Tab', pendingPreview: { filename: data.filename, text: data.text } };
         tabs.push(tab);
         activeTabId = id;
         saveState();

@@ -2020,6 +2020,37 @@
 		(function init() {
 			currentFileName = instances[currentInstance].fileName;
 			const isJson = currentFileName.toLowerCase().endsWith(".json");
+
+			// ── Standalone new-tab import from edu.html ──────────────────────
+			// When edu.html opens jsv.html in a new browser tab it stashes the
+			// decrypted text in localStorage under 'jsv_import_data'.  Pick it
+			// up here, load it, then remove the key so it doesn't pollute future
+			// sessions.  Only do this when NOT inside a workspace iframe.
+			const isInsideFrame = window.parent && window.parent !== window;
+			if (!isInsideFrame) {
+				try {
+					const importData = localStorage.getItem('jsv_import_data');
+					if (importData) {
+						localStorage.removeItem('jsv_import_data');
+						currentFileName = 'decrypted.json';
+						instances[currentInstance].content = importData;
+						instances[currentInstance].fileName = currentFileName;
+						initEditor(importData, 'json');
+						buildTree(importData);
+						saveJsvState();
+						updateTabTitle();
+						document.getElementById("instance-label").textContent = `JSON ${currentInstance + 1}`;
+						document.querySelectorAll(".instance-btn").forEach(btn => {
+							btn.classList.remove("bg-blue-100", "dark:bg-blue-900/30");
+							if (parseInt(btn.dataset.instance) === currentInstance) {
+								btn.classList.add("bg-blue-100", "dark:bg-blue-900/30");
+							}
+						});
+						return; // skip normal init below
+					}
+				} catch (e) { /* localStorage unavailable */ }
+			}
+
 			initEditor(instances[currentInstance].content, isJson ? "json" : "javascript");
 
 			if (instances[currentInstance].content.trim()) {
