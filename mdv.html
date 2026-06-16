@@ -173,8 +173,13 @@
 		}
 
 		/* ── Lists ── */
-		.prose ul,
+		.prose ul {
+			list-style-type: disc;
+			padding-left: 2em;
+		}
+
 		.prose ol {
+			list-style-type: decimal;
 			padding-left: 2em;
 		}
 
@@ -1536,7 +1541,7 @@
 			if (editor) {
 				const text = editor.state.doc.toString();
 				contentArea.innerHTML = DOMPurify.sanitize(marked.parse(text));
-				enhanceContent();
+				if (!isEditing) enhanceContent();
 				updateOutline();
 				Prism.highlightAllUnder(contentArea);
 				if (window.MdvComments) MdvComments.applyHighlights();
