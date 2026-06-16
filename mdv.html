@@ -38,6 +38,8 @@
 	<style>
 		:root {
 			--reader-font-size: 1rem;
+			--link-color: #58a6ff;
+			--link-color-hover: #79c0ff;
 		}
 
 		@media (max-width: 640px) {
@@ -46,116 +48,236 @@
 			}
 		}
 
+		@media (prefers-color-scheme: light) {
+			:root {
+				--link-color: #0969da;
+				--link-color-hover: #0550ae;
+			}
+		}
+
+		/* ── GitHub-style Markdown Body ── */
 		.prose {
 			max-width: none;
 			color: var(--text-primary) !important;
 			font-size: var(--reader-font-size);
-			line-height: 1.7;
+			line-height: 1.5;
 			word-wrap: break-word;
+			font-kerning: normal;
 		}
 
 		.prose p,
 		.prose ul,
 		.prose ol,
-		.prose blockquote,
+		.prose dl,
+		.prose table,
 		.prose pre,
-		.prose table {
-			margin-top: 1.25em;
-			margin-bottom: 1.25em;
+		.prose details {
+			margin-top: 0;
+			margin-bottom: 1rem;
+		}
+
+		.prose blockquote {
+			margin-top: 0;
+			margin-bottom: 1rem;
+		}
+
+		/* ── Headings ── */
+		.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+			font-weight: 500;
+			line-height: 1.25;
+			margin-top: 1.5rem;
+			margin-bottom: 1rem;
 		}
 
 		.prose h1 {
-			font-size: clamp(1.3rem, 3vw, 1.9em);
-			line-height: 1.2;
+			font-size: 2em;
 			margin-top: 0;
-			margin-bottom: 0.6em;
-			border-bottom: 2px solid var(--border-default);
-			padding-bottom: 0.25em;
+			margin-bottom: 1rem;
+			padding-bottom: 0.3em;
+			border-bottom: 1px solid var(--border-default);
 			color: var(--text-primary);
 		}
 
 		.prose h2 {
-			font-size: clamp(1.1rem, 2.5vw, 1.4em);
-			line-height: 1.3;
-			margin-top: 1.4em;
-			margin-bottom: 0.5em;
+			font-size: 1.5em;
+			padding-bottom: 0.3em;
+			border-bottom: 1px solid var(--border-default);
 			color: var(--text-primary);
 		}
 
 		.prose h3 {
-			font-size: clamp(1rem, 2vw, 1.15em);
-			margin-top: 1.1em;
-			margin-bottom: 0.4em;
+			font-size: 1.25em;
+			color: var(--text-primary);
+		}
+
+		.prose h4 {
+			font-size: 1em;
+			color: var(--text-primary);
+		}
+
+		.prose h5 {
+			font-size: 0.875em;
+			color: var(--text-primary);
+		}
+
+		.prose h6 {
+			font-size: 0.85em;
 			color: var(--text-secondary);
 		}
 
-		.prose ul {
-			list-style-type: disc;
-			padding-left: 1.5em;
+		.prose h1 .anchor,
+		.prose h2 .anchor,
+		.prose h3 .anchor,
+		.prose h4 .anchor,
+		.prose h5 .anchor,
+		.prose h6 .anchor {
+			float: left;
+			margin-left: -1.25rem;
+			padding-right: 0.25rem;
+			line-height: 1;
+			opacity: 0;
+			transition: opacity var(--transition-fast);
+			text-decoration: none;
+			color: var(--link-color);
 		}
 
+		.prose h1:hover .anchor,
+		.prose h2:hover .anchor,
+		.prose h3:hover .anchor,
+		.prose h4:hover .anchor,
+		.prose h5:hover .anchor,
+		.prose h6:hover .anchor {
+			opacity: 1;
+		}
+
+		.prose h1 .anchor svg,
+		.prose h2 .anchor svg,
+		.prose h3 .anchor svg,
+		.prose h4 .anchor svg,
+		.prose h5 .anchor svg,
+		.prose h6 .anchor svg {
+			display: inline-block;
+			width: 1rem;
+			height: 1rem;
+			fill: currentColor;
+		}
+
+		/* ── Links ── */
+		.prose a {
+			color: var(--link-color);
+			text-decoration: none;
+		}
+
+		.prose a:hover {
+			text-decoration: underline;
+		}
+
+		/* ── Lists ── */
+		.prose ul,
 		.prose ol {
-			list-style-type: decimal;
-			padding-left: 1.5em;
+			padding-left: 2em;
+		}
+
+		.prose ul ul,
+		.prose ul ol,
+		.prose ol ol,
+		.prose ol ul {
+			margin-top: 0;
+			margin-bottom: 0;
 		}
 
 		.prose li {
-			margin-top: 0.5em;
-			margin-bottom: 0.5em;
-			padding-left: 0.25em;
+			margin-top: 0;
+			padding-left: 0;
+			word-wrap: break-word;
+		}
+
+		.prose li+li {
+			margin-top: 0.25em;
 		}
 
 		.prose li>p {
-			margin-top: 0.5em;
-			margin-bottom: 0.5em;
+			margin-top: 1rem;
 		}
 
+		.prose li>p:first-child {
+			margin-top: 0;
+		}
+
+		/* ── Task Lists ── */
+		.prose .task-list-item {
+			list-style-type: none;
+		}
+
+		.prose .task-list-item input[type="checkbox"] {
+			margin: 0 .2em .25em -1.4em;
+			vertical-align: middle;
+		}
+
+		.prose .contains-task-list {
+			padding-left: 0;
+		}
+
+		/* ── Blockquotes ── */
 		.prose blockquote {
-			border-left: 4px solid var(--border-default);
-			padding-left: 1.25em;
-			font-style: italic;
+			padding: 0 1em;
 			color: var(--text-secondary);
+			border-left: 0.25em solid var(--border-default);
 		}
 
-		/* Code Handling */
-		.prose :not(pre)>code {
+		.prose blockquote>:first-child {
+			margin-top: 0;
+		}
+
+		.prose blockquote>:last-child {
+			margin-bottom: 0;
+		}
+
+		/* ── Code ── */
+		.prose :not(pre)>code,
+		.prose tt {
 			background-color: var(--code-inline-bg);
 			padding: 0.2em 0.4em;
-			border-radius: 0.25rem;
+			border-radius: 6px;
 			font-family: var(--font-mono);
 			font-size: 0.85em;
 			color: var(--code-inline-text);
+			white-space: break-spaces;
 		}
 
 		.prose pre {
 			background-color: var(--code-bg) !important;
 			padding: 1rem !important;
-			border-radius: var(--radius-lg);
-			overflow-x: auto;
-			border: 1px solid var(--border-default);
+			border-radius: 6px;
+			overflow: auto;
+			line-height: 1.45;
+			font-size: 0.85em;
 		}
 
 		.prose pre code {
 			background: transparent !important;
 			padding: 0 !important;
 			border-radius: 0 !important;
-			font-size: 0.85em !important;
-			line-height: 1.5 !important;
+			font-size: 100% !important;
+			line-height: inherit !important;
 			color: var(--text-primary) !important;
 			font-family: var(--font-mono) !important;
 		}
 
-		/* Tables */
+		/* ── Tables ── */
 		.prose table {
-			width: 100%;
+			display: block;
+			width: max-content;
+			max-width: 100%;
+			overflow: auto;
 			border-collapse: collapse;
 			font-size: 0.9em;
-			display: block;
-			overflow-x: auto;
+			font-variant: tabular-nums;
 			-webkit-overflow-scrolling: touch;
 		}
 
 		.prose th {
+			font-weight: 600;
 			background-color: var(--bg-surface-hover);
 			text-align: left;
 		}
@@ -163,11 +285,37 @@
 		.prose th,
 		.prose td {
 			border: 1px solid var(--border-default);
-			padding: 0.75em;
+			padding: 6px 13px;
 		}
 
-		/* Responsive Media */
-		.prose img,
+		.prose tr {
+			background-color: var(--bg-surface);
+			border-top: 1px solid var(--border-default);
+		}
+
+		.prose tr:nth-child(2n) {
+			background-color: var(--bg-surface-hover);
+		}
+
+		.prose table img {
+			background-color: transparent;
+		}
+
+		/* ── Horizontal Rules ── */
+		.prose hr {
+			height: 0.25em;
+			padding: 0;
+			margin: 1.5rem 0;
+			background-color: var(--border-default);
+			border: 0;
+		}
+
+		/* ── Images & Media ── */
+		.prose img {
+			max-width: 100%;
+			box-sizing: content-box;
+		}
+
 		.prose video,
 		.prose iframe {
 			max-width: 100%;
@@ -175,7 +323,132 @@
 			border-radius: var(--radius-md);
 		}
 
-		/* KaTeX Math Styling */
+		/* ── Definition Lists ── */
+		.prose dl {
+			padding: 0;
+		}
+
+		.prose dt {
+			font-size: 1em;
+			font-style: italic;
+			font-weight: 600;
+			margin-top: 1rem;
+			padding: 0;
+		}
+
+		.prose dd {
+			padding: 0 1rem;
+			margin-bottom: 1rem;
+			margin-left: 0;
+		}
+
+		/* ── Keyboard tags ── */
+		.prose kbd {
+			display: inline-block;
+			padding: 3px 5px;
+			font: 11px var(--font-mono);
+			line-height: 10px;
+			color: var(--text-primary);
+			vertical-align: middle;
+			background-color: var(--bg-surface-raised);
+			border: 1px solid var(--border-default);
+			border-bottom-color: var(--border-strong);
+			border-radius: 6px;
+			box-shadow: inset 0 -1px 0 var(--border-default);
+		}
+
+		/* ── Footnotes ── */
+		.prose .footnotes {
+			font-size: 0.85em;
+			color: var(--text-secondary);
+			border-top: 1px solid var(--border-default);
+			margin-top: 2rem;
+			padding-top: 1rem;
+		}
+
+		.prose .footnotes ol {
+			padding-left: 1rem;
+		}
+
+		.prose .footnotes li {
+			margin-top: 0.25em;
+		}
+
+		.prose .footnotes li:target {
+			background-color: var(--bg-surface-hover);
+		}
+
+		.prose a[data-footnote-ref] {
+			font-size: 0.85em;
+			vertical-align: super;
+			line-height: 1;
+		}
+
+		/* ── GFM Alerts / Callouts ── */
+		.prose .markdown-alert {
+			padding: 0.5rem 1rem;
+			margin-bottom: 1rem;
+			border-left: 0.25em solid var(--border-default);
+		}
+
+		.prose .markdown-alert>:first-child {
+			margin-top: 0;
+		}
+
+		.prose .markdown-alert>:last-child {
+			margin-bottom: 0;
+		}
+
+		.prose .markdown-alert .markdown-alert-title {
+			display: flex;
+			align-items: center;
+			gap: 0.5rem;
+			font-weight: 500;
+			line-height: 1;
+			margin-bottom: 0.25rem;
+			margin-top: 0;
+		}
+
+		.prose .markdown-alert .markdown-alert-title svg {
+			display: inline-block;
+			width: 1rem;
+			height: 1rem;
+			fill: currentColor;
+			flex-shrink: 0;
+		}
+
+		.prose .markdown-alert-note {
+			border-left-color: var(--link-color);
+		}
+		.prose .markdown-alert-note .markdown-alert-title {
+			color: var(--link-color);
+		}
+		.prose .markdown-alert-tip {
+			border-left-color: var(--success);
+		}
+		.prose .markdown-alert-tip .markdown-alert-title {
+			color: var(--success);
+		}
+		.prose .markdown-alert-important {
+			border-left-color: #8250df;
+		}
+		.prose .markdown-alert-important .markdown-alert-title {
+			color: #8250df;
+		}
+		.prose .markdown-alert-warning {
+			border-left-color: var(--warning);
+		}
+		.prose .markdown-alert-warning .markdown-alert-title {
+			color: var(--warning);
+		}
+		.prose .markdown-alert-caution {
+			border-left-color: var(--danger);
+		}
+		.prose .markdown-alert-caution .markdown-alert-title {
+			color: var(--danger);
+		}
+
+		/* ── KaTeX Math Styling ── */
 		.katex-display {
 			margin: 1.5em 0 !important;
 			overflow-x: auto;
@@ -187,55 +460,17 @@
 			font-size: 1.1em;
 		}
 
-		@media (prefers-color-scheme: dark) {
-			body {
-				background-color: var(--bg-root);
-				color: var(--text-primary);
+		@media (prefers-color-scheme: light) {
+			.prose tr {
+				background-color: #ffffff;
 			}
 
-			.sidebar {
-				background-color: var(--bg-surface);
-				border-color: var(--border-default);
+			.prose tr:nth-child(2n) {
+				background-color: #f6f8fa;
 			}
 
-			.prose {
-				color: var(--text-primary);
-			}
-
-			.prose h1 {
-				color: var(--text-primary);
-				border-color: var(--border-default);
-			}
-
-			.prose h2 {
-				color: var(--text-primary);
-			}
-
-			.prose h3 {
-				color: var(--text-secondary);
-			}
-
-			.prose :not(pre)>code {
-				background-color: var(--code-inline-bg);
-				color: var(--code-inline-text);
-			}
-
-			.prose blockquote {
-				border-color: var(--border-default);
-				color: var(--text-secondary);
-			}
-
-			.prose th {
-				background-color: var(--bg-surface-hover);
-			}
-
-			.prose th,
-			.prose td {
-				border-color: var(--border-default);
-			}
-
-			.file-item:hover {
-				background-color: var(--bg-surface-hover);
+			.prose .footnotes li:target {
+				background-color: #f6f8fa;
 			}
 		}
 
@@ -1255,10 +1490,53 @@
 			});
 		}
 
+		function enhanceContent() {
+			// ── GFM Alerts: transform > [!NOTE] blockquotes ──
+			contentArea.querySelectorAll('blockquote').forEach(bq => {
+				const firstP = bq.querySelector('p');
+				if (!firstP) return;
+				const match = firstP.textContent.match(/^\[!([A-Z]+)\]/);
+				if (!match) return;
+				const types = { NOTE: 'note', TIP: 'tip', IMPORTANT: 'important', WARNING: 'warning', CAUTION: 'caution' };
+				const type = types[match[1]];
+				if (!type) return;
+				firstP.innerHTML = firstP.innerHTML.replace(/^\[!([A-Z]+)\]\s*/, '');
+				const wrapper = document.createElement('div');
+				wrapper.className = 'markdown-alert markdown-alert-' + type;
+				// Build title row
+				const icons = {
+					note: '<path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75h.5A.75.75 0 0 1 7.75 8v3a.75.75 0 0 1-.75.75h-.5a.75.75 0 0 1 0-1.5h.25V8.5h-.25a.75.75 0 0 1 0-1.5ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"/>',
+					tip: '<path d="M8 1.5c-2.363 0-4 1.69-4 3.75 0 .984.424 1.625.984 2.304l.214.253c.223.264.47.556.673.848.284.411.537.896.621 1.491a.75.75 0 0 1-1.484.212c-.04-.282-.163-.547-.37-.847a8.456 8.456 0 0 0-.542-.68c-.084-.1-.173-.205-.268-.32C3.201 7.75 2.5 6.766 2.5 5.25 2.5 2.31 4.863 0 8 0s5.5 2.31 5.5 5.25c0 1.516-.701 2.5-1.328 3.259-.095.115-.184.22-.268.319-.207.245-.383.453-.542.68-.208.3-.33.565-.37.848a.75.75 0 0 1-1.485-.212c.085-.595.337-1.08.621-1.491.203-.292.45-.584.673-.848l.214-.253C11.576 7.375 12 6.734 12 5.75 12 3.19 10.363 1.5 8 1.5ZM6.823 11.585a.75.75 0 0 0-.497 1.038l.397.91a.75.75 0 0 0 1.364-.622l-.397-.91a.75.75 0 0 0-.867-.416ZM7.5 14.25V15a.75.75 0 0 0 1.5 0v-.75a.75.75 0 0 0-1.5 0Z"/>',
+					important: '<path d="M0 1.75C0 .784.784 0 1.75 0h12.5C15.216 0 16 .784 16 1.75v9.5A1.75 1.75 0 0 1 14.25 13H8.06l-2.574 2.573A1.458 1.458 0 0 1 3 14.543V13H1.75A1.75 1.75 0 0 1 0 11.25Zm8 4.5a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm.75 2.5a.75.75 0 0 0-1.5 0v2.5a.75.75 0 0 0 1.5 0Z"/>',
+					warning: '<path d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575Zm1.763.707a.25.25 0 0 0-.44 0L1.698 13.132a.25.25 0 0 0 .22.368h12.164a.25.25 0 0 0 .22-.368Zm.53 3.996v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"/>',
+					caution: '<path d="M4.47.22A.749.749 0 0 1 5 0h6c.199 0 .389.079.53.22l4.25 4.25c.141.14.22.331.22.53v6a.749.749 0 0 1-.22.53l-4.25 4.25A.749.749 0 0 1 11 16H5a.749.749 0 0 1-.53-.22L.22 11.53A.749.749 0 0 1 0 11V5c0-.199.079-.389.22-.53Zm.84 1.28L1.5 5.31v5.38l3.81 3.81h5.38l3.81-3.81V5.31L10.69 1.5ZM8 4a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 8 4Zm0 8a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"/>'
+				};
+				const title = match[1].charAt(0) + match[1].slice(1).toLowerCase();
+				wrapper.innerHTML = '<p class="markdown-alert-title"><svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">' + (icons[type] || icons.note) + '</svg>' + title + '</p>';
+				// Move all children from blockquote into wrapper
+				while (bq.firstChild) wrapper.appendChild(bq.firstChild);
+				bq.replaceWith(wrapper);
+			});
+
+			// ── Heading Anchor Links ──
+			contentArea.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(h => {
+				if (h.querySelector('.anchor')) return;
+				const id = h.textContent.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
+				h.id = id;
+				const a = document.createElement('a');
+				a.className = 'anchor';
+				a.href = '#' + id;
+				a.setAttribute('aria-hidden', 'true');
+				a.innerHTML = '<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M7.775 3.275a.75.75 0 0 1 1.06 0l1.25-1.25a2 2 0 1 1 2.83 2.83l-2.5 2.5a2 2 0 0 1-2.83 0 .75.75 0 0 0-1.06 1.06 3.5 3.5 0 0 0 4.95 0l2.5-2.5a3.5 3.5 0 0 0-4.95-4.95l-1.25 1.25a.75.75 0 0 0 0 1.06Z"/></svg>';
+				h.insertBefore(a, h.firstChild);
+			});
+		}
+
 		function updatePreview() {
 			if (editor) {
 				const text = editor.state.doc.toString();
 				contentArea.innerHTML = DOMPurify.sanitize(marked.parse(text));
+				enhanceContent();
 				updateOutline();
 				Prism.highlightAllUnder(contentArea);
 				if (window.MdvComments) MdvComments.applyHighlights();
