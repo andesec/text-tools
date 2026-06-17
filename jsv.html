@@ -798,67 +798,56 @@
 			fileListContainer.appendChild(btn);
 		}
 
+		// Escape literal control characters (newlines, tabs, carriage returns) that
+		// appear inside JSON string literals. Uses a simple state machine to track
+		// whether the current position is inside a double-quoted string, handling
+		// backslash escape sequences correctly.
 		function escapeLiteralNewlinesInStrings(text) {
 			let result = "";
+			let inString = false;
 			let i = 0;
 			while (i < text.length) {
-				if (text[i] === '"') {
-					result += '"';
-					i++;
-					while (i < text.length && text[i] !== '"') {
-						if (text[i] === '\\') {
-							result += text[i];
-							if (i + 1 < text.length) {
-								result += text[i + 1];
-								i += 2;
-							} else {
-								i++;
-							}
-						} else if (text[i] === '\n') {
-							result += '\\n';
-							i++;
-						} else if (text[i] === '\r') {
-							result += '\\r';
-							i++;
-						} else {
-							result += text[i];
-							i++;
-						}
-					}
-					if (i < text.length) {
-						result += '"';
+				const ch = text[i];
+				if (inString) {
+					if (ch === '\\') {
+						// Copy the escape sequence verbatim (backslash + next char)
+						result += ch;
 						i++;
-					}
-				} else if (text[i] === "'") {
-					result += "'";
-					i++;
-					while (i < text.length && text[i] !== "'") {
-						if (text[i] === '\\') {
-							result += text[i];
-							if (i + 1 < text.length) {
-								result += text[i + 1];
-								i += 2;
-							} else {
-								i++;
-							}
-						} else if (text[i] === '\n') {
-							result += '\\n';
-							i++;
-						} else if (text[i] === '\r') {
-							result += '\\r';
-							i++;
-						} else {
+						if (i < text.length) {
 							result += text[i];
 							i++;
 						}
-					}
-					if (i < text.length) {
-						result += "'";
+					} else if (ch === '"') {
+						// End of string
+						result += ch;
+						i++;
+						inString = false;
+					} else if (ch === '\n') {
+						result += '\\n';
+						i++;
+					} else if (ch === '\r') {
+						result += '\\r';
+						i++;
+					} else if (ch === '\t') {
+						result += '\\t';
+						i++;
+					} else if (ch < '\x20') {
+						// Other control characters (e.g. \x00–\x1f)
+						result += '\\u' + ch.charCodeAt(0).toString(16).padStart(4, '0');
+						i++;
+					} else {
+						result += ch;
 						i++;
 					}
 				} else {
-					result += text[i];
-					i++;
+					if (ch === '"') {
+						result += ch;
+						i++;
+						inString = true;
+					} else {
+						result += ch;
+						i++;
+					}
 				}
 			}
 			return result;
@@ -885,8 +874,10 @@
 			sourceJSON = null; // Reset sourceJSON when a new file is displayed
 			sourceBtn.classList.add("hidden"); // Hide source button
 
+			const cleanedText = cleanLiteralNewlinesIfJson(text, name);
+
 			// Save to current instance
-			instances[currentInstance].content = text;
+			instances[currentInstance].content = cleanedText;
 			instances[currentInstance].fileName = name;
 
 			document.querySelectorAll(".file-item").forEach((el) => el.classList.remove("active", "bg-blue-100", "dark:bg-blue-900/30"));
@@ -895,11 +886,11 @@
 			if (window.innerWidth < 768 && document.body.classList.contains("mobile-sidebar-active")) toggleSidebar();
 
 			const isJson = name.toLowerCase().endsWith(".json");
-			initEditor(text, isJson ? "json" : "javascript");
+			initEditor(cleanedText, isJson ? "json" : "javascript");
 			updateTabTitle();
 
-			if (isJson || !text.trim() || text.trim().startsWith("{") || text.trim().startsWith("[")) {
-				buildTree(text);
+			if (isJson || !cleanedText.trim() || cleanedText.trim().startsWith("{") || cleanedText.trim().startsWith("[")) {
+				buildTree(cleanedText);
 			} else {
 				treeRoot.innerHTML = '<div class="text-gray-400 p-8 text-center italic">Not currently showing tree for non-JSON content.</div>';
 			}
@@ -2199,10 +2190,12 @@
 				} catch (e) { /* localStorage unavailable */ }
 			}
 
-			initEditor(instances[currentInstance].content, isJson ? "json" : "javascript");
+			const cleanedContent = cleanLiteralNewlinesIfJson(instances[currentInstance].content, currentFileName);
+			instances[currentInstance].content = cleanedContent;
+			initEditor(cleanedContent, isJson ? "json" : "javascript");
 
-			if (instances[currentInstance].content.trim()) {
-				buildTree(instances[currentInstance].content);
+			if (cleanedContent.trim()) {
+				buildTree(cleanedContent);
 			} else {
 				treeRoot.innerHTML = '<div class="text-gray-400 p-8 text-center italic">Not currently showing tree for non-JSON content.</div>';
 			}
@@ -2274,21 +2267,22 @@
 			currentFileName = filename;
 			sourceJSON = null;
 			sourceBtn.classList.add('hidden');
-			instances[currentInstance].content = text;
+			const cleanedText = cleanLiteralNewlinesIfJson(text, filename);
+			instances[currentInstance].content = cleanedText;
 			instances[currentInstance].fileName = filename;
 
 			// Auto-detect language from filename extension
 			const isJson = filename.toLowerCase().endsWith('.json');
 			const lang = isJson ? 'json' : 'javascript';
-			initEditor(text, lang);
+			initEditor(cleanedText, lang);
 			updateTabTitle();
 			saveJsvState();
 
 			// Rebuild tree for JSON-shaped content; otherwise show the
 			// existing "not JSON" hint used in displayFile()
-			const trimmed = text.trim();
+			const trimmed = cleanedText.trim();
 			if (isJson || !trimmed || trimmed.startsWith('{') || trimmed.startsWith('[')) {
-				buildTree(text);
+				buildTree(cleanedText);
 			} else {
 				treeRoot.innerHTML = '<div class="text-gray-400 p-8 text-center italic">Not currently showing tree for non-JSON content.</div>';
 			}
