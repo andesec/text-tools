@@ -480,7 +480,19 @@
         iframe.id = `iframe-${id}`;
         iframe.name = `tab_${id}`;
         iframe.className = 'workspace-iframe';
-        iframe.src = tabData.url;
+        let targetUrl = tabData.url;
+        try {
+          const urlObj = new URL(targetUrl, window.location.origin + window.location.pathname);
+          urlObj.searchParams.set('show_chrome', '1');
+          targetUrl = urlObj.pathname + urlObj.search + urlObj.hash;
+        } catch (e) {
+          if (targetUrl.includes('?')) {
+            targetUrl += '&show_chrome=1';
+          } else {
+            targetUrl += '?show_chrome=1';
+          }
+        }
+        iframe.src = targetUrl;
         
         iframe.onload = () => {
           try {
