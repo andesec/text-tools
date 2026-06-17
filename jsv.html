@@ -26,6 +26,66 @@
 	<link rel="stylesheet" href="theme.css">
 	<link rel="stylesheet" href="jsv.css">
 
+	<style>
+		/* ── Iframe Embed Mode ──────────────────────────────── */
+		body.iframe-mode .app-header {
+			display: none !important;
+		}
+
+		body.iframe-mode #files-panel {
+			display: none !important;
+		}
+
+		/* Sidebar in iframe mode: always visible, animated collapse */
+		body.iframe-mode #sidebar {
+			display: flex !important;
+			transition: width var(--transition-slow), min-width var(--transition-slow);
+		}
+
+		body.iframe-mode #sidebar.iframe-sidebar-collapsed {
+			display: flex !important;
+			width: 0 !important;
+			min-width: 0 !important;
+			overflow: hidden;
+		}
+
+		/* Floating sidebar toggle button for iframe mode */
+		#iframe-sidebar-toggle {
+			display: none;
+			position: fixed;
+			top: 8px;
+			left: 8px;
+			z-index: 200;
+			width: 32px;
+			height: 32px;
+			border-radius: var(--radius-md);
+			border: 1px solid var(--border-default);
+			background: var(--bg-surface-raised);
+			color: var(--text-secondary);
+			cursor: pointer;
+			align-items: center;
+			justify-content: center;
+			transition: background var(--transition-fast), color var(--transition-fast), left var(--transition-slow);
+			box-shadow: 0 2px 8px var(--shadow-md);
+		}
+
+		body.iframe-mode #iframe-sidebar-toggle {
+			display: flex;
+		}
+
+		#iframe-sidebar-toggle:hover {
+			background: var(--accent);
+			color: #fff;
+			border-color: var(--accent);
+		}
+
+		#iframe-sidebar-toggle svg {
+			width: 16px;
+			height: 16px;
+			transition: transform var(--transition-slow);
+		}
+	</style>
+
 
 </head>
 
@@ -204,6 +264,13 @@
 			</div>
 		</div>
 	</header>
+
+	<!-- Sidebar toggle for iframe embed mode -->
+	<button id="iframe-sidebar-toggle" title="Toggle sidebar" aria-label="Toggle sidebar">
+		<svg id="iframe-toggle-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+			<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+		</svg>
+	</button>
 
 	<div class="flex-1 flex overflow-hidden relative">
 		<aside id="sidebar" class="w-72 app-sidebar flex flex-col shrink-0 hidden md:flex">
@@ -2163,6 +2230,50 @@
 			// Clear loading flag
 			_syncLoadingContent = false;
 		});
+		// ── Iframe Embed Mode ─────────────────────────────────────────────
+		(function () {
+			const isInsideFrame = window.parent && window.parent !== window;
+			const urlParams = new URLSearchParams(window.location.search);
+			const showChrome = urlParams.get('show_chrome') === '1';
+
+			if (isInsideFrame && !showChrome) {
+				document.body.classList.add('iframe-mode');
+			}
+
+			const toggleBtn = document.getElementById('iframe-sidebar-toggle');
+			const sidebarEl = document.getElementById('sidebar');
+			const toggleIcon = document.getElementById('iframe-toggle-icon');
+			const ICON_OPEN = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>';
+			const ICON_CLOSE = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>';
+
+			let sidebarCollapsed = false;
+
+			if (toggleBtn) {
+				toggleBtn.addEventListener('click', () => {
+					sidebarCollapsed = !sidebarCollapsed;
+					if (sidebarCollapsed) {
+						sidebarEl.classList.add('iframe-sidebar-collapsed');
+						toggleIcon.innerHTML = ICON_OPEN;
+						toggleBtn.title = 'Show sidebar';
+						toggleBtn.style.left = '8px';
+					} else {
+						sidebarEl.classList.remove('iframe-sidebar-collapsed');
+						toggleIcon.innerHTML = ICON_CLOSE;
+						toggleBtn.title = 'Hide sidebar';
+						toggleBtn.style.left = (sidebarEl.offsetWidth + 4) + 'px';
+					}
+				});
+
+				// Position toggle correctly after sidebar renders
+				if (isInsideFrame && !showChrome) {
+					requestAnimationFrame(() => {
+						toggleIcon.innerHTML = ICON_CLOSE;
+						toggleBtn.title = 'Hide sidebar';
+						toggleBtn.style.left = (sidebarEl.offsetWidth + 4) + 'px';
+					});
+				}
+			}
+		})();
 	</script>
 	<script src="dylen-shorthand.js"></script>
 	<script src="footer.js"></script>
