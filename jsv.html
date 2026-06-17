@@ -79,10 +79,12 @@
 			border-color: var(--accent);
 		}
 
-		#iframe-sidebar-toggle svg {
-			width: 16px;
-			height: 16px;
-			transition: transform var(--transition-slow);
+		/* Hide editor syntax error highlights */
+		.cm-invalidChar, .cm-error, .cm-invalid, .ͼ1 .cm-invalid {
+			color: inherit !important;
+			background: transparent !important;
+			border: none !important;
+			text-decoration: none !important;
 		}
 	</style>
 
@@ -663,7 +665,8 @@
 			const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
 			const extensions = [
 				basicSetup,
-				language === "json" ? json() : javascript(),
+				// Use javascript mode even for JSON to support raw/lenient editing and folding with raw newlines/quotes
+				javascript(),
 				isDark ? oneDark : [],
 				keymap.of(foldKeymap),
 				EditorView.editable.of(!readOnly),
@@ -795,6 +798,86 @@
 			fileListContainer.appendChild(btn);
 		}
 
+		function escapeLiteralNewlinesInStrings(text) {
+			let result = "";
+			let i = 0;
+			while (i < text.length) {
+				if (text[i] === '"') {
+					result += '"';
+					i++;
+					while (i < text.length && text[i] !== '"') {
+						if (text[i] === '\\') {
+							result += text[i];
+							if (i + 1 < text.length) {
+								result += text[i + 1];
+								i += 2;
+							} else {
+								i++;
+							}
+						} else if (text[i] === '\n') {
+							result += '\\n';
+							i++;
+						} else if (text[i] === '\r') {
+							result += '\\r';
+							i++;
+						} else {
+							result += text[i];
+							i++;
+						}
+					}
+					if (i < text.length) {
+						result += '"';
+						i++;
+					}
+				} else if (text[i] === "'") {
+					result += "'";
+					i++;
+					while (i < text.length && text[i] !== "'") {
+						if (text[i] === '\\') {
+							result += text[i];
+							if (i + 1 < text.length) {
+								result += text[i + 1];
+								i += 2;
+							} else {
+								i++;
+							}
+						} else if (text[i] === '\n') {
+							result += '\\n';
+							i++;
+						} else if (text[i] === '\r') {
+							result += '\\r';
+							i++;
+						} else {
+							result += text[i];
+							i++;
+						}
+					}
+					if (i < text.length) {
+						result += "'";
+						i++;
+					}
+				} else {
+					result += text[i];
+					i++;
+				}
+			}
+			return result;
+		}
+
+		function cleanLiteralNewlinesIfJson(text, filename) {
+			if (!text) return text;
+			const isJson = filename?.toLowerCase().endsWith(".json") || (text.trim().startsWith("{") || text.trim().startsWith("["));
+			if (isJson) {
+				try {
+					JSON.parse(text);
+					return text;
+				} catch (e) {
+					return escapeLiteralNewlinesInStrings(text);
+				}
+			}
+			return text;
+		}
+
 		async function displayFile(name, element) {
 			const file = loadedFiles.get(name);
 			const text = await (file.text ? file.text() : readFileAsText(file));
@@ -857,9 +940,7 @@
 			cleaned = cleaned.replace(/,\s*([\]}])/g, "$1");
 
 			// 6. Handle literal newlines in strings
-			cleaned = cleaned.replace(/:\s*"(.*?)"/gs, (match, p1) => {
-				return `: "${p1.replace(/\n/g, "\\n").replace(/\r/g, "\\r")}"`;
-			});
+			cleaned = escapeLiteralNewlinesInStrings(cleaned);
 
 			return cleaned;
 		}
