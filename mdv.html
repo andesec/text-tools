@@ -2329,11 +2329,25 @@
 
 		// ── Iframe Embed Mode ─────────────────────────────────────────────
 		(function () {
-			const isInsideFrame = window.parent && window.parent !== window;
 			const urlParams = new URLSearchParams(window.location.search);
 			const showChrome = urlParams.get('show_chrome') === '1';
 
-			if (isInsideFrame && !showChrome) {
+			// Only activate iframe-mode for cross-origin embeds.
+			// Same-origin parents (the workspace) can access window.parent.document;
+			// cross-origin external embeds cannot — they throw a SecurityError.
+			function isExternalIframe() {
+				if (!window.parent || window.parent === window) return false;
+				try {
+					void window.parent.document; // throws if cross-origin
+					return false; // same-origin = workspace
+				} catch (e) {
+					return true; // cross-origin = external embed
+				}
+			}
+
+			const iframeMode = isExternalIframe() && !showChrome;
+
+			if (iframeMode) {
 				document.body.classList.add('iframe-mode');
 			}
 
@@ -2362,7 +2376,7 @@
 				});
 
 				// Position toggle correctly after sidebar renders
-				if (isInsideFrame && !showChrome) {
+				if (iframeMode) {
 					requestAnimationFrame(() => {
 						toggleIcon.innerHTML = ICON_CLOSE;
 						toggleBtn.title = 'Hide sidebar';
