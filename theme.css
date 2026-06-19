@@ -678,4 +678,21 @@ body {
   display: block;
 }
 
+/* ── CodeMirror Selection Layering & Visibility Fixes ── */
+.cm-editor .cm-line ::selection,
+.cm-editor .cm-line::selection {
+  background-color: #b3d7fe !important;
+  color: inherit !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .cm-editor .cm-line ::selection,
+  .cm-editor .cm-line::selection {
+    background-color: #3e4451 !important;
+    color: inherit !important;
+  }
+}
+
+
+
 

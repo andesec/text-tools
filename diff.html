@@ -52,6 +52,8 @@
     .diff-move-to    { background: var(--diff-move-to)   !important; display: block; }
     .diff-move-char  { background: var(--diff-move-char);  border-radius: 2px; }
 
+
+
     /* ── CM sizing ────────────────────────────────────────── */
     .cm-editor       { height: 100% !important; }
     .cm-scroller     { overflow: auto !important; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 13px; }
@@ -259,6 +261,9 @@
       </button>
       <div id="dd-options-menu" class="dropdown-menu p-2 space-y-0.5">
         <label class="dropdown-item cursor-pointer">
+          <input type="checkbox" id="opt-wrap" class="rounded mr-2"> Word wrap
+        </label>
+        <label class="dropdown-item cursor-pointer">
           <input type="checkbox" id="opt-ws" class="rounded mr-2"> Ignore whitespace
         </label>
         <label class="dropdown-item cursor-pointer">
@@ -428,6 +433,7 @@ const decoField = StateField.define({
 // ── compartments ────────────────────────────────────────────
 const themeL = new Compartment(), themeR = new Compartment();
 const langL  = new Compartment(), langR  = new Compartment();
+const wrapL  = new Compartment(), wrapR  = new Compartment();
 
 // ── state ───────────────────────────────────────────────────
 let editorL = null, editorR = null;
@@ -436,7 +442,7 @@ let outlineOpen = true;
 let diffTimer = null;
 let syncingScroll = false;
 let currentLang = 'auto';
-let opts = { ignoreWS: false, caseInsensitive: false, normalizeTypo: false };
+let opts = { ignoreWS: false, caseInsensitive: false, normalizeTypo: false, wordWrap: false };
 const STORAGE = window.name && window.name.startsWith('tab_') ? 'difftool-v2_' + window.name : 'difftool-v2';
 
 const isDark = () => window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -492,6 +498,7 @@ function createEditors(leftDoc = '', rightDoc = '') {
         basicSetup,
         themeL.of(theme()),
         langL.of(langExt(leftName || rightName)),
+        wrapL.of(opts.wordWrap ? EditorView.lineWrapping : []),
         decoField,
         EditorView.theme({ '&':{ height:'100%', width:'100%' }, '.cm-scroller':{ overflow:'auto' } }),
         EditorView.updateListener.of(v => { if (v.docChanged) scheduleDiff(); }),
@@ -508,6 +515,7 @@ function createEditors(leftDoc = '', rightDoc = '') {
         basicSetup,
         themeR.of(theme()),
         langR.of(langExt(rightName || leftName)),
+        wrapR.of(opts.wordWrap ? EditorView.lineWrapping : []),
         decoField,
         EditorView.theme({ '&':{ height:'100%', width:'100%' }, '.cm-scroller':{ overflow:'auto' } }),
         EditorView.updateListener.of(v => { if (v.docChanged) scheduleDiff(); }),
@@ -1133,6 +1141,13 @@ document.getElementById('btn-paste-left-u').onclick = () => pasteToDiff('left');
 document.getElementById('btn-paste-right-u').onclick = () => pasteToDiff('right');
 
 // ── options ──────────────────────────────────────────────────
+document.getElementById('opt-wrap').onchange = e => {
+  opts.wordWrap = e.target.checked;
+  const ext = opts.wordWrap ? EditorView.lineWrapping : [];
+  editorL?.dispatch({ effects: wrapL.reconfigure(ext) });
+  editorR?.dispatch({ effects: wrapR.reconfigure(ext) });
+  saveToStorage();
+};
 document.getElementById('opt-ws').onchange   = e => { opts.ignoreWS        = e.target.checked; scheduleDiff(); };
 document.getElementById('opt-ci').onchange   = e => { opts.caseInsensitive = e.target.checked; scheduleDiff(); };
 document.getElementById('opt-typo').onchange = e => { opts.normalizeTypo   = e.target.checked; scheduleDiff(); };
@@ -1266,6 +1281,7 @@ function loadFromStorage() {
     if (s.lang) { currentLang = s.lang; document.getElementById('lang-select').value = s.lang; }
     if (s.leftName)  document.getElementById('lbl-left').textContent  = s.leftName;
     if (s.rightName) document.getElementById('lbl-right').textContent = s.rightName;
+    document.getElementById('opt-wrap').checked = opts.wordWrap ?? false;
     document.getElementById('opt-ws').checked   = opts.ignoreWS;
     document.getElementById('opt-ci').checked   = opts.caseInsensitive;
     document.getElementById('opt-typo').checked = opts.normalizeTypo ?? false;
