@@ -731,9 +731,61 @@ function runDiff() {
 }
 
 /**
- * Compares paired original text lines directly so highlight character offsets
- * correspond exactly to the layout inside CodeMirror. This resolves offset mismatching
- * issues caused by operating on post-normalized strings.
+ * Tokenises a string into word / whitespace / punctuation tokens.
+ * Each token keeps its original text so we can map back to exact character offsets.
+ */
+function tokenizeLine(text) {
+  const tokens = [];
+  const re = /(\s+|[^\s\w]+|\w+)/g;
+  let m;
+  while ((m = re.exec(text)) !== null) tokens.push(m[0]);
+  return tokens;
+}
+
+/**
+ * Uses the diff_linesToChars_ trick on word-level tokens so diff_match_patch
+ * compares whole tokens instead of individual characters.  The result is mapped
+ * back to character positions for precise editor decoration.
+ */
+function diffWordsToCharRanges(dmp, lineA, lineB) {
+  const tokA = tokenizeLine(lineA);
+  const tokB = tokenizeLine(lineB);
+
+  // Build a shared token → char mapping (same idea as diff_linesToChars_)
+  const tokenMap = [];           // index → token string
+  const tokenToIndex = new Map(); // token string → index
+  let nextIdx = 0;
+
+  function encode(tokens) {
+    let chars = '';
+    for (const tok of tokens) {
+      let idx = tokenToIndex.get(tok);
+      if (idx === undefined) { idx = nextIdx++; tokenToIndex.set(tok, idx); tokenMap.push(tok); }
+      chars += String.fromCharCode(idx);
+    }
+    return chars;
+  }
+
+  const charsA = encode(tokA);
+  const charsB = encode(tokB);
+
+  const diffs = dmp.diff_main(charsA, charsB, false);
+  dmp.diff_cleanupSemantic(diffs);
+
+  // Convert token-index diffs back to the original text segments
+  const result = [];
+  for (const [op, coded] of diffs) {
+    let text = '';
+    for (let i = 0; i < coded.length; i++) text += tokenMap[coded.charCodeAt(i)];
+    result.push([op, text]);
+  }
+  return result;
+}
+
+/**
+ * Compares paired original text lines using word-level tokenisation so
+ * highlights cover meaningful words rather than individual characters.
+ * Offsets correspond exactly to the layout inside CodeMirror.
  */
 function addIntraLineDiffs(dmp, leftCharDecos, rightCharDecos, movedLeft = new Set(), movedRight = new Set()) {
   const ldoc = editorL.state.doc;
@@ -747,9 +799,8 @@ function addIntraLineDiffs(dmp, leftCharDecos, rightCharDecos, movedLeft = new S
     const rl = rdoc.line(i).text;
     if (ll === rl) continue;
 
-    // Use raw original line parameters for exact structural match inside editor viewport
-    const diffs = dmp.diff_main(ll, rl);
-    dmp.diff_cleanupSemanticLossless(diffs);
+    // Word-level diff for meaningful highlights
+    const diffs = diffWordsToCharRanges(dmp, ll, rl);
 
     const equalLen = diffs.reduce((s, [op, txt]) => s + (op === 0 ? txt.length : 0), 0);
     const maxLen   = Math.max(ll.length, rl.length);
@@ -856,12 +907,11 @@ function renderUnified(left, right) {
       const delLines  = segs.map(() => leftLines[li++]    ?? '');
       const insLines  = insSegs.map(() => rightLines[ri++] ?? '');
 
-      // Pre-compute char diffs for non-moved pairs (only when lines are sufficiently similar)
+      // Pre-compute word-level diffs for non-moved pairs (only when lines are sufficiently similar)
       const SIMILARITY_THRESHOLD = 0.3;
       const pairDiffs = Array.from({ length: pairCount }, (_, k) => {
         if (movedFromLines.has(leftLineNum + k) || movedToLines.has(rightLineNum + k)) return null;
-        const cd = dmp.diff_main(delLines[k], insLines[k]);
-        dmp.diff_cleanupSemanticLossless(cd);
+        const cd = diffWordsToCharRanges(dmp, delLines[k], insLines[k]);
         // Skip char highlights if lines are too dissimilar
         const equalLen = cd.reduce((s, [op, txt]) => s + (op === 0 ? txt.length : 0), 0);
         const maxLen   = Math.max(delLines[k].length, insLines[k].length);
