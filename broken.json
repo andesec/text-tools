@@ -1,0 +1,2671 @@
+{
+  "id": "MYvks4bO8PmBj0vM",
+  "public_id": "MYvks4bO8PmBj0vM",
+  "user_id": 1,
+  "title": "Practitioner's Guide to Securing Azure API Management",
+  "created_at": "2026-06-20T19:00:22Z",
+  "status": "completed",
+  "is_archived": false,
+  "idempotency_key": null,
+  "tags": null,
+  "lesson_plan": {
+    "title": "Practitioner's Guide to Securing Azure API Management",
+    "summary": "This lesson equips practitioners with the skills to harden Azure API Management across four critical dimensions. You will implement XML-based policies for traffic throttling, integrate OAuth 2.0 and OIDC for robust identity validation, and isolate your infrastructure using Virtual Networks and Private Link. Finally, you will learn to manage secrets and certificates securely using Azure Key Vault and Managed Identities, ensuring a production-grade security posture for your API ecosystem.",
+    "sections": [
+      {
+        "title": "Governing Traffic with APIM Policies",
+        "skills": [
+          "api-policy-management",
+          "api-security-configuration"
+        ],
+        "objectives": {
+          "knowledge": "",
+          "reasoning": "",
+          "application": "Implement the rate-limit-by-key and quota-by-key policies within the APIM inbound processing block.",
+          "understanding": "Distinguish between rate limits for transient protection and quotas for long-term consumption management.",
+          "thought_process": ""
+        },
+        "search_query": "Azure API Management policy editor screenshot",
+        "extra_context": {
+          "rationale": "Traffic control is the most immediate security and stability concern for any public-facing API.",
+          "focus_area": "Inbound policy configuration for traffic throttling and consumer management.",
+          "pacing_notes": "Start with the 'Noisy Neighbor' problem to ground the need for throttling. Use XML code snippets early to demystify the policy editor.",
+          "prerequisites": [
+            "Basic understanding of Azure API Management instances",
+            "Knowledge of HTTP request-response headers"
+          ],
+          "misconceptions": [
+            "Learners often confuse rate limits with quotas; rate limits prevent spikes, while quotas manage monthly/weekly budget.",
+            "Assuming policies are applied globally when they can be scoped to products, APIs, or operations."
+          ]
+        },
+        "planned_widgets": [
+          "markdown",
+          "caselet",
+          "codeViewer",
+          "stepFlow",
+          "checklist",
+          "mcqs"
+        ],
+        "retrieval_query": "",
+        "teaching_intent": "Introduce rate limiting and quota enforcement by demonstrating how to prevent backend exhaustion and manage consumer tiers through XML-based policies.",
+        "content_enrichment": [
+          "Provide a real-world scenario of an API being taken down by a single unoptimized loop in a client application.",
+          "Include a policy snippet showing how to use the 'calls' and 'renewal-period' attributes correctly."
+        ],
+        "template_instructions": ""
+      },
+      {
+        "title": "Modern Identity with OAuth 2.0 and OIDC",
+        "skills": [
+          "identity-and-access-management",
+          "api-security-configuration"
+        ],
+        "objectives": {
+          "knowledge": "",
+          "reasoning": "Determine when to use OAuth 2.0 scopes versus custom claims for fine-grained authorization logic.",
+          "application": "",
+          "understanding": "",
+          "thought_process": "Synthesize the handshake between the Client, Identity Provider (Entra ID), and APIM to secure a request."
+        },
+        "search_query": "OAuth 2.0 authorization code flow diagram",
+        "extra_context": {
+          "rationale": "Identity is the primary security perimeter. Moving away from shared secrets (API Keys) is essential for production security.",
+          "focus_area": "Configuring the validate-jwt policy and integrating with Azure Entra ID.",
+          "pacing_notes": "Use a sequence flow to explain the token lifecycle before diving into XML validation logic.",
+          "prerequisites": [
+            "Understanding of JWT (JSON Web Tokens) structure",
+            "Conceptual knowledge of OAuth 2.0 flows"
+          ],
+          "misconceptions": [
+            "Thinking APIM handles user login directly; it only validates the resulting token.",
+            "Neglecting to validate the 'aud' (audience) or 'iss' (issuer) claims, which can lead to token replay attacks."
+          ]
+        },
+        "planned_widgets": [
+          "compare",
+          "flowDiagram",
+          "markdown",
+          "codeViewer",
+          "codeReview",
+          "truefalse"
+        ],
+        "retrieval_query": "",
+        "teaching_intent": "Transition from static API keys to dynamic token-based security using the validate-jwt policy to verify identity and authorize claims.",
+        "content_enrichment": [
+          "Explain the 'OpenID Connect Discovery' endpoint and how APIM uses it to fetch public keys for signature validation.",
+          "Demonstrate a common mistake: hardcoding the signing key instead of letting APIM fetch it from the OIDC metadata."
+        ],
+        "template_instructions": ""
+      },
+      {
+        "title": "Hardening the Network with Private Link",
+        "skills": [
+          "secure-network-architecture"
+        ],
+        "objectives": {
+          "knowledge": "",
+          "reasoning": "",
+          "application": "Configure an APIM instance in 'Internal' VNET mode and establish a Private Endpoint to a backend service.",
+          "understanding": "Explain the difference between Service Endpoints and Private Link in the context of data exfiltration prevention.",
+          "thought_process": ""
+        },
+        "search_query": "Azure Private Link architecture diagram",
+        "extra_context": {
+          "rationale": "Network-level security provides defense-in-depth, ensuring that even if an identity is compromised, the attacker cannot reach the network endpoint.",
+          "focus_area": "Network isolation and secure backend connectivity.",
+          "pacing_notes": "Focus on the 'why'—moving traffic off the public internet—before detailing the subnet requirements.",
+          "prerequisites": [
+            "Azure Virtual Network (VNET) and Subnet basics",
+            "Knowledge of DNS resolution in Azure"
+          ],
+          "misconceptions": [
+            "Believing that 'Internal' mode still allows public access by default.",
+            "Underestimating the complexity of NSG (Network Security Group) rules required for APIM management traffic."
+          ]
+        },
+        "planned_widgets": [
+          "markdown",
+          "flowDiagram",
+          "table",
+          "stepFlow",
+          "checklist",
+          "connections"
+        ],
+        "retrieval_query": "",
+        "teaching_intent": "Eliminate the public internet attack surface by deploying APIM within a Virtual Network and using Private Link for backend communication.",
+        "content_enrichment": [
+          "List the mandatory NSG ports for APIM (e.g., 3443 for management) to avoid broken deployments.",
+          "Compare the 'External' and 'Internal' VNET deployment models using a side-by-side table."
+        ],
+        "template_instructions": ""
+      },
+      {
+        "title": "Secure Credential & Secret Management",
+        "skills": [
+          "credential-management",
+          "api-policy-management"
+        ],
+        "objectives": {
+          "knowledge": "",
+          "reasoning": "Evaluate the risk reduction of using Managed Identities over traditional service principals for secret access.",
+          "application": "Configure APIM Named Values to fetch secrets directly from Azure Key Vault at runtime.",
+          "understanding": "",
+          "thought_process": ""
+        },
+        "search_query": "Azure Key Vault managed identity access control",
+        "extra_context": {
+          "rationale": "Credential management is often the weakest link; automating rotation and vaulting removes human error from the equation.",
+          "focus_area": "Automating secret rotation and removing hardcoded credentials from policies.",
+          "pacing_notes": "Conclude the lesson by showing how this integrates all previous sections (Identity + Policy + Network).",
+          "prerequisites": [
+            "Azure Key Vault basics",
+            "Concept of Managed Identities in Azure"
+          ],
+          "misconceptions": [
+            "Storing secrets in 'Named Values' as plain text is secure enough (it isn't—they are visible in the portal).",
+            "Forgetting to grant the APIM Managed Identity 'Secret User' permissions on the Key Vault."
+          ]
+        },
+        "planned_widgets": [
+          "markdown",
+          "stepFlow",
+          "codeViewer",
+          "caselet",
+          "table",
+          "mcqs"
+        ],
+        "retrieval_query": "",
+        "teaching_intent": "Centralize and protect sensitive data by integrating Azure Key Vault with APIM Managed Identities for secret and certificate handling.",
+        "content_enrichment": [
+          "Demonstrate the syntax for referencing a Key Vault secret in a policy using the '{{SecretName}}' notation.",
+          "Provide a checklist for setting up 'Managed Identity' access policies in Key Vault."
+        ],
+        "template_instructions": ""
+      }
+    ],
+    "data_collection_points": [
+      "Difference between rate-limit-by-key and quota-by-key renewal periods",
+      "Validation of JWT claims (aud, iss, exp) within an XML inbound policy",
+      "Network requirements for APIM Internal VNET mode including NSG port 3443",
+      "Configuration of Managed Identity for Key Vault access without credentials",
+      "Syntax for dynamic secret retrieval in APIM Named Values",
+      "Identification of common OAuth 2.0 misconfigurations in a code review scenario",
+      "Troubleshooting DNS resolution issues when using Private Endpoints",
+      "Mapping security requirements to specific APIM policy fragments"
+    ]
+  },
+  "plan_sections": [
+    {
+      "title": "Governing Traffic with APIM Policies",
+      "skills": [
+        "api-policy-management",
+        "api-security-configuration"
+      ],
+      "objectives": {
+        "knowledge": "",
+        "reasoning": "",
+        "application": "Implement the rate-limit-by-key and quota-by-key policies within the APIM inbound processing block.",
+        "understanding": "Distinguish between rate limits for transient protection and quotas for long-term consumption management.",
+        "thought_process": ""
+      },
+      "search_query": "Azure API Management policy editor screenshot",
+      "extra_context": {
+        "rationale": "Traffic control is the most immediate security and stability concern for any public-facing API.",
+        "focus_area": "Inbound policy configuration for traffic throttling and consumer management.",
+        "pacing_notes": "Start with the 'Noisy Neighbor' problem to ground the need for throttling. Use XML code snippets early to demystify the policy editor.",
+        "prerequisites": [
+          "Basic understanding of Azure API Management instances",
+          "Knowledge of HTTP request-response headers"
+        ],
+        "misconceptions": [
+          "Learners often confuse rate limits with quotas; rate limits prevent spikes, while quotas manage monthly/weekly budget.",
+          "Assuming policies are applied globally when they can be scoped to products, APIs, or operations."
+        ]
+      },
+      "section_number": 1,
+      "planned_widgets": [
+        "markdown",
+        "caselet",
+        "codeViewer",
+        "stepFlow",
+        "checklist",
+        "mcqs"
+      ],
+      "retrieval_query": "",
+      "teaching_intent": "Introduce rate limiting and quota enforcement by demonstrating how to prevent backend exhaustion and manage consumer tiers through XML-based policies.",
+      "content_enrichment": [
+        "Provide a real-world scenario of an API being taken down by a single unoptimized loop in a client application.",
+        "Include a policy snippet showing how to use the 'calls' and 'renewal-period' attributes correctly."
+      ],
+      "template_instructions": ""
+    },
+    {
+      "title": "Modern Identity with OAuth 2.0 and OIDC",
+      "skills": [
+        "identity-and-access-management",
+        "api-security-configuration"
+      ],
+      "objectives": {
+        "knowledge": "",
+        "reasoning": "Determine when to use OAuth 2.0 scopes versus custom claims for fine-grained authorization logic.",
+        "application": "",
+        "understanding": "",
+        "thought_process": "Synthesize the handshake between the Client, Identity Provider (Entra ID), and APIM to secure a request."
+      },
+      "search_query": "OAuth 2.0 authorization code flow diagram",
+      "extra_context": {
+        "rationale": "Identity is the primary security perimeter. Moving away from shared secrets (API Keys) is essential for production security.",
+        "focus_area": "Configuring the validate-jwt policy and integrating with Azure Entra ID.",
+        "pacing_notes": "Use a sequence flow to explain the token lifecycle before diving into XML validation logic.",
+        "prerequisites": [
+          "Understanding of JWT (JSON Web Tokens) structure",
+          "Conceptual knowledge of OAuth 2.0 flows"
+        ],
+        "misconceptions": [
+          "Thinking APIM handles user login directly; it only validates the resulting token.",
+          "Neglecting to validate the 'aud' (audience) or 'iss' (issuer) claims, which can lead to token replay attacks."
+        ]
+      },
+      "section_number": 2,
+      "planned_widgets": [
+        "compare",
+        "flowDiagram",
+        "markdown",
+        "codeViewer",
+        "codeReview",
+        "truefalse"
+      ],
+      "retrieval_query": "",
+      "teaching_intent": "Transition from static API keys to dynamic token-based security using the validate-jwt policy to verify identity and authorize claims.",
+      "content_enrichment": [
+        "Explain the 'OpenID Connect Discovery' endpoint and how APIM uses it to fetch public keys for signature validation.",
+        "Demonstrate a common mistake: hardcoding the signing key instead of letting APIM fetch it from the OIDC metadata."
+      ],
+      "template_instructions": ""
+    },
+    {
+      "title": "Hardening the Network with Private Link",
+      "skills": [
+        "secure-network-architecture"
+      ],
+      "objectives": {
+        "knowledge": "",
+        "reasoning": "",
+        "application": "Configure an APIM instance in 'Internal' VNET mode and establish a Private Endpoint to a backend service.",
+        "understanding": "Explain the difference between Service Endpoints and Private Link in the context of data exfiltration prevention.",
+        "thought_process": ""
+      },
+      "search_query": "Azure Private Link architecture diagram",
+      "extra_context": {
+        "rationale": "Network-level security provides defense-in-depth, ensuring that even if an identity is compromised, the attacker cannot reach the network endpoint.",
+        "focus_area": "Network isolation and secure backend connectivity.",
+        "pacing_notes": "Focus on the 'why'—moving traffic off the public internet—before detailing the subnet requirements.",
+        "prerequisites": [
+          "Azure Virtual Network (VNET) and Subnet basics",
+          "Knowledge of DNS resolution in Azure"
+        ],
+        "misconceptions": [
+          "Believing that 'Internal' mode still allows public access by default.",
+          "Underestimating the complexity of NSG (Network Security Group) rules required for APIM management traffic."
+        ]
+      },
+      "section_number": 3,
+      "planned_widgets": [
+        "markdown",
+        "flowDiagram",
+        "table",
+        "stepFlow",
+        "checklist",
+        "connections"
+      ],
+      "retrieval_query": "",
+      "teaching_intent": "Eliminate the public internet attack surface by deploying APIM within a Virtual Network and using Private Link for backend communication.",
+      "content_enrichment": [
+        "List the mandatory NSG ports for APIM (e.g., 3443 for management) to avoid broken deployments.",
+        "Compare the 'External' and 'Internal' VNET deployment models using a side-by-side table."
+      ],
+      "template_instructions": ""
+    },
+    {
+      "title": "Secure Credential & Secret Management",
+      "skills": [
+        "credential-management",
+        "api-policy-management"
+      ],
+      "objectives": {
+        "knowledge": "",
+        "reasoning": "Evaluate the risk reduction of using Managed Identities over traditional service principals for secret access.",
+        "application": "Configure APIM Named Values to fetch secrets directly from Azure Key Vault at runtime.",
+        "understanding": "",
+        "thought_process": ""
+      },
+      "search_query": "Azure Key Vault managed identity access control",
+      "extra_context": {
+        "rationale": "Credential management is often the weakest link; automating rotation and vaulting removes human error from the equation.",
+        "focus_area": "Automating secret rotation and removing hardcoded credentials from policies.",
+        "pacing_notes": "Conclude the lesson by showing how this integrates all previous sections (Identity + Policy + Network).",
+        "prerequisites": [
+          "Azure Key Vault basics",
+          "Concept of Managed Identities in Azure"
+        ],
+        "misconceptions": [
+          "Storing secrets in 'Named Values' as plain text is secure enough (it isn't—they are visible in the portal).",
+          "Forgetting to grant the APIM Managed Identity 'Secret User' permissions on the Key Vault."
+        ]
+      },
+      "section_number": 4,
+      "planned_widgets": [
+        "markdown",
+        "stepFlow",
+        "codeViewer",
+        "caselet",
+        "table",
+        "mcqs"
+      ],
+      "retrieval_query": "",
+      "teaching_intent": "Centralize and protect sensitive data by integrating Azure Key Vault with APIM Managed Identities for secret and certificate handling.",
+      "content_enrichment": [
+        "Demonstrate the syntax for referencing a Key Vault secret in a policy using the '{{SecretName}}' notation.",
+        "Provide a checklist for setting up 'Managed Identity' access policies in Key Vault."
+      ],
+      "template_instructions": ""
+    }
+  ],
+  "plan_data_collection_points": [
+    "Difference between rate-limit-by-key and quota-by-key renewal periods",
+    "Validation of JWT claims (aud, iss, exp) within an XML inbound policy",
+    "Network requirements for APIM Internal VNET mode including NSG port 3443",
+    "Configuration of Managed Identity for Key Vault access without credentials",
+    "Syntax for dynamic secret retrieval in APIM Named Values",
+    "Identification of common OAuth 2.0 misconfigurations in a code review scenario",
+    "Troubleshooting DNS resolution issues when using Private Endpoints",
+    "Mapping security requirements to specific APIM policy fragments"
+  ],
+  "content": {
+    "sections": [
+      {
+        "sections": [
+          {
+            "items": [
+              {
+                "mcqs": null,
+                "graph": null,
+                "table": null,
+                "caselet": null,
+                "compare": null,
+                "fenster": null,
+                "livecall": null,
+                "markdown": {
+                  "id": null,
+                  "karut": [
+                    "understanding",
+                    "knowledge"
+                  ],
+                  "title": "The Noisy Neighbor Problem",
+                  "diagram": "+---------+      +------------+      +---------+\n| Client  | ---> | APIM (429) | -X-> | Backend |\n+---------+      +------------+      +---------+\n      |                |                  |\n      | [Looping Call] | [Policy Check]   | [Safe]  |\n      +----------------+------------------+---------+",
+                  "keywords": [
+                    "azure-api-management",
+                    "apim-policies",
+                    "rate-limiting"
+                  ],
+                  "markdown": "In a shared API ecosystem, a single poorly written client script can inadvertently launch a Denial of Service (DoS) attack. Imagine a mobile app developer who accidentally places an API call inside a tight `while` loop; without governance, that one client could exhaust your backend database connections, starving all other legitimate users. This is the 'Noisy Neighbor' problem.\n\nAzure API Management (APIM) solves this using **Policies**—XML-based configuration blocks that execute logic as requests pass through the gateway. To protect your infrastructure, we focus on the `inbound` processing block, where we intercept traffic before it ever touches your backend code.\n\nWe distinguish between two primary tools for traffic governance:\n1.  **Rate Limits**: Short-term protection (seconds/minutes) to prevent infrastructure spikes.\n2.  **Quotas**: Long-term management (days/months) to enforce business tiers or subscription budgets.",
+                  "study_duration": 3
+                },
+                "roleplay": null,
+                "stepFlow": null,
+                "checklist": null,
+                "dialogues": null,
+                "fillblank": null,
+                "flipcards": null,
+                "sequences": null,
+                "taskCheck": null,
+                "truefalse": null,
+                "codeEditor": null,
+                "codeReview": null,
+                "codeViewer": null,
+                "longAnswer": null,
+                "swipecards": null,
+                "connections": null,
+                "flowDiagram": null,
+                "shortAnswer": null,
+                "illustration": null,
+                "pictureProbe": null,
+                "terminalDemo": null,
+                "translations": null,
+                "offscreenTask": null,
+                "audioRecording": null,
+                "equationviewer": null,
+                "interactiveTerminal": null
+              },
+              {
+                "mcqs": null,
+                "graph": null,
+                "table": null,
+                "caselet": {
+                  "id": null,
+                  "cards": [
+                    "A fintech startup provides a 'Stock Price' API. Suddenly, backend latency spikes from 50ms to 5,000ms. The database CPU hits 100%.",
+                    "Logs reveal a single API key is responsible for 95% of the traffic. A partner developer's retry logic has malfunctioned, sending 500 requests per second.",
+                    "The team decides to implement `rate-limit-by-key`. They choose the `subscription-id` as the key to isolate the impact to just that one partner.",
+                    "They set a limit of 10 calls per second. Immediately, the partner's requests start receiving `429 Too Many Requests`, while other clients return to normal latency.",
+                    "To prevent this partner from burning through their entire monthly budget in one day, the team also adds a `quota-by-key` policy set to 50,000 calls per month.",
+                    "The partner fixes their code. The APIM dashboard shows the 'blocked' traffic dropping, and the backend remains stable without any manual scaling."
+                  ],
+                  "karut": [
+                    "reasoning",
+                    "application"
+                  ],
+                  "title": "The Infinite Loop Incident",
+                  "keywords": [
+                    "rate-limiting",
+                    "quota-enforcement",
+                    "api-security-configuration"
+                  ],
+                  "study_duration": 6
+                },
+                "compare": null,
+                "fenster": null,
+                "livecall": null,
+                "markdown": null,
+                "roleplay": null,
+                "stepFlow": null,
+                "checklist": null,
+                "dialogues": null,
+                "fillblank": null,
+                "flipcards": null,
+                "sequences": null,
+                "taskCheck": null,
+                "truefalse": null,
+                "codeEditor": null,
+                "codeReview": null,
+                "codeViewer": null,
+                "longAnswer": null,
+                "swipecards": null,
+                "connections": null,
+                "flowDiagram": null,
+                "shortAnswer": null,
+                "illustration": null,
+                "pictureProbe": null,
+                "terminalDemo": null,
+                "translations": null,
+                "offscreenTask": null,
+                "audioRecording": null,
+                "equationviewer": null,
+                "interactiveTerminal": null
+              },
+              {
+                "mcqs": null,
+                "graph": null,
+                "table": null,
+                "caselet": null,
+                "compare": null,
+                "fenster": null,
+                "livecall": null,
+                "markdown": null,
+                "roleplay": null,
+                "stepFlow": null,
+                "checklist": null,
+                "dialogues": null,
+                "fillblank": null,
+                "flipcards": null,
+                "sequences": null,
+                "taskCheck": null,
+                "truefalse": null,
+                "codeEditor": null,
+                "codeReview": null,
+                "codeViewer": {
+                  "id": null,
+                  "code": "<policies>\n    <inbound>\n        <base />\n        <!-- 1. Rate Limit: Prevent short-term spikes (per 60 seconds) -->\n        <rate-limit-by-key calls="20" \n                           renewal-period="60" \n                           counter-key="@(context.Subscription.Id)" />\n\n        <!-- 2. Quota: Manage long-term consumption (per month) -->\n        <quota-by-key calls="10000" \n                      renewal-period="2592000" \n                      counter-key="@(context.Subscription.Id)" />\n    </inbound>\n    <backend>\n        <forward-request />\n    </backend>\n    <outbound>\n        <base />\n    </outbound>\n</policies>",
+                  "karut": [
+                    "application",
+                    "understanding"
+                  ],
+                  "title": "Implementing Throttling Policies",
+                  "keywords": [
+                    "apim-policies",
+                    "rate-limiting",
+                    "quota-enforcement"
+                  ],
+                  "language": "xml",
+                  "study_duration": 5,
+                  "highlighted_lines": [
+                    6,
+                    7,
+                    11,
+                    12
+                  ]
+                },
+                "longAnswer": null,
+                "swipecards": null,
+                "connections": null,
+                "flowDiagram": null,
+                "shortAnswer": null,
+                "illustration": null,
+                "pictureProbe": null,
+                "terminalDemo": null,
+                "translations": null,
+                "offscreenTask": null,
+                "audioRecording": null,
+                "equationviewer": null,
+                "interactiveTerminal": null
+              },
+              {
+                "mcqs": null,
+                "graph": null,
+                "table": null,
+                "caselet": null,
+                "compare": null,
+                "fenster": null,
+                "livecall": null,
+                "markdown": null,
+                "roleplay": null,
+                "stepFlow": {
+                  "id": null,
+                  "flow": [
+                    "Navigate to the 'APIs' blade in the Azure Portal and select your target API.",
+                    "Select the 'Design' tab and click the '</>' icon in the Inbound processing section to open the Policy Editor.",
+                    "Locate the `<inbound>` tag and ensure the `<base />` tag is present to inherit product-level policies.",
+                    "Insert the `<rate-limit-by-key />` snippet, defining the `calls` threshold and `renewal-period` in seconds.",
+                    "Define the `counter-key` using a C# expression like `@(context.Request.IpAddress)` for IP-based throttling.",
+                    "Click 'Save' and test the endpoint using the 'Test' tab to verify the 429 response after exceeding the limit."
+                  ],
+                  "karut": [
+                    "application"
+                  ],
+                  "title": "Configuring a New Policy",
+                  "keywords": [
+                    "api-policy-management",
+                    "azure-api-management"
+                  ],
+                  "study_duration": 4
+                },
+                "checklist": null,
+                "dialogues": null,
+                "fillblank": null,
+                "flipcards": null,
+                "sequences": null,
+                "taskCheck": null,
+                "truefalse": null,
+                "codeEditor": null,
+                "codeReview": null,
+                "codeViewer": null,
+                "longAnswer": null,
+                "swipecards": null,
+                "connections": null,
+                "flowDiagram": null,
+                "shortAnswer": null,
+                "illustration": null,
+                "pictureProbe": null,
+                "terminalDemo": null,
+                "translations": null,
+                "offscreenTask": null,
+                "audioRecording": null,
+                "equationviewer": null,
+                "interactiveTerminal": null
+              },
+              {
+                "mcqs": null,
+                "graph": null,
+                "table": null,
+                "caselet": null,
+                "compare": null,
+                "fenster": null,
+                "livecall": null,
+                "markdown": null,
+                "roleplay": null,
+                "stepFlow": null,
+                "checklist": {
+                  "id": null,
+                  "mode": "review",
+                  "items": [
+                    {
+                      "group": "Logic & Scope",
+                      "items": [
+                        "Is the policy placed in the <inbound> section to block traffic before it reaches the backend?",
+                        "Does the counter-key uniquely identify the consumer (e.g., Subscription ID or IP)?",
+                        "Is the <base /> tag included to ensure higher-level security policies aren't bypassed?"
+                      ]
+                    },
+                    {
+                      "group": "Threshold Calibration",
+                      "items": [
+                        "Is the rate-limit renewal period short enough (e.g., 60s) to handle transient spikes?",
+                        "Is the quota renewal period long enough (e.g., 2,592,000s for a month) for billing enforcement?",
+                        "Have you verified that the backend capacity can actually handle the 'allowed' maximum rate?"
+                      ]
+                    }
+                  ],
+                  "karut": [
+                    "thought-process",
+                    "reasoning"
+                  ],
+                  "title": "Policy Design Review",
+                  "prompt": "Review your proposed APIM policy configuration against these critical stability and security criteria:",
+                  "keywords": [
+                    "api-policy-management",
+                    "api-security-configuration"
+                  ],
+                  "study_duration": 5,
+                  "checker_guidance": "A high-quality assessment should recognize that rate limits and quotas serve different time horizons. The learner should confirm that policies are inbound and that the counter-key is specific enough to prevent 'fate sharing' between different users. If they mark 'No' for the base tag, they must understand that this breaks policy inheritance."
+                },
+                "dialogues": null,
+                "fillblank": null,
+                "flipcards": null,
+                "sequences": null,
+                "taskCheck": null,
+                "truefalse": null,
+                "codeEditor": null,
+                "codeReview": null,
+                "codeViewer": null,
+                "longAnswer": null,
+                "swipecards": null,
+                "connections": null,
+                "flowDiagram": null,
+                "shortAnswer": null,
+                "illustration": null,
+                "pictureProbe": null,
+                "terminalDemo": null,
+                "translations": null,
+                "offscreenTask": null,
+                "audioRecording": null,
+                "equationviewer": null,
+                "interactiveTerminal": null
+              },
+              {
+                "mcqs": {
+                  "id": null,
+                  "title": "Traffic Governance Quiz",
+                  "questions": [
+                    {
+                      "a": 1,
+                      "c": [
+                        "rate-limit-by-key with renewal-period="604800"",
+                        "quota-by-key with renewal-period="604800"",
+                        "rate-limit with renewal-period="3600""
+                      ],
+                      "e": "Quotas are designed for long-term consumption tracking (like a week, which is 604,800 seconds). Rate limits are for short-term burst protection. Using 'by-key' ensures the limit applies to individual users rather than the entire API.",
+                      "q": "A developer wants to ensure that no single user can exceed 5,000 requests per week to manage their subscription tier. Which policy and renewal period is most appropriate?",
+                      "karut": [
+                        "reasoning"
+                      ],
+                      "keywords": [
+                        "quota-enforcement",
+                        "rate-limiting"
+                      ]
+                    },
+                    {
+                      "a": 1,
+                      "c": [
+                        "The API-level policy will fail to compile.",
+                        "The Product-level policies will be ignored for that API.",
+                        "Both policies will execute, with the Product policy running first."
+                      ],
+                      "e": "The `<base />` tag is the instruction to execute policies defined at a higher scope (Product or Global). If omitted, the API-level policy completely overrides the higher-level ones, potentially bypassing global security controls.",
+                      "q": "What happens if you omit the `<base />` tag in an API-level inbound policy when a Product-level policy also exists?",
+                      "karut": [
+                        "understanding"
+                      ],
+                      "keywords": [
+                        "apim-policies",
+                        "api-policy-management"
+                      ]
+                    },
+                    {
+                      "a": 0,
+                      "c": [
+                        "Rate limit counters are local to each gateway instance and not synchronized globally.",
+                        "The renewal-period attribute is incorrectly calculated in milliseconds.",
+                        "The counter-key is using the wrong context variable."
+                      ],
+                      "e": "In Azure APIM, rate-limit counters are maintained independently by each regional gateway. If you have two regions, a client could theoretically hit 100 calls/min in East US and another 100 calls/min in West US.",
+                      "q": "You observe that a rate limit of 100 calls per minute is being exceeded in a multi-region APIM deployment (East US and West US). Why might this be happening?",
+                      "karut": [
+                        "reasoning"
+                      ],
+                      "keywords": [
+                        "rate-limiting",
+                        "azure-api-management"
+                      ]
+                    }
+                  ],
+                  "study_duration": 5
+                },
+                "graph": null,
+                "table": null,
+                "caselet": null,
+                "compare": null,
+                "fenster": null,
+                "livecall": null,
+                "markdown": null,
+                "roleplay": null,
+                "stepFlow": null,
+                "checklist": null,
+                "dialogues": null,
+                "fillblank": null,
+                "flipcards": null,
+                "sequences": null,
+                "taskCheck": null,
+                "truefalse": null,
+                "codeEditor": null,
+                "codeReview": null,
+                "codeViewer": null,
+                "longAnswer": null,
+                "swipecards": null,
+                "connections": null,
+                "flowDiagram": null,
+                "shortAnswer": null,
+                "illustration": null,
+                "pictureProbe": null,
+                "terminalDemo": null,
+                "translations": null,
+                "offscreenTask": null,
+                "audioRecording": null,
+                "equationviewer": null,
+                "interactiveTerminal": null
+              }
+            ],
+            "title": "Governing Traffic with APIM Policies",
+            "skills": [],
+            "learning_duration": 28
+          }
+        ],
+        "glossary_id": "SnNvNIaSI8fvbj9F"
+      },
+      {
+        "sections": [
+          {
+            "items": [
+              {
+                "mcqs": null,
+                "graph": null,
+                "table": null,
+                "caselet": null,
+                "compare": {
+                  "id": null,
+                  "rows": [
+                    {
+                      "left": "**Static API Keys**",
+                      "right": "**OAuth 2.0 Tokens**"
+                    },
+                    {
+                      "left": "Long-lived, rarely rotated.",
+                      "right": "Short-lived, automatically expire."
+                    },
+                    {
+                      "left": "Opaque string; carries no context.",
+                      "right": "Structured JWT; carries identity and claims."
+                    },
+                    {
+                      "left": "Revocation requires manual intervention.",
+                      "right": "Revocation is handled by the Identity Provider."
+                    },
+                    {
+                      "left": "High blast radius if leaked.",
+                      "right": "Limited blast radius due to expiration and scopes."
+                    }
+                  ],
+                  "karut": [
+                    "knowledge",
+                    "reasoning"
+                  ],
+                  "title": "API Keys vs. OAuth 2.0",
+                  "keywords": [
+                    "oauth-2-0",
+                    "api-keys",
+                    "jwt"
+                  ],
+                  "study_duration": 3
+                },
+                "fenster": null,
+                "livecall": null,
+                "markdown": null,
+                "roleplay": null,
+                "stepFlow": null,
+                "checklist": null,
+                "dialogues": null,
+                "fillblank": null,
+                "flipcards": null,
+                "sequences": null,
+                "taskCheck": null,
+                "truefalse": null,
+                "codeEditor": null,
+                "codeReview": null,
+                "codeViewer": null,
+                "longAnswer": null,
+                "swipecards": null,
+                "connections": null,
+                "flowDiagram": null,
+                "shortAnswer": null,
+                "illustration": null,
+                "pictureProbe": null,
+                "terminalDemo": null,
+                "translations": null,
+                "offscreenTask": null,
+                "audioRecording": null,
+                "equationviewer": null,
+                "interactiveTerminal": null
+              },
+              {
+                "mcqs": null,
+                "graph": null,
+                "table": null,
+                "caselet": null,
+                "compare": null,
+                "fenster": null,
+                "livecall": null,
+                "markdown": null,
+                "roleplay": null,
+                "stepFlow": null,
+                "checklist": null,
+                "dialogues": null,
+                "fillblank": null,
+                "flipcards": null,
+                "sequences": null,
+                "taskCheck": null,
+                "truefalse": null,
+                "codeEditor": null,
+                "codeReview": null,
+                "codeViewer": null,
+                "longAnswer": null,
+                "swipecards": null,
+                "connections": null,
+                "flowDiagram": {
+                  "id": null,
+                  "code": "sequenceDiagram\n    participant Client\n    participant EntraID as Entra ID (IdP)\n    participant APIM as Azure API Management\n    participant Backend as Backend API\n\n    Client->>EntraID: 1. Request Authorization Code\n    EntraID-->>Client: 2. Return Authorization Code\n    Client->>EntraID: 3. Exchange Code for Access Token\n    EntraID-->>Client: 4. Return JWT Access Token\n    Client->>APIM: 5. API Request + Bearer Token\n    APIM->>EntraID: 6. Fetch OIDC Metadata (Public Keys)\n    EntraID-->>APIM: 7. Return Public Keys\n    APIM->>APIM: 8. Validate JWT Signature & Claims\n    APIM->>Backend: 9. Forward Request (if valid)\n    Backend-->>APIM: 10. API Response\n    APIM-->>Client: 11. API Response",
+                  "karut": [
+                    "understanding",
+                    "thought-process"
+                  ],
+                  "title": "OAuth 2.0 Authorization Code Flow",
+                  "keywords": [
+                    "oauth-2-0",
+                    "openid-connect",
+                    "entra-id"
+                  ],
+                  "description": "The sequence of events when a client requests access to an API secured by APIM and Entra ID.",
+                  "study_duration": 4
+                },
+                "shortAnswer": null,
+                "illustration": null,
+                "pictureProbe": null,
+                "terminalDemo": null,
+                "translations": null,
+                "offscreenTask": null,
+                "audioRecording": null,
+                "equationviewer": null,
+                "interactiveTerminal": null
+              },
+              {
+                "mcqs": null,
+                "graph": null,
+                "table": null,
+                "caselet": null,
+                "compare": null,
+                "fenster": null,
+                "livecall": null,
+                "markdown": {
+                  "id": null,
+                  "karut": [
+                    "understanding",
+                    "application"
+                  ],
+                  "title": "Validating JWTs in APIM",
+                  "diagram": null,
+                  "keywords": [
+                    "validate-jwt",
+                    "openid-connect",
+                    "jwt-claims"
+                  ],
+                  "markdown": "Identity is the primary security perimeter. Moving away from shared secrets (API Keys) is essential for production security. APIM does not handle user login directly; it only validates the resulting token.\n\nThe `validate-jwt` policy is the cornerstone of API security in APIM. It verifies the token's signature, expiration, and claims before allowing the request to proceed to the backend.\n\n### The OpenID Connect Discovery Endpoint\n\nAPIM uses the OpenID Connect (OIDC) Discovery endpoint to fetch the public keys needed to verify the JWT signature. This is crucial because Entra ID rotates its signing keys periodically.\n\n> **Note**: A common mistake is hardcoding the signing key in the policy. If the IdP rotates the key, your API will immediately start rejecting valid tokens. Always use the OIDC metadata endpoint so APIM can fetch the current keys dynamically.\n\n### Essential Claims to Validate\n\nValidating the signature is not enough. You must also validate the claims within the token to prevent token replay attacks:\n\n*   **`aud` (Audience)**: Ensures the token was issued specifically for your API. If an attacker steals a token meant for a different API, validating the audience will block it.\n*   **`iss` (Issuer)**: Ensures the token was issued by your trusted Identity Provider (e.g., your specific Entra ID tenant).",
+                  "study_duration": 5
+                },
+                "roleplay": null,
+                "stepFlow": null,
+                "checklist": null,
+                "dialogues": null,
+                "fillblank": null,
+                "flipcards": null,
+                "sequences": null,
+                "taskCheck": null,
+                "truefalse": null,
+                "codeEditor": null,
+                "codeReview": null,
+                "codeViewer": null,
+                "longAnswer": null,
+                "swipecards": null,
+                "connections": null,
+                "flowDiagram": null,
+                "shortAnswer": null,
+                "illustration": null,
+                "pictureProbe": null,
+                "terminalDemo": null,
+                "translations": null,
+                "offscreenTask": null,
+                "audioRecording": null,
+                "equationviewer": null,
+                "interactiveTerminal": null
+              },
+              {
+                "mcqs": null,
+                "graph": null,
+                "table": null,
+                "caselet": null,
+                "compare": null,
+                "fenster": null,
+                "livecall": null,
+                "markdown": null,
+                "roleplay": null,
+                "stepFlow": null,
+                "checklist": null,
+                "dialogues": null,
+                "fillblank": null,
+                "flipcards": null,
+                "sequences": null,
+                "taskCheck": null,
+                "truefalse": null,
+                "codeEditor": null,
+                "codeReview": null,
+                "codeViewer": {
+                  "id": null,
+                  "code": "<policies>\n    <inbound>\n        <base />\n        <!-- Validate the JWT token -->\n        <validate-jwt header-name="Authorization" failed-validation-httpcode="401" failed-validation-error-message="Unauthorized">\n            <!-- Fetch public keys dynamically from the OIDC endpoint -->\n            <openid-config url="https://login.microsoftonline.com/{{tenant-id}}/v2.0/.well-known/openid-configuration" />\n            <audiences>\n                <!-- Ensure the token is meant for this API -->\n                <audience>api://my-backend-api</audience>\n            </audiences>\n            <issuers>\n                <!-- Ensure the token was issued by our specific Entra ID tenant -->\n                <issuer>https://sts.windows.net/{{tenant-id}}/</issuer>\n            </issuers>\n            <required-claims>\n                <!-- Require a specific scope for fine-grained authorization -->\n                <claim name="scp" match="any">\n                    <value>Files.Read</value>\n                </claim>\n            </required-claims>\n        </validate-jwt>\n    </inbound>\n    <backend>\n        <base />\n    </backend>\n    <outbound>\n        <base />\n    </outbound>\n    <on-error>\n        <base />\n    </on-error>\n</policies>",
+                  "karut": [
+                    "application",
+                    "understanding"
+                  ],
+                  "title": "Configuring the validate-jwt Policy",
+                  "keywords": [
+                    "validate-jwt",
+                    "apim-policies",
+                    "jwt-claims"
+                  ],
+                  "language": "xml",
+                  "study_duration": 4,
+                  "highlighted_lines": [
+                    6,
+                    9,
+                    13,
+                    17
+                  ]
+                },
+                "longAnswer": null,
+                "swipecards": null,
+                "connections": null,
+                "flowDiagram": null,
+                "shortAnswer": null,
+                "illustration": null,
+                "pictureProbe": null,
+                "terminalDemo": null,
+                "translations": null,
+                "offscreenTask": null,
+                "audioRecording": null,
+                "equationviewer": null,
+                "interactiveTerminal": null
+              },
+              {
+                "mcqs": null,
+                "graph": null,
+                "table": null,
+                "caselet": null,
+                "compare": null,
+                "fenster": null,
+                "livecall": null,
+                "markdown": null,
+                "roleplay": null,
+                "stepFlow": null,
+                "checklist": null,
+                "dialogues": null,
+                "fillblank": null,
+                "flipcards": null,
+                "sequences": null,
+                "taskCheck": null,
+                "truefalse": null,
+                "codeEditor": null,
+                "codeReview": {
+                  "id": null,
+                  "goal": "The learner must identify that the policy hardcodes the signing key instead of using the OIDC discovery endpoint, and that it fails to validate the audience claim.",
+                  "karut": [
+                    "reasoning",
+                    "thought-process"
+                  ],
+                  "title": "Identify the JWT Vulnerability",
+                  "keywords": [
+                    "validate-jwt",
+                    "api-security-configuration",
+                    "jwt-claims"
+                  ],
+                  "language": "xml",
+                  "ai_prompt": "Create a code review exercise where the learner must find two critical flaws in an XML validate-jwt policy: 1) A hardcoded <issuer-signing-keys> block instead of <openid-config>, and 2) Missing <audiences> validation. The code should look plausible but insecure.",
+                  "description": "A developer has submitted a pull request to update the APIM policy for a new API endpoint. The policy includes a validate-jwt configuration.",
+                  "resource_id": null,
+                  "study_duration": 6
+                },
+                "codeViewer": null,
+                "longAnswer": null,
+                "swipecards": null,
+                "connections": null,
+                "flowDiagram": null,
+                "shortAnswer": null,
+                "illustration": null,
+                "pictureProbe": null,
+                "terminalDemo": null,
+                "translations": null,
+                "offscreenTask": null,
+                "audioRecording": null,
+                "equationviewer": null,
+                "interactiveTerminal": null
+              },
+              {
+                "mcqs": null,
+                "graph": null,
+                "table": null,
+                "caselet": null,
+                "compare": null,
+                "fenster": null,
+                "livecall": null,
+                "markdown": null,
+                "roleplay": null,
+                "stepFlow": null,
+                "checklist": null,
+                "dialogues": null,
+                "fillblank": null,
+                "flipcards": null,
+                "sequences": null,
+                "taskCheck": null,
+                "truefalse": {
+                  "id": null,
+                  "cards": [
+                    {
+                      "text": "APIM handles user authentication directly by prompting the user for credentials.",
+                      "karut": [
+                        "knowledge"
+                      ],
+                      "feedback": "False. APIM only validates the token provided in the request; the Identity Provider (like Entra ID) handles the actual authentication.",
+                      "keywords": [
+                        "azure-api-management",
+                        "entra-id"
+                      ],
+                      "correct_answer_index": 0
+                    },
+                    {
+                      "text": "Validating the 'aud' (audience) claim prevents a token issued for API 'A' from being used to access API 'B'.",
+                      "karut": [
+                        "understanding"
+                      ],
+                      "feedback": "True. The audience claim specifies the intended recipient of the token, preventing token replay across different APIs.",
+                      "keywords": [
+                        "jwt-claims",
+                        "api-security-configuration"
+                      ],
+                      "correct_answer_index": 1
+                    },
+                    {
+                      "text": "Hardcoding the issuer signing key in the APIM policy is a recommended practice for better performance.",
+                      "karut": [
+                        "application"
+                      ],
+                      "feedback": "False. Hardcoding the key will cause the API to fail when the Identity Provider rotates its keys. Always use the OIDC discovery endpoint.",
+                      "keywords": [
+                        "validate-jwt",
+                        "openid-connect"
+                      ],
+                      "correct_answer_index": 0
+                    }
+                  ],
+                  "title": "JWT Validation Concepts",
+                  "labels": {
+                    "true_label": "True",
+                    "false_label": "False"
+                  },
+                  "study_duration": 3
+                },
+                "codeEditor": null,
+                "codeReview": null,
+                "codeViewer": null,
+                "longAnswer": null,
+                "swipecards": null,
+                "connections": null,
+                "flowDiagram": null,
+                "shortAnswer": null,
+                "illustration": null,
+                "pictureProbe": null,
+                "terminalDemo": null,
+                "translations": null,
+                "offscreenTask": null,
+                "audioRecording": null,
+                "equationviewer": null,
+                "interactiveTerminal": null
+              }
+            ],
+            "title": "Modern Identity with OAuth 2.0 and OIDC",
+            "skills": [],
+            "learning_duration": 25
+          }
+        ],
+        "glossary_id": "SnNvNIaSI8fvbj9F"
+      },
+      {
+        "sections": [
+          {
+            "items": [
+              {
+                "mcqs": null,
+                "graph": null,
+                "table": null,
+                "caselet": null,
+                "compare": null,
+                "fenster": null,
+                "livecall": null,
+                "markdown": {
+                  "id": null,
+                  "karut": [
+                    "knowledge",
+                    "understanding"
+                  ],
+                  "title": "Network Isolation with VNETs",
+                  "diagram": null,
+                  "keywords": [
+                    "virtual-networks",
+                    "azure-api-management",
+                    "secure-network-architecture"
+                  ],
+                  "markdown": "Network-level security provides defense-in-depth. Even if an identity is compromised, an attacker cannot reach the API if it is not exposed to the public internet.\n\nDeploying APIM within an Azure Virtual Network (VNET) allows you to control inbound and outbound traffic. \n\n### Internal vs. External VNET Mode\n\n*   **External Mode**: The APIM gateway is accessible from the public internet, but it can route traffic to backend services located within the VNET.\n*   **Internal Mode**: The APIM gateway is *only* accessible from within the VNET. It has no public IP address for incoming API traffic.\n\n> **Note**: A common misconception is that 'Internal' mode still allows some public access by default. It does not. All incoming API traffic must originate from within the VNET or a connected network (like an ExpressRoute or VPN).",
+                  "study_duration": 4
+                },
+                "roleplay": null,
+                "stepFlow": null,
+                "checklist": null,
+                "dialogues": null,
+                "fillblank": null,
+                "flipcards": null,
+                "sequences": null,
+                "taskCheck": null,
+                "truefalse": null,
+                "codeEditor": null,
+                "codeReview": null,
+                "codeViewer": null,
+                "longAnswer": null,
+                "swipecards": null,
+                "connections": null,
+                "flowDiagram": null,
+                "shortAnswer": null,
+                "illustration": null,
+                "pictureProbe": null,
+                "terminalDemo": null,
+                "translations": null,
+                "offscreenTask": null,
+                "audioRecording": null,
+                "equationviewer": null,
+                "interactiveTerminal": null
+              },
+              {
+                "mcqs": null,
+                "graph": null,
+                "table": null,
+                "caselet": null,
+                "compare": null,
+                "fenster": null,
+                "livecall": null,
+                "markdown": null,
+                "roleplay": null,
+                "stepFlow": null,
+                "checklist": null,
+                "dialogues": null,
+                "fillblank": null,
+                "flipcards": null,
+                "sequences": null,
+                "taskCheck": null,
+                "truefalse": null,
+                "codeEditor": null,
+                "codeReview": null,
+                "codeViewer": null,
+                "longAnswer": null,
+                "swipecards": null,
+                "connections": null,
+                "flowDiagram": {
+                  "id": null,
+                  "code": "flowchart LR\n    subgraph Consumer VNET\n        Client[Client App]\n        PE[Private Endpoint]\n    end\n    subgraph Provider VNET\n        PLS[Private Link Service]\n        APIM[APIM (Internal)]\n        Backend[Backend API]\n    end\n    Client -->|Private IP| PE\n    PE -.->|Microsoft Backbone| PLS\n    PLS --> APIM\n    APIM --> Backend",
+                  "karut": [
+                    "understanding"
+                  ],
+                  "title": "Private Link Architecture",
+                  "keywords": [
+                    "private-link",
+                    "virtual-networks",
+                    "secure-network-architecture"
+                  ],
+                  "description": "How Private Link connects a consumer VNET to an APIM instance in a provider VNET.",
+                  "study_duration": 4
+                },
+                "shortAnswer": null,
+                "illustration": null,
+                "pictureProbe": null,
+                "terminalDemo": null,
+                "translations": null,
+                "offscreenTask": null,
+                "audioRecording": null,
+                "equationviewer": null,
+                "interactiveTerminal": null
+              },
+              {
+                "mcqs": null,
+                "graph": null,
+                "table": {
+                  "id": null,
+                  "rows": [
+                    [
+                      "Feature",
+                      "Service Endpoints",
+                      "Private Link"
+                    ],
+                    [
+                      "IP Address",
+                      "Public IP of the PaaS service",
+                      "Private IP from your VNET"
+                    ],
+                    [
+                      "Data Exfiltration Risk",
+                      "Higher (access to all instances of the service)",
+                      "Lower (access only to the specific resource)"
+                    ],
+                    [
+                      "On-Premises Access",
+                      "Requires NAT or public routing",
+                      "Accessible via ExpressRoute/VPN"
+                    ]
+                  ],
+                  "karut": [
+                    "reasoning",
+                    "understanding"
+                  ],
+                  "title": "Service Endpoints vs. Private Link",
+                  "keywords": [
+                    "private-link",
+                    "virtual-networks"
+                  ],
+                  "study_duration": 3
+                },
+                "caselet": null,
+                "compare": null,
+                "fenster": null,
+                "livecall": null,
+                "markdown": null,
+                "roleplay": null,
+                "stepFlow": null,
+                "checklist": null,
+                "dialogues": null,
+                "fillblank": null,
+                "flipcards": null,
+                "sequences": null,
+                "taskCheck": null,
+                "truefalse": null,
+                "codeEditor": null,
+                "codeReview": null,
+                "codeViewer": null,
+                "longAnswer": null,
+                "swipecards": null,
+                "connections": null,
+                "flowDiagram": null,
+                "shortAnswer": null,
+                "illustration": null,
+                "pictureProbe": null,
+                "terminalDemo": null,
+                "translations": null,
+                "offscreenTask": null,
+                "audioRecording": null,
+                "equationviewer": null,
+                "interactiveTerminal": null
+              },
+              {
+                "mcqs": null,
+                "graph": null,
+                "table": null,
+                "caselet": null,
+                "compare": null,
+                "fenster": null,
+                "livecall": null,
+                "markdown": null,
+                "roleplay": null,
+                "stepFlow": {
+                  "id": null,
+                  "flow": [
+                    "Create a dedicated subnet for APIM within your VNET.",
+                    "Configure a Network Security Group (NSG) and associate it with the subnet.",
+                    "Add an inbound NSG rule allowing TCP port 3443 from the 'ApiManagement' service tag (required for management traffic).",
+                    "Add outbound NSG rules allowing TCP port 443 to 'Storage' and 'AzureKeyVault' service tags.",
+                    "Deploy or migrate the APIM instance into the dedicated subnet, selecting 'Internal' mode.",
+                    "Configure a Private DNS Zone to resolve the APIM gateway hostname to its new private IP address."
+                  ],
+                  "karut": [
+                    "application",
+                    "thought-process"
+                  ],
+                  "title": "Configuring APIM in Internal VNET Mode",
+                  "keywords": [
+                    "virtual-networks",
+                    "azure-api-management",
+                    "secure-network-architecture"
+                  ],
+                  "study_duration": 5
+                },
+                "checklist": null,
+                "dialogues": null,
+                "fillblank": null,
+                "flipcards": null,
+                "sequences": null,
+                "taskCheck": null,
+                "truefalse": null,
+                "codeEditor": null,
+                "codeReview": null,
+                "codeViewer": null,
+                "longAnswer": null,
+                "swipecards": null,
+                "connections": null,
+                "flowDiagram": null,
+                "shortAnswer": null,
+                "illustration": null,
+                "pictureProbe": null,
+                "terminalDemo": null,
+                "translations": null,
+                "offscreenTask": null,
+                "audioRecording": null,
+                "equationviewer": null,
+                "interactiveTerminal": null
+              },
+              {
+                "mcqs": null,
+                "graph": null,
+                "table": null,
+                "caselet": null,
+                "compare": null,
+                "fenster": null,
+                "livecall": null,
+                "markdown": null,
+                "roleplay": null,
+                "stepFlow": null,
+                "checklist": {
+                  "id": null,
+                  "mode": "review",
+                  "items": [
+                    {
+                      "group": "Network Security Groups (NSG)",
+                      "items": [
+                        "Is inbound port 3443 allowed from the ApiManagement service tag?",
+                        "Are outbound ports 443 allowed to Storage and AzureKeyVault service tags?"
+                      ]
+                    },
+                    {
+                      "group": "DNS Resolution",
+                      "items": [
+                        "Is a Private DNS Zone configured for the APIM gateway hostname?",
+                        "Is the Private DNS Zone linked to the client VNET?"
+                      ]
+                    }
+                  ],
+                  "karut": [
+                    "application",
+                    "thought-process"
+                  ],
+                  "title": "VNET Deployment Pre-Flight",
+                  "prompt": "Review your APIM VNET configuration against these critical requirements:",
+                  "keywords": [
+                    "virtual-networks",
+                    "secure-network-architecture"
+                  ],
+                  "study_duration": 5,
+                  "checker_guidance": "A 'Yes' means the specific NSG rule or DNS configuration is actively deployed and verified. 'Partial' might mean the rule exists but uses overly broad IP ranges instead of service tags. 'No' means the requirement is missing, which will likely result in a broken deployment or inaccessible gateway."
+                },
+                "dialogues": null,
+                "fillblank": null,
+                "flipcards": null,
+                "sequences": null,
+                "taskCheck": null,
+                "truefalse": null,
+                "codeEditor": null,
+                "codeReview": null,
+                "codeViewer": null,
+                "longAnswer": null,
+                "swipecards": null,
+                "connections": null,
+                "flowDiagram": null,
+                "shortAnswer": null,
+                "illustration": null,
+                "pictureProbe": null,
+                "terminalDemo": null,
+                "translations": null,
+                "offscreenTask": null,
+                "audioRecording": null,
+                "equationviewer": null,
+                "interactiveTerminal": null
+              },
+              {
+                "mcqs": null,
+                "graph": null,
+                "table": null,
+                "caselet": null,
+                "compare": null,
+                "fenster": null,
+                "livecall": null,
+                "markdown": null,
+                "roleplay": null,
+                "stepFlow": null,
+                "checklist": null,
+                "dialogues": null,
+                "fillblank": null,
+                "flipcards": null,
+                "sequences": null,
+                "taskCheck": null,
+                "truefalse": null,
+                "codeEditor": null,
+                "codeReview": null,
+                "codeViewer": null,
+                "longAnswer": null,
+                "swipecards": null,
+                "connections": {
+                  "id": null,
+                  "title": "Match the Network Concept",
+                  "prompt": "Match each network requirement to its purpose in an APIM VNET deployment.",
+                  "left_items": [
+                    {
+                      "id": "port3443",
+                      "karut": [
+                        "knowledge"
+                      ],
+                      "label": "Inbound TCP Port 3443",
+                      "match": "mgmt",
+                      "keywords": [
+                        "secure-network-architecture"
+                      ]
+                    },
+                    {
+                      "id": "privatedns",
+                      "karut": [
+                        "understanding"
+                      ],
+                      "label": "Private DNS Zone",
+                      "match": "resolution",
+                      "keywords": [
+                        "virtual-networks"
+                      ]
+                    },
+                    {
+                      "id": "internalmode",
+                      "karut": [
+                        "knowledge"
+                      ],
+                      "label": "Internal VNET Mode",
+                      "match": "nopublic",
+                      "keywords": [
+                        "azure-api-management"
+                      ]
+                    }
+                  ],
+                  "right_items": [
+                    {
+                      "id": "mgmt",
+                      "label": "Allows Azure to manage the APIM instance."
+                    },
+                    {
+                      "id": "resolution",
+                      "label": "Resolves the APIM hostname to a private IP."
+                    },
+                    {
+                      "id": "nopublic",
+                      "label": "Removes the public IP for incoming API traffic."
+                    },
+                    {
+                      "id": "outbound",
+                      "label": "Allows APIM to reach backend services."
+                    }
+                  ],
+                  "study_duration": 4
+                },
+                "flowDiagram": null,
+                "shortAnswer": null,
+                "illustration": null,
+                "pictureProbe": null,
+                "terminalDemo": null,
+                "translations": null,
+                "offscreenTask": null,
+                "audioRecording": null,
+                "equationviewer": null,
+                "interactiveTerminal": null
+              }
+            ],
+            "title": "Hardening the Network with Private Link",
+            "skills": [],
+            "learning_duration": 25
+          }
+        ],
+        "glossary_id": "SnNvNIaSI8fvbj9F"
+      },
+      {
+        "sections": [
+          {
+            "items": [
+              {
+                "mcqs": null,
+                "graph": null,
+                "table": null,
+                "caselet": null,
+                "compare": null,
+                "fenster": null,
+                "livecall": null,
+                "markdown": {
+                  "id": null,
+                  "karut": [
+                    "knowledge",
+                    "understanding"
+                  ],
+                  "title": "Eliminating Hardcoded Secrets",
+                  "diagram": null,
+                  "keywords": [
+                    "azure-key-vault",
+                    "secret-management",
+                    "credential-management"
+                  ],
+                  "markdown": "Credential management is often the weakest link in cloud security. Hardcoding API keys, connection strings, or certificates in APIM policies or Named Values exposes them to anyone with read access to the APIM instance.\n\nThe solution is to centralize secrets in Azure Key Vault and grant APIM access using a Managed Identity. This automates secret rotation and removes human error from the equation.\n\n### Managed Identities\n\nA Managed Identity is an Entra ID feature that provides an automatically managed identity for Azure resources. When you enable a System-Assigned Managed Identity on your APIM instance, Azure creates an identity tied to the lifecycle of that specific APIM resource.\n\n> **Note**: Storing secrets in APIM 'Named Values' as plain text is not secure—they are visible in the Azure portal. Always link Named Values to Key Vault secrets.",
+                  "study_duration": 4
+                },
+                "roleplay": null,
+                "stepFlow": null,
+                "checklist": null,
+                "dialogues": null,
+                "fillblank": null,
+                "flipcards": null,
+                "sequences": null,
+                "taskCheck": null,
+                "truefalse": null,
+                "codeEditor": null,
+                "codeReview": null,
+                "codeViewer": null,
+                "longAnswer": null,
+                "swipecards": null,
+                "connections": null,
+                "flowDiagram": null,
+                "shortAnswer": null,
+                "illustration": null,
+                "pictureProbe": null,
+                "terminalDemo": null,
+                "translations": null,
+                "offscreenTask": null,
+                "audioRecording": null,
+                "equationviewer": null,
+                "interactiveTerminal": null
+              },
+              {
+                "mcqs": null,
+                "graph": null,
+                "table": null,
+                "caselet": null,
+                "compare": null,
+                "fenster": null,
+                "livecall": null,
+                "markdown": null,
+                "roleplay": null,
+                "stepFlow": {
+                  "id": null,
+                  "flow": [
+                    "Enable a System-Assigned Managed Identity on the APIM instance.",
+                    "Navigate to the Azure Key Vault and open Access Policies (or RBAC settings).",
+                    "Grant the APIM Managed Identity the 'Key Vault Secrets User' role (or equivalent access policy).",
+                    "In APIM, create a new Named Value.",
+                    "Select 'Key Vault' as the type and provide the Secret Identifier URI.",
+                    "Reference the Named Value in your APIM policies using the {{NamedValueName}} syntax."
+                  ],
+                  "karut": [
+                    "application",
+                    "thought-process"
+                  ],
+                  "title": "Integrating APIM with Key Vault",
+                  "keywords": [
+                    "azure-key-vault",
+                    "secret-management",
+                    "azure-api-management"
+                  ],
+                  "study_duration": 4
+                },
+                "checklist": null,
+                "dialogues": null,
+                "fillblank": null,
+                "flipcards": null,
+                "sequences": null,
+                "taskCheck": null,
+                "truefalse": null,
+                "codeEditor": null,
+                "codeReview": null,
+                "codeViewer": null,
+                "longAnswer": null,
+                "swipecards": null,
+                "connections": null,
+                "flowDiagram": null,
+                "shortAnswer": null,
+                "illustration": null,
+                "pictureProbe": null,
+                "terminalDemo": null,
+                "translations": null,
+                "offscreenTask": null,
+                "audioRecording": null,
+                "equationviewer": null,
+                "interactiveTerminal": null
+              },
+              {
+                "mcqs": null,
+                "graph": null,
+                "table": null,
+                "caselet": null,
+                "compare": null,
+                "fenster": null,
+                "livecall": null,
+                "markdown": null,
+                "roleplay": null,
+                "stepFlow": null,
+                "checklist": null,
+                "dialogues": null,
+                "fillblank": null,
+                "flipcards": null,
+                "sequences": null,
+                "taskCheck": null,
+                "truefalse": null,
+                "codeEditor": null,
+                "codeReview": null,
+                "codeViewer": {
+                  "id": null,
+                  "code": "<policies>\n    <inbound>\n        <base />\n        <!-- Set the backend service URL -->\n        <set-backend-service base-url="https://my-backend-api.internal" />\n        <!-- Inject the API key fetched from Key Vault via Named Value -->\n        <set-header name="X-API-Key" exists-action="override">\n            <value>{{BackendApiKey}}</value>\n        </set-header>\n    </inbound>\n    <backend>\n        <base />\n    </backend>\n    <outbound>\n        <base />\n    </outbound>\n    <on-error>\n        <base />\n    </on-error>\n</policies>",
+                  "karut": [
+                    "application"
+                  ],
+                  "title": "Referencing Secrets in Policies",
+                  "keywords": [
+                    "apim-policies",
+                    "secret-management"
+                  ],
+                  "language": "xml",
+                  "study_duration": 3,
+                  "highlighted_lines": [
+                    7,
+                    8,
+                    9
+                  ]
+                },
+                "longAnswer": null,
+                "swipecards": null,
+                "connections": null,
+                "flowDiagram": null,
+                "shortAnswer": null,
+                "illustration": null,
+                "pictureProbe": null,
+                "terminalDemo": null,
+                "translations": null,
+                "offscreenTask": null,
+                "audioRecording": null,
+                "equationviewer": null,
+                "interactiveTerminal": null
+              },
+              {
+                "mcqs": null,
+                "graph": null,
+                "table": null,
+                "caselet": {
+                  "id": null,
+                  "cards": [
+                    "A developer needs to connect APIM to a legacy backend system that requires a static API key.",
+                    "To save time, the developer creates a Named Value in APIM called `LegacyApiKey`, sets the type to 'Plain', and pastes the key directly into the value field.",
+                    "During a routine audit, a junior administrator with read-only access to the APIM instance views the Named Values blade in the Azure portal.",
+                    "The administrator can clearly see the plain text value of `LegacyApiKey`. The credential is now compromised, even though the administrator only had read access.",
+                    "The security team mandates a fix: The API key must be moved to Azure Key Vault, and the APIM Named Value must be updated to reference the Key Vault secret using the APIM Managed Identity."
+                  ],
+                  "karut": [
+                    "reasoning",
+                    "application"
+                  ],
+                  "title": "The Leaked API Key",
+                  "keywords": [
+                    "credential-management",
+                    "secret-management",
+                    "azure-key-vault"
+                  ],
+                  "study_duration": 6
+                },
+                "compare": null,
+                "fenster": null,
+                "livecall": null,
+                "markdown": null,
+                "roleplay": null,
+                "stepFlow": null,
+                "checklist": null,
+                "dialogues": null,
+                "fillblank": null,
+                "flipcards": null,
+                "sequences": null,
+                "taskCheck": null,
+                "truefalse": null,
+                "codeEditor": null,
+                "codeReview": null,
+                "codeViewer": null,
+                "longAnswer": null,
+                "swipecards": null,
+                "connections": null,
+                "flowDiagram": null,
+                "shortAnswer": null,
+                "illustration": null,
+                "pictureProbe": null,
+                "terminalDemo": null,
+                "translations": null,
+                "offscreenTask": null,
+                "audioRecording": null,
+                "equationviewer": null,
+                "interactiveTerminal": null
+              },
+              {
+                "mcqs": null,
+                "graph": null,
+                "table": {
+                  "id": null,
+                  "rows": [
+                    [
+                      "Feature",
+                      "Managed Identity",
+                      "Service Principal"
+                    ],
+                    [
+                      "Credential Management",
+                      "Automatic (handled by Azure)",
+                      "Manual (requires rotation)"
+                    ],
+                    [
+                      "Lifecycle",
+                      "Tied to the Azure resource",
+                      "Independent"
+                    ],
+                    [
+                      "Risk of Leakage",
+                      "Zero (no credentials to leak)",
+                      "High (client secret can be leaked)"
+                    ]
+                  ],
+                  "karut": [
+                    "reasoning",
+                    "understanding"
+                  ],
+                  "title": "Managed Identity vs. Service Principal",
+                  "keywords": [
+                    "credential-management",
+                    "secret-management"
+                  ],
+                  "study_duration": 3
+                },
+                "caselet": null,
+                "compare": null,
+                "fenster": null,
+                "livecall": null,
+                "markdown": null,
+                "roleplay": null,
+                "stepFlow": null,
+                "checklist": null,
+                "dialogues": null,
+                "fillblank": null,
+                "flipcards": null,
+                "sequences": null,
+                "taskCheck": null,
+                "truefalse": null,
+                "codeEditor": null,
+                "codeReview": null,
+                "codeViewer": null,
+                "longAnswer": null,
+                "swipecards": null,
+                "connections": null,
+                "flowDiagram": null,
+                "shortAnswer": null,
+                "illustration": null,
+                "pictureProbe": null,
+                "terminalDemo": null,
+                "translations": null,
+                "offscreenTask": null,
+                "audioRecording": null,
+                "equationviewer": null,
+                "interactiveTerminal": null
+              },
+              {
+                "mcqs": {
+                  "id": null,
+                  "title": "Secret Management Knowledge Check",
+                  "questions": [
+                    {
+                      "a": 0,
+                      "c": [
+                        "The APIM Managed Identity has not been granted 'Secret User' permissions on the Key Vault.",
+                        "The Named Value syntax in the policy is incorrect; it should use [[SecretName]] instead of {{SecretName}}.",
+                        "Key Vault does not support integration with APIM Named Values."
+                      ],
+                      "e": "If APIM cannot retrieve the secret, it is almost always an authorization issue. The APIM Managed Identity must be explicitly granted permission (via Access Policy or RBAC) to read secrets from the Key Vault.",
+                      "q": "You have configured a Named Value in APIM to fetch a secret from Azure Key Vault. However, the policy fails at runtime, indicating it cannot retrieve the secret. What is the most likely cause?",
+                      "karut": [
+                        "reasoning",
+                        "application"
+                      ],
+                      "keywords": [
+                        "azure-key-vault",
+                        "credential-management"
+                      ]
+                    }
+                  ],
+                  "study_duration": 5
+                },
+                "graph": null,
+                "table": null,
+                "caselet": null,
+                "compare": null,
+                "fenster": null,
+                "livecall": null,
+                "markdown": null,
+                "roleplay": null,
+                "stepFlow": null,
+                "checklist": null,
+                "dialogues": null,
+                "fillblank": null,
+                "flipcards": null,
+                "sequences": null,
+                "taskCheck": null,
+                "truefalse": null,
+                "codeEditor": null,
+                "codeReview": null,
+                "codeViewer": null,
+                "longAnswer": null,
+                "swipecards": null,
+                "connections": null,
+                "flowDiagram": null,
+                "shortAnswer": null,
+                "illustration": null,
+                "pictureProbe": null,
+                "terminalDemo": null,
+                "translations": null,
+                "offscreenTask": null,
+                "audioRecording": null,
+                "equationviewer": null,
+                "interactiveTerminal": null
+              }
+            ],
+            "title": "Secure Credential & Secret Management",
+            "skills": [],
+            "learning_duration": 25
+          }
+        ],
+        "glossary_id": "SnNvNIaSI8fvbj9F"
+      }
+    ],
+    "glossary_id": "SnNvNIaSI8fvbj9F"
+  },
+  "content_shorthand": {
+    "sections": [
+      {
+        "items": [
+          {
+            "id": "OuhapqdFbdehOMrS",
+            "markdown": [
+              "The Noisy Neighbor Problem",
+              "In a shared API ecosystem, a single poorly written client script can inadvertently launch a Denial of Service (DoS) attack. Imagine a mobile app developer who accidentally places an API call inside a tight `while` loop; without governance, that one client could exhaust your backend database connections, starving all other legitimate users. This is the 'Noisy Neighbor' problem.\n\nAzure API Management (APIM) solves this using **Policies**—XML-based configuration blocks that execute logic as requests pass through the gateway. To protect your infrastructure, we focus on the `inbound` processing block, where we intercept traffic before it ever touches your backend code.\n\nWe distinguish between two primary tools for traffic governance:\n1.  **Rate Limits**: Short-term protection (seconds/minutes) to prevent infrastructure spikes.\n2.  **Quotas**: Long-term management (days/months) to enforce business tiers or subscription budgets.",
+              "+---------+      +------------+      +---------+\n| Client  | ---> | APIM (429) | -X-> | Backend |\n+---------+      +------------+      +---------+\n      |                |                  |\n      | [Looping Call] | [Policy Check]   | [Safe]  |\n      +----------------+------------------+---------+",
+              "OuhapqdFbdehOMrS",
+              [
+                "understanding",
+                "knowledge"
+              ],
+              [
+                "azure-api-management",
+                "apim-policies",
+                "rate-limiting"
+              ]
+            ]
+          },
+          {
+            "id": "fDxkjNnE5WvnBfdU",
+            "caselet": [
+              "The Infinite Loop Incident",
+              [
+                "A fintech startup provides a 'Stock Price' API. Suddenly, backend latency spikes from 50ms to 5,000ms. The database CPU hits 100%.",
+                "Logs reveal a single API key is responsible for 95% of the traffic. A partner developer's retry logic has malfunctioned, sending 500 requests per second.",
+                "The team decides to implement `rate-limit-by-key`. They choose the `subscription-id` as the key to isolate the impact to just that one partner.",
+                "They set a limit of 10 calls per second. Immediately, the partner's requests start receiving `429 Too Many Requests`, while other clients return to normal latency.",
+                "To prevent this partner from burning through their entire monthly budget in one day, the team also adds a `quota-by-key` policy set to 50,000 calls per month.",
+                "The partner fixes their code. The APIM dashboard shows the 'blocked' traffic dropping, and the backend remains stable without any manual scaling."
+              ],
+              "fDxkjNnE5WvnBfdU",
+              [
+                "reasoning",
+                "application"
+              ],
+              [
+                "rate-limiting",
+                "quota-enforcement",
+                "api-security-configuration"
+              ]
+            ]
+          },
+          {
+            "id": "VPF6M01KuvU21GyM",
+            "codeViewer": [
+              "Implementing Throttling Policies",
+              "<policies>\n    <inbound>\n        <base />\n        <!-- 1. Rate Limit: Prevent short-term spikes (per 60 seconds) -->\n        <rate-limit-by-key calls="20" \n                           renewal-period="60" \n                           counter-key="@(context.Subscription.Id)" />\n\n        <!-- 2. Quota: Manage long-term consumption (per month) -->\n        <quota-by-key calls="10000" \n                      renewal-period="2592000" \n                      counter-key="@(context.Subscription.Id)" />\n    </inbound>\n    <backend>\n        <forward-request />\n    </backend>\n    <outbound>\n        <base />\n    </outbound>\n</policies>",
+              "xml",
+              [
+                6,
+                7,
+                11,
+                12
+              ],
+              "VPF6M01KuvU21GyM",
+              [
+                "application",
+                "understanding"
+              ],
+              [
+                "apim-policies",
+                "rate-limiting",
+                "quota-enforcement"
+              ]
+            ]
+          },
+          {
+            "id": "SmiHswAaZeanqDF9",
+            "stepFlow": [
+              "Configuring a New Policy",
+              [
+                "Navigate to the 'APIs' blade in the Azure Portal and select your target API.",
+                "Select the 'Design' tab and click the '</>' icon in the Inbound processing section to open the Policy Editor.",
+                "Locate the `<inbound>` tag and ensure the `<base />` tag is present to inherit product-level policies.",
+                "Insert the `<rate-limit-by-key />` snippet, defining the `calls` threshold and `renewal-period` in seconds.",
+                "Define the `counter-key` using a C# expression like `@(context.Request.IpAddress)` for IP-based throttling.",
+                "Click 'Save' and test the endpoint using the 'Test' tab to verify the 429 response after exceeding the limit."
+              ],
+              "SmiHswAaZeanqDF9",
+              [
+                "application"
+              ],
+              [
+                "api-policy-management",
+                "azure-api-management"
+              ]
+            ]
+          },
+          {
+            "id": "DWGnTDTyC7IjKGf2",
+            "checklist": [
+              "Policy Design Review",
+              "review",
+              "Review your proposed APIM policy configuration against these critical stability and security criteria:",
+              [
+                {
+                  "group": "Logic & Scope",
+                  "items": [
+                    "Is the policy placed in the <inbound> section to block traffic before it reaches the backend?",
+                    "Does the counter-key uniquely identify the consumer (e.g., Subscription ID or IP)?",
+                    "Is the <base /> tag included to ensure higher-level security policies aren't bypassed?"
+                  ]
+                },
+                {
+                  "group": "Threshold Calibration",
+                  "items": [
+                    "Is the rate-limit renewal period short enough (e.g., 60s) to handle transient spikes?",
+                    "Is the quota renewal period long enough (e.g., 2,592,000s for a month) for billing enforcement?",
+                    "Have you verified that the backend capacity can actually handle the 'allowed' maximum rate?"
+                  ]
+                }
+              ],
+              "DWGnTDTyC7IjKGf2",
+              [
+                "thought-process",
+                "reasoning"
+              ],
+              [
+                "api-policy-management",
+                "api-security-configuration"
+              ]
+            ]
+          },
+          {
+            "id": "59XUiKFTgEUl1NaU",
+            "mcqs": [
+              "Traffic Governance Quiz",
+              [
+                [
+                  "A developer wants to ensure that no single user can exceed 5,000 requests per week to manage their subscription tier. Which policy and renewal period is most appropriate?",
+                  [
+                    "rate-limit-by-key with renewal-period="604800"",
+                    "quota-by-key with renewal-period="604800"",
+                    "rate-limit with renewal-period="3600""
+                  ],
+                  1,
+                  "Quotas are designed for long-term consumption tracking (like a week, which is 604,800 seconds). Rate limits are for short-term burst protection. Using 'by-key' ensures the limit applies to individual users rather than the entire API.",
+                  [
+                    "reasoning"
+                  ],
+                  [
+                    "quota-enforcement",
+                    "rate-limiting"
+                  ]
+                ],
+                [
+                  "What happens if you omit the `<base />` tag in an API-level inbound policy when a Product-level policy also exists?",
+                  [
+                    "The API-level policy will fail to compile.",
+                    "The Product-level policies will be ignored for that API.",
+                    "Both policies will execute, with the Product policy running first."
+                  ],
+                  1,
+                  "The `<base />` tag is the instruction to execute policies defined at a higher scope (Product or Global). If omitted, the API-level policy completely overrides the higher-level ones, potentially bypassing global security controls.",
+                  [
+                    "understanding"
+                  ],
+                  [
+                    "apim-policies",
+                    "api-policy-management"
+                  ]
+                ],
+                [
+                  "You observe that a rate limit of 100 calls per minute is being exceeded in a multi-region APIM deployment (East US and West US). Why might this be happening?",
+                  [
+                    "Rate limit counters are local to each gateway instance and not synchronized globally.",
+                    "The renewal-period attribute is incorrectly calculated in milliseconds.",
+                    "The counter-key is using the wrong context variable."
+                  ],
+                  0,
+                  "In Azure APIM, rate-limit counters are maintained independently by each regional gateway. If you have two regions, a client could theoretically hit 100 calls/min in East US and another 100 calls/min in West US.",
+                  [
+                    "reasoning"
+                  ],
+                  [
+                    "rate-limiting",
+                    "azure-api-management"
+                  ]
+                ]
+              ],
+              "59XUiKFTgEUl1NaU"
+            ]
+          }
+        ],
+        "title": "Governing Traffic with APIM Policies",
+        "learning_duration": 28
+      },
+      {
+        "items": [
+          {
+            "id": "UfzU5XZxFlJB1lOU",
+            "compare": [
+              "API Keys vs. OAuth 2.0",
+              [
+                [
+                  "**Static API Keys**",
+                  "**OAuth 2.0 Tokens**"
+                ],
+                [
+                  "Long-lived, rarely rotated.",
+                  "Short-lived, automatically expire."
+                ],
+                [
+                  "Opaque string; carries no context.",
+                  "Structured JWT; carries identity and claims."
+                ],
+                [
+                  "Revocation requires manual intervention.",
+                  "Revocation is handled by the Identity Provider."
+                ],
+                [
+                  "High blast radius if leaked.",
+                  "Limited blast radius due to expiration and scopes."
+                ]
+              ],
+              "UfzU5XZxFlJB1lOU",
+              [
+                "knowledge",
+                "reasoning"
+              ],
+              [
+                "oauth-2-0",
+                "api-keys",
+                "jwt"
+              ]
+            ]
+          },
+          {
+            "id": "tZXzlK3Lsl9IlzRo",
+            "flowDiagram": [
+              "OAuth 2.0 Authorization Code Flow",
+              "The sequence of events when a client requests access to an API secured by APIM and Entra ID.",
+              "sequenceDiagram\n    participant Client\n    participant EntraID as Entra ID (IdP)\n    participant APIM as Azure API Management\n    participant Backend as Backend API\n\n    Client->>EntraID: 1. Request Authorization Code\n    EntraID-->>Client: 2. Return Authorization Code\n    Client->>EntraID: 3. Exchange Code for Access Token\n    EntraID-->>Client: 4. Return JWT Access Token\n    Client->>APIM: 5. API Request + Bearer Token\n    APIM->>EntraID: 6. Fetch OIDC Metadata (Public Keys)\n    EntraID-->>APIM: 7. Return Public Keys\n    APIM->>APIM: 8. Validate JWT Signature & Claims\n    APIM->>Backend: 9. Forward Request (if valid)\n    Backend-->>APIM: 10. API Response\n    APIM-->>Client: 11. API Response",
+              "tZXzlK3Lsl9IlzRo",
+              [
+                "understanding",
+                "thought-process"
+              ],
+              [
+                "oauth-2-0",
+                "openid-connect",
+                "entra-id"
+              ]
+            ]
+          },
+          {
+            "id": "Ec0GFxYRd0qvBKPi",
+            "markdown": [
+              "Validating JWTs in APIM",
+              "Identity is the primary security perimeter. Moving away from shared secrets (API Keys) is essential for production security. APIM does not handle user login directly; it only validates the resulting token.\n\nThe `validate-jwt` policy is the cornerstone of API security in APIM. It verifies the token's signature, expiration, and claims before allowing the request to proceed to the backend.\n\n### The OpenID Connect Discovery Endpoint\n\nAPIM uses the OpenID Connect (OIDC) Discovery endpoint to fetch the public keys needed to verify the JWT signature. This is crucial because Entra ID rotates its signing keys periodically.\n\n> **Note**: A common mistake is hardcoding the signing key in the policy. If the IdP rotates the key, your API will immediately start rejecting valid tokens. Always use the OIDC metadata endpoint so APIM can fetch the current keys dynamically.\n\n### Essential Claims to Validate\n\nValidating the signature is not enough. You must also validate the claims within the token to prevent token replay attacks:\n\n*   **`aud` (Audience)**: Ensures the token was issued specifically for your API. If an attacker steals a token meant for a different API, validating the audience will block it.\n*   **`iss` (Issuer)**: Ensures the token was issued by your trusted Identity Provider (e.g., your specific Entra ID tenant).",
+              null,
+              "Ec0GFxYRd0qvBKPi",
+              [
+                "understanding",
+                "application"
+              ],
+              [
+                "validate-jwt",
+                "openid-connect",
+                "jwt-claims"
+              ]
+            ]
+          },
+          {
+            "id": "qfDfkI97AQJlDsPC",
+            "codeViewer": [
+              "Configuring the validate-jwt Policy",
+              "<policies>\n    <inbound>\n        <base />\n        <!-- Validate the JWT token -->\n        <validate-jwt header-name="Authorization" failed-validation-httpcode="401" failed-validation-error-message="Unauthorized">\n            <!-- Fetch public keys dynamically from the OIDC endpoint -->\n            <openid-config url="https://login.microsoftonline.com/{{tenant-id}}/v2.0/.well-known/openid-configuration" />\n            <audiences>\n                <!-- Ensure the token is meant for this API -->\n                <audience>api://my-backend-api</audience>\n            </audiences>\n            <issuers>\n                <!-- Ensure the token was issued by our specific Entra ID tenant -->\n                <issuer>https://sts.windows.net/{{tenant-id}}/</issuer>\n            </issuers>\n            <required-claims>\n                <!-- Require a specific scope for fine-grained authorization -->\n                <claim name="scp" match="any">\n                    <value>Files.Read</value>\n                </claim>\n            </required-claims>\n        </validate-jwt>\n    </inbound>\n    <backend>\n        <base />\n    </backend>\n    <outbound>\n        <base />\n    </outbound>\n    <on-error>\n        <base />\n    </on-error>\n</policies>",
+              "xml",
+              [
+                6,
+                9,
+                13,
+                17
+              ],
+              "qfDfkI97AQJlDsPC",
+              [
+                "application",
+                "understanding"
+              ],
+              [
+                "validate-jwt",
+                "apim-policies",
+                "jwt-claims"
+              ]
+            ]
+          },
+          {
+            "id": "0rw4FNjaAWg602Pd",
+            "codeReview": [
+              "Identify the JWT Vulnerability",
+              "XrgPsULrtEcUS0g8",
+              "0rw4FNjaAWg602Pd",
+              [
+                "reasoning",
+                "thought-process"
+              ],
+              [
+                "validate-jwt",
+                "api-security-configuration",
+                "jwt-claims"
+              ]
+            ]
+          },
+          {
+            "id": "daRCdbmSV9ZkeTni",
+            "truefalse": [
+              "JWT Validation Concepts",
+              [
+                "False",
+                "True"
+              ],
+              [
+                [
+                  "APIM handles user authentication directly by prompting the user for credentials.",
+                  0,
+                  "False. APIM only validates the token provided in the request; the Identity Provider (like Entra ID) handles the actual authentication.",
+                  [
+                    "knowledge"
+                  ],
+                  [
+                    "azure-api-management",
+                    "entra-id"
+                  ]
+                ],
+                [
+                  "Validating the 'aud' (audience) claim prevents a token issued for API 'A' from being used to access API 'B'.",
+                  1,
+                  "True. The audience claim specifies the intended recipient of the token, preventing token replay across different APIs.",
+                  [
+                    "understanding"
+                  ],
+                  [
+                    "jwt-claims",
+                    "api-security-configuration"
+                  ]
+                ],
+                [
+                  "Hardcoding the issuer signing key in the APIM policy is a recommended practice for better performance.",
+                  0,
+                  "False. Hardcoding the key will cause the API to fail when the Identity Provider rotates its keys. Always use the OIDC discovery endpoint.",
+                  [
+                    "application"
+                  ],
+                  [
+                    "validate-jwt",
+                    "openid-connect"
+                  ]
+                ]
+              ],
+              "daRCdbmSV9ZkeTni"
+            ]
+          }
+        ],
+        "title": "Modern Identity with OAuth 2.0 and OIDC",
+        "learning_duration": 25
+      },
+      {
+        "items": [
+          {
+            "id": "sqtCe4s0bNKBfb4i",
+            "markdown": [
+              "Network Isolation with VNETs",
+              "Network-level security provides defense-in-depth. Even if an identity is compromised, an attacker cannot reach the API if it is not exposed to the public internet.\n\nDeploying APIM within an Azure Virtual Network (VNET) allows you to control inbound and outbound traffic. \n\n### Internal vs. External VNET Mode\n\n*   **External Mode**: The APIM gateway is accessible from the public internet, but it can route traffic to backend services located within the VNET.\n*   **Internal Mode**: The APIM gateway is *only* accessible from within the VNET. It has no public IP address for incoming API traffic.\n\n> **Note**: A common misconception is that 'Internal' mode still allows some public access by default. It does not. All incoming API traffic must originate from within the VNET or a connected network (like an ExpressRoute or VPN).",
+              null,
+              "sqtCe4s0bNKBfb4i",
+              [
+                "knowledge",
+                "understanding"
+              ],
+              [
+                "virtual-networks",
+                "azure-api-management",
+                "secure-network-architecture"
+              ]
+            ]
+          },
+          {
+            "id": "vJlLYNwReH6kZbrX",
+            "flowDiagram": [
+              "Private Link Architecture",
+              "How Private Link connects a consumer VNET to an APIM instance in a provider VNET.",
+              "flowchart LR\n    subgraph Consumer VNET\n        Client[Client App]\n        PE[Private Endpoint]\n    end\n    subgraph Provider VNET\n        PLS[Private Link Service]\n        APIM[APIM (Internal)]\n        Backend[Backend API]\n    end\n    Client -->|Private IP| PE\n    PE -.->|Microsoft Backbone| PLS\n    PLS --> APIM\n    APIM --> Backend",
+              "vJlLYNwReH6kZbrX",
+              [
+                "understanding"
+              ],
+              [
+                "private-link",
+                "virtual-networks",
+                "secure-network-architecture"
+              ]
+            ]
+          },
+          {
+            "id": "0x8iGaENXnpfJ5QD",
+            "table": [
+              "Service Endpoints vs. Private Link",
+              [
+                [
+                  "Feature",
+                  "Service Endpoints",
+                  "Private Link"
+                ],
+                [
+                  "IP Address",
+                  "Public IP of the PaaS service",
+                  "Private IP from your VNET"
+                ],
+                [
+                  "Data Exfiltration Risk",
+                  "Higher (access to all instances of the service)",
+                  "Lower (access only to the specific resource)"
+                ],
+                [
+                  "On-Premises Access",
+                  "Requires NAT or public routing",
+                  "Accessible via ExpressRoute/VPN"
+                ]
+              ],
+              "0x8iGaENXnpfJ5QD",
+              [
+                "reasoning",
+                "understanding"
+              ],
+              [
+                "private-link",
+                "virtual-networks"
+              ]
+            ]
+          },
+          {
+            "id": "maV0XDxxfr6ybo5l",
+            "stepFlow": [
+              "Configuring APIM in Internal VNET Mode",
+              [
+                "Create a dedicated subnet for APIM within your VNET.",
+                "Configure a Network Security Group (NSG) and associate it with the subnet.",
+                "Add an inbound NSG rule allowing TCP port 3443 from the 'ApiManagement' service tag (required for management traffic).",
+                "Add outbound NSG rules allowing TCP port 443 to 'Storage' and 'AzureKeyVault' service tags.",
+                "Deploy or migrate the APIM instance into the dedicated subnet, selecting 'Internal' mode.",
+                "Configure a Private DNS Zone to resolve the APIM gateway hostname to its new private IP address."
+              ],
+              "maV0XDxxfr6ybo5l",
+              [
+                "application",
+                "thought-process"
+              ],
+              [
+                "virtual-networks",
+                "azure-api-management",
+                "secure-network-architecture"
+              ]
+            ]
+          },
+          {
+            "id": "EoPBSNZapdTccZRK",
+            "checklist": [
+              "VNET Deployment Pre-Flight",
+              "review",
+              "Review your APIM VNET configuration against these critical requirements:",
+              [
+                {
+                  "group": "Network Security Groups (NSG)",
+                  "items": [
+                    "Is inbound port 3443 allowed from the ApiManagement service tag?",
+                    "Are outbound ports 443 allowed to Storage and AzureKeyVault service tags?"
+                  ]
+                },
+                {
+                  "group": "DNS Resolution",
+                  "items": [
+                    "Is a Private DNS Zone configured for the APIM gateway hostname?",
+                    "Is the Private DNS Zone linked to the client VNET?"
+                  ]
+                }
+              ],
+              "EoPBSNZapdTccZRK",
+              [
+                "application",
+                "thought-process"
+              ],
+              [
+                "virtual-networks",
+                "secure-network-architecture"
+              ]
+            ]
+          },
+          {
+            "id": "Bjz80oAwOcwd1hOK",
+            "connections": [
+              "Match the Network Concept",
+              "Match each network requirement to its purpose in an APIM VNET deployment.",
+              [
+                [
+                  "port3443",
+                  "mgmt",
+                  "Inbound TCP Port 3443",
+                  [
+                    "knowledge"
+                  ],
+                  [
+                    "secure-network-architecture"
+                  ]
+                ],
+                [
+                  "privatedns",
+                  "resolution",
+                  "Private DNS Zone",
+                  [
+                    "understanding"
+                  ],
+                  [
+                    "virtual-networks"
+                  ]
+                ],
+                [
+                  "internalmode",
+                  "nopublic",
+                  "Internal VNET Mode",
+                  [
+                    "knowledge"
+                  ],
+                  [
+                    "azure-api-management"
+                  ]
+                ]
+              ],
+              [
+                [
+                  "mgmt",
+                  "Allows Azure to manage the APIM instance."
+                ],
+                [
+                  "resolution",
+                  "Resolves the APIM hostname to a private IP."
+                ],
+                [
+                  "nopublic",
+                  "Removes the public IP for incoming API traffic."
+                ],
+                [
+                  "outbound",
+                  "Allows APIM to reach backend services."
+                ]
+              ],
+              "Bjz80oAwOcwd1hOK"
+            ]
+          }
+        ],
+        "title": "Hardening the Network with Private Link",
+        "learning_duration": 25
+      },
+      {
+        "items": [
+          {
+            "id": "iHYFfQ2FAVA9bBbj",
+            "markdown": [
+              "Eliminating Hardcoded Secrets",
+              "Credential management is often the weakest link in cloud security. Hardcoding API keys, connection strings, or certificates in APIM policies or Named Values exposes them to anyone with read access to the APIM instance.\n\nThe solution is to centralize secrets in Azure Key Vault and grant APIM access using a Managed Identity. This automates secret rotation and removes human error from the equation.\n\n### Managed Identities\n\nA Managed Identity is an Entra ID feature that provides an automatically managed identity for Azure resources. When you enable a System-Assigned Managed Identity on your APIM instance, Azure creates an identity tied to the lifecycle of that specific APIM resource.\n\n> **Note**: Storing secrets in APIM 'Named Values' as plain text is not secure—they are visible in the Azure portal. Always link Named Values to Key Vault secrets.",
+              null,
+              "iHYFfQ2FAVA9bBbj",
+              [
+                "knowledge",
+                "understanding"
+              ],
+              [
+                "azure-key-vault",
+                "secret-management",
+                "credential-management"
+              ]
+            ]
+          },
+          {
+            "id": "Ys8FYpP8UzkfAF58",
+            "stepFlow": [
+              "Integrating APIM with Key Vault",
+              [
+                "Enable a System-Assigned Managed Identity on the APIM instance.",
+                "Navigate to the Azure Key Vault and open Access Policies (or RBAC settings).",
+                "Grant the APIM Managed Identity the 'Key Vault Secrets User' role (or equivalent access policy).",
+                "In APIM, create a new Named Value.",
+                "Select 'Key Vault' as the type and provide the Secret Identifier URI.",
+                "Reference the Named Value in your APIM policies using the {{NamedValueName}} syntax."
+              ],
+              "Ys8FYpP8UzkfAF58",
+              [
+                "application",
+                "thought-process"
+              ],
+              [
+                "azure-key-vault",
+                "secret-management",
+                "azure-api-management"
+              ]
+            ]
+          },
+          {
+            "id": "2TBHiaLmkrnTHCEf",
+            "codeViewer": [
+              "Referencing Secrets in Policies",
+              "<policies>\n    <inbound>\n        <base />\n        <!-- Set the backend service URL -->\n        <set-backend-service base-url="https://my-backend-api.internal" />\n        <!-- Inject the API key fetched from Key Vault via Named Value -->\n        <set-header name="X-API-Key" exists-action="override">\n            <value>{{BackendApiKey}}</value>\n        </set-header>\n    </inbound>\n    <backend>\n        <base />\n    </backend>\n    <outbound>\n        <base />\n    </outbound>\n    <on-error>\n        <base />\n    </on-error>\n</policies>",
+              "xml",
+              [
+                7,
+                8,
+                9
+              ],
+              "2TBHiaLmkrnTHCEf",
+              [
+                "application"
+              ],
+              [
+                "apim-policies",
+                "secret-management"
+              ]
+            ]
+          },
+          {
+            "id": "JTSRkau4tESOPIDM",
+            "caselet": [
+              "The Leaked API Key",
+              [
+                "A developer needs to connect APIM to a legacy backend system that requires a static API key.",
+                "To save time, the developer creates a Named Value in APIM called `LegacyApiKey`, sets the type to 'Plain', and pastes the key directly into the value field.",
+                "During a routine audit, a junior administrator with read-only access to the APIM instance views the Named Values blade in the Azure portal.",
+                "The administrator can clearly see the plain text value of `LegacyApiKey`. The credential is now compromised, even though the administrator only had read access.",
+                "The security team mandates a fix: The API key must be moved to Azure Key Vault, and the APIM Named Value must be updated to reference the Key Vault secret using the APIM Managed Identity."
+              ],
+              "JTSRkau4tESOPIDM",
+              [
+                "reasoning",
+                "application"
+              ],
+              [
+                "credential-management",
+                "secret-management",
+                "azure-key-vault"
+              ]
+            ]
+          },
+          {
+            "id": "pzTfVQ8eYnSVhFJX",
+            "table": [
+              "Managed Identity vs. Service Principal",
+              [
+                [
+                  "Feature",
+                  "Managed Identity",
+                  "Service Principal"
+                ],
+                [
+                  "Credential Management",
+                  "Automatic (handled by Azure)",
+                  "Manual (requires rotation)"
+                ],
+                [
+                  "Lifecycle",
+                  "Tied to the Azure resource",
+                  "Independent"
+                ],
+                [
+                  "Risk of Leakage",
+                  "Zero (no credentials to leak)",
+                  "High (client secret can be leaked)"
+                ]
+              ],
+              "pzTfVQ8eYnSVhFJX",
+              [
+                "reasoning",
+                "understanding"
+              ],
+              [
+                "credential-management",
+                "secret-management"
+              ]
+            ]
+          },
+          {
+            "id": "PVqtKnQ8z8IAQTWT",
+            "mcqs": [
+              "Secret Management Knowledge Check",
+              [
+                [
+                  "You have configured a Named Value in APIM to fetch a secret from Azure Key Vault. However, the policy fails at runtime, indicating it cannot retrieve the secret. What is the most likely cause?",
+                  [
+                    "The APIM Managed Identity has not been granted 'Secret User' permissions on the Key Vault.",
+                    "The Named Value syntax in the policy is incorrect; it should use [[SecretName]] instead of {{SecretName}}.",
+                    "Key Vault does not support integration with APIM Named Values."
+                  ],
+                  0,
+                  "If APIM cannot retrieve the secret, it is almost always an authorization issue. The APIM Managed Identity must be explicitly granted permission (via Access Policy or RBAC) to read secrets from the Key Vault.",
+                  [
+                    "reasoning",
+                    "application"
+                  ],
+                  [
+                    "azure-key-vault",
+                    "credential-management"
+                  ]
+                ]
+              ],
+              "PVqtKnQ8z8IAQTWT"
+            ]
+          }
+        ],
+        "title": "Secure Credential & Secret Management",
+        "learning_duration": 25
+      }
+    ],
+    "glossary_id": "SnNvNIaSI8fvbj9F"
+  },
+  "removed_widgets_csv": null,
+  "glossary_id": 1,
+  "presentation_id": null,
+  "updated_at": null,
+  "summary": "This lesson equips practitioners with the skills to harden Azure API Management across four critical dimensions. You will implement XML-based policies for traffic throttling, integrate OAuth 2.0 and OIDC for robust identity validation, and isolate your infrastructure using Virtual Networks and Private Link. Finally, you will learn to manage secrets and certificates securely using Azure Key Vault and Managed Identities, ensuring a production-grade security posture for your API ecosystem.",
+  "lesson_language": null,
+  "teacher_persona": null,
+  "outcomes_request_id": 1,
+  "outcomes_json": [
+    "Configure Azure API Management policies to effectively implement rate limiting and enforce custom quotas.",
+    "Apply OAuth 2.0 and OpenID Connect flows to secure API access and manage user authorization.",
+    "Establish secure backend communication channels for APIs by configuring Azure Virtual Networks and Private Link.",
+    "Integrate Azure Key Vault to securely store and manage secrets, keys, and certificates for API management.",
+    "Troubleshoot common issues arising from incorrect policy configurations or authentication failures in Azure APIM.",
+    "Evaluate and select appropriate security mechanisms within Azure APIM to meet specific compliance and performance requirements."
+  ],
+  "widgets_json": [
+    "markdown",
+    "stepFlow",
+    "flowDiagram",
+    "codeViewer",
+    "mcqs",
+    "truefalse",
+    "codeReview",
+    "connections",
+    "checklist",
+    "caselet",
+    "compare",
+    "longAnswer",
+    "table"
+  ],
+  "focus_keywords_json": [
+    "Azure API Management",
+    "APIM policies",
+    "rate limiting",
+    "quota enforcement",
+    "OAuth 2.0",
+    "OpenID Connect",
+    "Virtual Networks",
+    "Private Link",
+    "Azure Key Vault",
+    "secret management"
+  ],
+  "template_id": null,
+  "source_public_ids_json": null,
+  "visibility": "private",
+  "creator_user_id": 1,
+  "creator_email": "dylen.app@gmail.com",
+  "tenant_id": null,
+  "tenant_name": null,
+  "sections_count": 4,
+  "available_sections_count": 4,
+  "completed_sections_count": 0,
+  "blueprint": "itandsoftwareengineering",
+  "thumbnail_public_id": null,
+  "lesson_type": "static"
+}

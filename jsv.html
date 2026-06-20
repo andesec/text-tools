@@ -86,6 +86,60 @@
 			border: none !important;
 			text-decoration: none !important;
 		}
+
+		/* ── Tree Action Repair Wrench ── */
+		.tree-action-repair {
+			color: var(--warning) !important;
+		}
+
+		.tree-action-repair:hover {
+			color: var(--accent) !important;
+			background: var(--bg-surface-hover) !important;
+		}
+
+		/* ── Tree View Error Display ── */
+		.json-error-container {
+			color: var(--danger);
+			padding: 16px;
+			border: 1px solid var(--danger);
+			border-radius: var(--radius-md);
+		}
+
+		.json-error-title {
+			margin-bottom: 4px;
+			font-weight: 600;
+		}
+
+		.json-error-message {
+			font-size: 11px;
+			font-family: var(--font-mono);
+			color: var(--text-secondary);
+		}
+
+		.json-error-btn {
+			margin-top: 12px;
+			padding: 4px 10px;
+			background: rgb(239, 68, 68);
+			color: rgb(255, 255, 255);
+			border: none;
+			border-radius: var(--radius-sm);
+			font-size: 11px;
+			cursor: pointer;
+			transition: background-color var(--transition-fast);
+		}
+
+		.json-error-btn:hover {
+			background: rgb(220, 38, 38);
+		}
+
+		/* ── Tree View Empty Display ── */
+		.json-empty-message {
+			color: var(--text-tertiary);
+			padding: 32px;
+			text-align: center;
+			font-style: italic;
+			font-size: 12px;
+		}
 	</style>
 
 
@@ -317,6 +371,13 @@
 					</svg>
 					<span class="sidebar-panel-title">Tree View</span>
 					<div class="tree-header-actions">
+						<button class="btn-icon tree-action tree-action-repair" onclick="repairJsonAction()" title="Repair malformed JSON"
+							aria-label="Repair JSON">
+							<svg class="tree-action-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round"
+									d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+							</svg>
+						</button>
 						<button class="btn-icon tree-action" onclick="expandAllTree()" title="Expand all nodes"
 							aria-label="Expand all">
 							<svg class="tree-action-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -357,6 +418,13 @@
 					</svg>
 					<span>Tree View</span>
 					<div class="tree-header-actions">
+						<button class="btn-icon tree-action tree-action-repair" onclick="repairJsonAction()" title="Repair malformed JSON"
+							aria-label="Repair JSON">
+							<svg class="tree-action-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round"
+									d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+							</svg>
+						</button>
 						<button class="btn-icon tree-action" onclick="expandAllTree()" title="Expand all nodes"
 							aria-label="Expand all">
 							<svg class="tree-action-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -392,6 +460,7 @@
 	<div id="copy-toast" class="toast">Copied to clipboard!</div>
 
 	<script src="vendor/cm-js-bundle.js"></script>
+	<script src="vendor/jsonrepair.min.js"></script>
 	<script>
 		const { EditorView, basicSetup, javascript, json, oneDark, foldGutter, foldKeymap, keymap } = window.CM_JS;
 		const fileListContainer = document.getElementById("file-list");
@@ -902,12 +971,181 @@
 			} catch (e) {
 				// If it fails, try to "fix" common issues
 				try {
-					const cleaned = performSophisticatedClean(text);
-					return JSON.parse(cleaned);
+					const cleaned = robustCleanJson(text);
+					// Try to run jsonrepair on it
+					const repaired = window.JSONRepair ? window.JSONRepair.jsonrepair(cleaned) : cleaned;
+					return JSON.parse(repaired);
 				} catch (e2) {
-					throw e; // throw original error if fix fails
+					try {
+						const cleaned = performSophisticatedClean(text);
+						return JSON.parse(cleaned);
+					} catch (e3) {
+						throw e; // throw original error if fix fails
+					}
 				}
 			}
+		}
+
+		function robustCleanJson(text) {
+			let i = 0;
+			let result = "";
+			const stack = [];
+			let expectKey = false;
+			
+			while (i < text.length) {
+				const ch = text[i];
+				
+				if (/\s/.test(ch)) {
+					result += ch;
+					i++;
+					continue;
+				}
+				
+				if (ch === '/' && text[i + 1] === '/') {
+					while (i < text.length && text[i] !== '\n' && text[i] !== '\r') {
+						result += text[i];
+						i++;
+					}
+					continue;
+				}
+				if (ch === '/' && text[i + 1] === '*') {
+					result += '/*';
+					i += 2;
+					while (i < text.length && !(text[i] === '*' && text[i + 1] === '/')) {
+						result += text[i];
+						i++;
+					}
+					if (i < text.length) {
+						result += '*/';
+						i += 2;
+					}
+					continue;
+				}
+				
+				if (ch === '{') {
+					stack.push('{');
+					expectKey = true;
+					result += ch;
+					i++;
+					continue;
+				}
+				if (ch === '}') {
+					stack.pop();
+					expectKey = false;
+					result += ch;
+					i++;
+					continue;
+				}
+				if (ch === '[') {
+					stack.push('[');
+					expectKey = false;
+					result += ch;
+					i++;
+					continue;
+				}
+				if (ch === ']') {
+					stack.pop();
+					expectKey = false;
+					result += ch;
+					i++;
+					continue;
+				}
+				if (ch === ':') {
+					expectKey = false;
+					result += ch;
+					i++;
+					continue;
+				}
+				if (ch === ',') {
+					const top = stack[stack.length - 1];
+					if (top === '{') {
+						expectKey = true;
+					} else {
+						expectKey = false;
+					}
+					result += ch;
+					i++;
+					continue;
+				}
+				
+				if (ch === '"') {
+					let candidateIndices = [];
+					let j = i + 1;
+					while (j < text.length) {
+						if (text[j] === '"') {
+							let backslashCount = 0;
+							let k = j - 1;
+							while (k > i && text[k] === '\\') {
+								backslashCount++;
+								k--;
+							}
+							if (backslashCount % 2 === 0) {
+								candidateIndices.push(j);
+							}
+						}
+						j++;
+					}
+					
+					let closingQuoteIndex = -1;
+					if (expectKey) {
+						if (candidateIndices.length > 0) {
+							closingQuoteIndex = candidateIndices[0];
+						}
+					} else {
+						for (let idx = 0; idx < candidateIndices.length; idx++) {
+							const qIndex = candidateIndices[idx];
+							let nextNonWs = "";
+							let nextPos = qIndex + 1;
+							while (nextPos < text.length) {
+								if (!/\s/.test(text[nextPos])) {
+									nextNonWs = text[nextPos];
+									break;
+								}
+								nextPos++;
+							}
+							if (nextNonWs === "" || nextNonWs === ',' || nextNonWs === '}' || nextNonWs === ']') {
+								closingQuoteIndex = qIndex;
+								break;
+							}
+						}
+					}
+					
+					if (closingQuoteIndex !== -1) {
+						const stringContent = text.slice(i + 1, closingQuoteIndex);
+						let escapedContent = "";
+						for (let j = 0; j < stringContent.length; j++) {
+							const curChar = stringContent[j];
+							if (curChar === '"') {
+								let backslashCount = 0;
+								let k = j - 1;
+								while (k >= 0 && stringContent[k] === '\\') {
+									backslashCount++;
+									k--;
+								}
+								if (backslashCount % 2 === 0) {
+									escapedContent += '\\"';
+								} else {
+									escapedContent += '"';
+								}
+							} else {
+								escapedContent += curChar;
+							}
+						}
+						
+						result += '"' + escapedContent + '"';
+						i = closingQuoteIndex + 1;
+					} else {
+						result += ch;
+						i++;
+					}
+					continue;
+				}
+				
+				result += ch;
+				i++;
+			}
+			
+			return result;
 		}
 
 		function performSophisticatedClean(text) {
@@ -1115,7 +1353,7 @@
 		}
 
 		function buildTree(text) {
-			const empty = '<div style="color:var(--text-tertiary);padding:2rem;text-align:center;font-style:italic;font-size:12px;">Editor is empty. Paste or type JSON to see the tree view.</div>';
+			const empty = '<div class="json-empty-message">Editor is empty. Paste or type JSON to see the tree view.</div>';
 			const renderTo = [treeRoot, treeMobile];
 			renderTo.forEach(r => r.innerHTML = "");
 			if (!text || text.trim() === "") {
@@ -1132,10 +1370,10 @@
 			} catch (e) {
 				currentOffsetMap = null;
 				currentTreeText = null;
-				const errHtml = `<div style="color:var(--danger);padding:1rem;border:1px solid var(--danger);border-radius:8px;">
-					<div style="margin-bottom:4px;font-weight:600;">Invalid JSON</div>
-					<div style="font-size:11px;font-family:var(--font-mono);color:var(--text-secondary);">${e.message}</div>
-					<button onclick="transform('cleanJSON')" style="margin-top:12px;padding:4px 10px;background:var(--danger-muted);color:var(--danger);border:none;border-radius:6px;font-size:11px;cursor:pointer;">Try to Auto-Fix JSON</button>
+				const errHtml = `<div class="json-error-container">
+					<div class="json-error-title">Invalid JSON</div>
+					<div class="json-error-message">${e.message}</div>
+					<button onclick="repairJsonAction()" class="json-error-btn">Try to Auto-Fix JSON</button>
 				</div>`;
 				renderTo.forEach(r => r.innerHTML = errHtml);
 			}
@@ -1362,12 +1600,20 @@
 					return;
 				} else if (type === "cleanJSON") {
 					try {
-						const cleaned = performSophisticatedClean(content);
-						const parsed = JSON.parse(cleaned);
+						const { jsonrepair } = window.JSONRepair;
+						const preCleaned = robustCleanJson(content);
+						const repaired = jsonrepair(preCleaned);
+						const parsed = JSON.parse(repaired);
 						result = JSON.stringify(parsed, null, 2);
 					} catch (e) {
-						// Final fallback attempt if performSophisticatedClean + JSON.parse fails
-						result = content.replace(/\\n/g, "\n").replace(/\\"/g, '"');
+						try {
+							const cleaned = performSophisticatedClean(content);
+							const parsed = JSON.parse(cleaned);
+							result = JSON.stringify(parsed, null, 2);
+						} catch (e2) {
+							// Final fallback attempt if performSophisticatedClean + JSON.parse fails
+							result = content.replace(/\\n/g, "\n").replace(/\\"/g, '"');
+						}
 					}
 				}
 
@@ -1377,6 +1623,41 @@
 				// Removed manual buildTree call as updateListener handles it
 			} catch (e) {
 				alert("Transformation failed: " + e.message);
+			}
+		};
+
+		window.repairJsonAction = () => {
+			if (!editor) return;
+			const content = editor.state.doc.toString();
+			if (!content.trim()) {
+				toast("Editor is empty — nothing to repair.");
+				return;
+			}
+			try {
+				const { jsonrepair } = window.JSONRepair;
+				const preCleaned = robustCleanJson(content);
+				const repaired = jsonrepair(preCleaned);
+				const parsed = JSON.parse(repaired);
+				const formatted = JSON.stringify(parsed, null, 2);
+				
+				editor.dispatch({
+					changes: { from: 0, to: editor.state.doc.length, insert: formatted }
+				});
+				toast("JSON successfully repaired and formatted!");
+			} catch (e) {
+				console.error("[repairJsonAction] failed:", e);
+				// Fallback to sophisticated clean if jsonrepair failed or JSON.parse failed
+				try {
+					const cleaned = performSophisticatedClean(content);
+					const parsed = JSON.parse(cleaned);
+					const formatted = JSON.stringify(parsed, null, 2);
+					editor.dispatch({
+						changes: { from: 0, to: editor.state.doc.length, insert: formatted }
+					});
+					toast("JSON repaired via fallback cleaner.");
+				} catch (e2) {
+					toast("Failed to repair JSON: " + e.message);
+				}
 			}
 		};
 
