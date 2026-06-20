@@ -700,7 +700,6 @@ function runDiff() {
   // Line-level diff
   const encoded   = dmp.diff_linesToChars_(norm(leftText), norm(rightText));
   const lineDiffs = dmp.diff_main(encoded.chars1, encoded.chars2, false);
-  dmp.diff_cleanupSemantic(lineDiffs);
   dmp.diff_charsToLines_(lineDiffs, encoded.lineArray);
 
   // Detect moved blocks
@@ -730,7 +729,7 @@ function runDiff() {
   // Intra-line char highlighting
   const leftCharDecos  = [];
   const rightCharDecos = [];
-  addIntraLineDiffs(dmp, leftCharDecos, rightCharDecos, movedFromLines, movedToLines);
+  addIntraLineDiffs(dmp, leftCharDecos, rightCharDecos, lineDiffs, movedFromLines, movedToLines);
 
   editorL.dispatch({ effects: setDecosEffect.of(buildDecos(editorL, leftLineDecos,  leftCharDecos)) });
   editorR.dispatch({ effects: setDecosEffect.of(buildDecos(editorR, rightLineDecos, rightCharDecos)) });
@@ -795,42 +794,81 @@ function diffWordsToCharRanges(dmp, lineA, lineB) {
  * highlights cover meaningful words rather than individual characters.
  * Offsets correspond exactly to the layout inside CodeMirror.
  */
-function addIntraLineDiffs(dmp, leftCharDecos, rightCharDecos, movedLeft = new Set(), movedRight = new Set()) {
+function addIntraLineDiffs(dmp, leftCharDecos, rightCharDecos, lineDiffs, movedFromLines = new Set(), movedToLines = new Set()) {
   const ldoc = editorL.state.doc;
   const rdoc = editorR.state.doc;
-  const maxLines = Math.min(ldoc.lines, rdoc.lines);
   const SIMILARITY_THRESHOLD = 0.3;
 
-  for (let i = 1; i <= maxLines; i++) {
-    if (movedLeft.has(i) || movedRight.has(i)) continue;
-    const ll = ldoc.line(i).text;
-    const rl = rdoc.line(i).text;
-    if (ll === rl) continue;
+  let leftLine = 1;
+  let rightLine = 1;
+  let idx = 0;
 
-    // Word-level diff for meaningful highlights
-    const diffs = diffWordsToCharRanges(dmp, ll, rl);
+  while (idx < lineDiffs.length) {
+    const [op, text] = lineDiffs[idx];
+    const segs = text.split('\n');
+    if (segs.length > 1 && segs[segs.length - 1] === '') segs.pop();
 
-    const equalLen = diffs.reduce((s, [op, txt]) => s + (op === 0 ? txt.length : 0), 0);
-    const maxLen   = Math.max(ll.length, rl.length);
-    if (maxLen > 0 && equalLen / maxLen < SIMILARITY_THRESHOLD) continue;
+    if (op === 0) {
+      leftLine += segs.length;
+      rightLine += segs.length;
+      idx++;
+    } else if (op === -1 && idx + 1 < lineDiffs.length && lineDiffs[idx + 1][0] === 1) {
+      // Adjacent delete→insert: pair for char highlights
+      const insText = lineDiffs[idx + 1][1];
+      const insSegs = insText.split('\n');
+      if (insSegs.length > 1 && insSegs[insSegs.length - 1] === '') insSegs.pop();
 
-    let lPos = ldoc.line(i).from;
-    let rPos = rdoc.line(i).from;
+      const pairCount = Math.min(segs.length, insSegs.length);
 
-    for (const [op, txt] of diffs) {
-      const len = txt.length;
-      if (op === -1) {
-        if (lPos + len <= ldoc.line(i).to + 1)
-          leftCharDecos.push({ from: lPos, to: lPos + len, cls: 'diff-del-char' });
-        lPos += len;
-      } else if (op === 1) {
-        if (rPos + len <= rdoc.line(i).to + 1)
-          rightCharDecos.push({ from: rPos, to: rPos + len, cls: 'diff-add-char' });
-        rPos += len;
-      } else {
-        lPos += len;
-        rPos += len;
+      for (let k = 0; k < pairCount; k++) {
+        const lNum = leftLine + k;
+        const rNum = rightLine + k;
+
+        if (movedFromLines.has(lNum) || movedToLines.has(rNum)) continue;
+
+        // Ensure we don't exceed doc line bounds
+        if (lNum > ldoc.lines || rNum > rdoc.lines) continue;
+
+        const ll = ldoc.line(lNum).text;
+        const rl = rdoc.line(rNum).text;
+
+        const diffs = diffWordsToCharRanges(dmp, ll, rl);
+
+        const equalLen = diffs.reduce((s, [cop, txt]) => s + (cop === 0 ? txt.length : 0), 0);
+        const maxLen   = Math.max(ll.length, rl.length);
+        if (maxLen > 0 && equalLen / maxLen < SIMILARITY_THRESHOLD) continue;
+
+        let lPos = ldoc.line(lNum).from;
+        let rPos = rdoc.line(rNum).from;
+
+        for (const [cop, txt] of diffs) {
+          const len = txt.length;
+          if (cop === -1) {
+            if (lPos + len <= ldoc.line(lNum).to + 1) {
+              leftCharDecos.push({ from: lPos, to: lPos + len, cls: 'diff-del-char' });
+            }
+            lPos += len;
+          } else if (cop === 1) {
+            if (rPos + len <= rdoc.line(rNum).to + 1) {
+              rightCharDecos.push({ from: rPos, to: rPos + len, cls: 'diff-add-char' });
+            }
+            rPos += len;
+          } else {
+            lPos += len;
+            rPos += len;
+          }
+        }
       }
+
+      leftLine += segs.length;
+      rightLine += insSegs.length;
+      idx += 2;
+    } else if (op === -1) {
+      leftLine += segs.length;
+      idx++;
+    } else {
+      rightLine += segs.length;
+      idx++;
     }
   }
 }
@@ -860,7 +898,6 @@ function renderUnified(left, right) {
   // Line-level diff on normalized text
   const encoded   = dmp.diff_linesToChars_(norm(left), norm(right));
   const lineDiffs = dmp.diff_main(encoded.chars1, encoded.chars2, false);
-  dmp.diff_cleanupSemantic(lineDiffs);
   dmp.diff_charsToLines_(lineDiffs, encoded.lineArray);
 
   // Move detection
