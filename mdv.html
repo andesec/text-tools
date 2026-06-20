@@ -931,6 +931,142 @@
 		#iframe-sidebar-toggle.sidebar-hidden {
 			left: 8px;
 		}
+
+		/* ── Runnable HTML Code Sandbox styles ── */
+		.runnable-code-container {
+			position: relative;
+			margin-top: 1rem;
+			margin-bottom: 1rem;
+			border: 1px solid var(--border-default);
+			border-radius: var(--radius-md);
+			background: var(--code-bg);
+			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+		}
+		.btn-run-code {
+			position: absolute;
+			top: 8px;
+			right: 8px;
+			z-index: 10;
+			background: var(--bg-surface-raised);
+			border: 1px solid var(--border-default);
+			color: var(--text-secondary);
+			border-radius: var(--radius-sm);
+			padding: 4px 8px;
+			font-size: var(--font-size-xs);
+			font-family: var(--font-sans);
+			cursor: pointer;
+			display: flex;
+			align-items: center;
+			gap: 4px;
+			transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+		}
+		.btn-run-code:hover {
+			background: var(--accent);
+			color: rgb(255, 255, 255);
+			border-color: var(--accent);
+		}
+		.runnable-header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			background: var(--bg-surface-raised);
+			border-bottom: 1px solid var(--border-default);
+			padding: 0 var(--space-2);
+			height: 36px;
+			flex-shrink: 0;
+		}
+		.runnable-tabs {
+			display: flex;
+			gap: var(--space-1);
+			height: 100%;
+			align-items: flex-end;
+		}
+		.runnable-tab {
+			background: transparent;
+			border: none;
+			border-bottom: 2px solid transparent;
+			color: var(--text-secondary);
+			font-family: var(--font-sans);
+			font-size: var(--font-size-xs);
+			font-weight: 500;
+			padding: var(--space-2) var(--space-3);
+			cursor: pointer;
+			transition: color var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
+			height: 100%;
+		}
+		.runnable-tab:hover {
+			color: var(--text-primary);
+			background: var(--bg-surface-hover);
+		}
+		.runnable-tab.active {
+			color: var(--text-primary);
+			border-bottom-color: var(--accent);
+			background: var(--bg-surface);
+		}
+		.runnable-close-btn {
+			background: transparent;
+			border: none;
+			color: var(--text-secondary);
+			border-radius: var(--radius-sm);
+			padding: 4px;
+			cursor: pointer;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			transition: background var(--transition-fast), color var(--transition-fast);
+		}
+		.runnable-close-btn:hover {
+			background: var(--bg-surface-hover);
+			color: var(--danger);
+		}
+		.runnable-panels-viewport {
+			overflow: hidden;
+			width: 100%;
+			height: 400px;
+			background: var(--code-bg);
+		}
+		.runnable-panels-wrapper {
+			display: flex;
+			width: 300%;
+			height: 100%;
+			transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+		}
+		.runnable-panel {
+			width: 33.3333%;
+			height: 100%;
+			flex-shrink: 0;
+			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+		}
+		.runnable-panel.panel-source {
+			overflow: auto;
+		}
+		.runnable-panel.panel-source pre {
+			margin: 0 !important;
+			border-radius: 0 !important;
+			height: 100%;
+			background: transparent !important;
+		}
+		.runnable-panel.panel-editor {
+			background: var(--bg-surface);
+		}
+		.runnable-editor-el {
+			flex: 1;
+			min-height: 0;
+			height: 100%;
+		}
+		.runnable-panel.panel-iframe {
+			background: rgb(255, 255, 255);
+		}
+		.runnable-iframe-el {
+			width: 100%;
+			height: 100%;
+			border: none;
+			background: rgb(255, 255, 255);
+		}
 	</style>
 </head>
 
@@ -1347,6 +1483,167 @@
 		var editor = null;
 		let lineWrap = true;
 		let currentFileHandle = null;
+		let _isEditingWidgetCode = false;
+
+		function updateMarkdownCodeBlock(blockIndex, newCode) {
+			if (!editor) return;
+			const text = editor.state.doc.toString();
+			let currentIndex = 0;
+			// Match code fences: ```html or ```xml
+			const regex = /(^|\n)([`~]{3,})(html|xml)\s*\n([\s\S]*?)\n\2(?=\n|$)/g;
+			let match;
+			let found = false;
+
+			while ((match = regex.exec(text)) !== null) {
+				if (currentIndex === blockIndex) {
+					const matchStart = match.index;
+					const matchEnd = regex.lastIndex;
+					// Reconstruct code block with the same delimiter and type
+					const newBlock = match[1] + match[2] + match[3] + "\n" + newCode + "\n" + match[2];
+					const replacedText = text.substring(0, matchStart) + newBlock + text.substring(matchEnd);
+					
+					_isEditingWidgetCode = true;
+					const transaction = editor.state.update({
+						changes: { from: 0, to: text.length, insert: replacedText }
+					});
+					editor.dispatch(transaction);
+					_isEditingWidgetCode = false;
+					found = true;
+					break;
+				}
+				currentIndex++;
+			}
+		}
+
+		function convertToRunnable(container, preEl, blockIndex) {
+			const codeEl = preEl.querySelector('code');
+			const initialCode = codeEl ? codeEl.textContent : "";
+
+			// Remove the floating button
+			const runBtn = container.querySelector('.btn-run-code');
+			if (runBtn) runBtn.remove();
+
+			// Create the Tab header and panels viewport
+			const header = document.createElement('div');
+			header.className = 'runnable-header';
+			header.innerHTML = `
+				<div class="runnable-tabs">
+					<button class="runnable-tab active" data-tab="0">Source</button>
+					<button class="runnable-tab" data-tab="1">Editor</button>
+					<button class="runnable-tab" data-tab="2">Preview</button>
+				</div>
+				<button class="runnable-close-btn" title="Revert to static code">
+					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+					</svg>
+				</button>
+			`;
+
+			const viewport = document.createElement('div');
+			viewport.className = 'runnable-panels-viewport';
+			viewport.innerHTML = `
+				<div class="runnable-panels-wrapper">
+					<div class="runnable-panel panel-source"></div>
+					<div class="runnable-panel panel-editor">
+						<div class="runnable-editor-el"></div>
+					</div>
+					<div class="runnable-panel panel-iframe">
+						<iframe class="runnable-iframe-el" sandbox="allow-scripts"></iframe>
+					</div>
+				</div>
+			`;
+
+			container.appendChild(header);
+			container.appendChild(viewport);
+
+			const panelsWrapper = viewport.querySelector('.runnable-panels-wrapper');
+			const panelSource = viewport.querySelector('.panel-source');
+			const panelEditorEl = viewport.querySelector('.runnable-editor-el');
+			const iframeEl = viewport.querySelector('.runnable-iframe-el');
+
+			// Move the original preEl into panelSource
+			panelSource.appendChild(preEl);
+
+			// Initialize iframe content
+			iframeEl.srcdoc = initialCode;
+
+			// Set up tabs switching
+			const tabs = header.querySelectorAll('.runnable-tab');
+			tabs.forEach(tab => {
+				tab.onclick = () => {
+					tabs.forEach(t => t.classList.remove('active'));
+					tab.classList.add('active');
+					const tabIdx = parseInt(tab.getAttribute('data-tab'), 10);
+					panelsWrapper.style.transform = `translateX(-${(tabIdx * 100) / 3}%)`;
+				};
+			});
+
+			let innerEditor = null;
+
+			// Set up close button to revert
+			const closeBtn = header.querySelector('.runnable-close-btn');
+			closeBtn.onclick = () => {
+				// Revert container back to simple preEl
+				container.innerHTML = "";
+				container.appendChild(preEl);
+
+				// Re-add floating run button
+				const newRunBtn = document.createElement('button');
+				newRunBtn.className = 'btn-run-code';
+				newRunBtn.innerHTML = `
+					<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+						<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path>
+					</svg>
+					<span>Run</span>
+				`;
+				container.appendChild(newRunBtn);
+				newRunBtn.onclick = () => {
+					convertToRunnable(container, preEl, blockIndex);
+				};
+
+				// Destroy CodeMirror instance if exists
+				if (innerEditor) {
+					innerEditor.destroy();
+				}
+			};
+
+			// Initialize CodeMirror inside Panel 2 (Editor)
+			const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+			innerEditor = new EditorView({
+				doc: initialCode,
+				extensions: [
+					basicSetup,
+					markdown(),
+					isDark ? oneDark : [],
+					EditorView.theme({
+						"&": { height: "100%", fontSize: "var(--editor-font-size)", backgroundColor: "var(--bg-surface)" },
+						".cm-scroller": { overflow: "auto", fontFamily: "var(--font-mono)" },
+						".cm-content": { fontWeight: "400 !important", fontFamily: "var(--font-mono) !important" },
+						".cm-line": { fontWeight: "400 !important" },
+						".cm-gutters": { backgroundColor: "var(--bg-surface)", borderRightColor: "var(--border-subtle)", color: "var(--text-tertiary)" }
+					}),
+					EditorView.lineWrapping,
+					EditorView.updateListener.of((update) => {
+						if (update.docChanged) {
+							const newCode = update.state.doc.toString();
+
+							// 1. Update running iframe
+							iframeEl.srcdoc = newCode;
+
+							// 2. Update Tab 1 code and re-prism highlight
+							if (codeEl) {
+								codeEl.textContent = newCode;
+								Prism.highlightElement(codeEl);
+							}
+
+							// 3. Update main editor document
+							updateMarkdownCodeBlock(blockIndex, newCode);
+						}
+					})
+				],
+				parent: panelEditorEl
+			});
+		}
 
 		// ── Two-way sync state ─────────────────────────────────────────────
 		let syncVersion = 0;           // Monotonically increasing counter
@@ -1548,9 +1845,10 @@
 						const sel = update.state.selection.main;
 						const selection = { from: sel.from, to: sel.to };
 						syncScheduleChange(text, selection);
-						updatePreview();
 						saveMdvState();
 						updateTabTitle();
+						if (_isEditingWidgetCode) return;
+						updatePreview();
 					}
 				})
 			];
@@ -1605,6 +1903,42 @@
 				a.setAttribute('aria-hidden', 'true');
 				a.innerHTML = '<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M7.775 3.275a.75.75 0 0 1 1.06 0l1.25-1.25a2 2 0 1 1 2.83 2.83l-2.5 2.5a2 2 0 0 1-2.83 0 .75.75 0 0 0-1.06 1.06 3.5 3.5 0 0 0 4.95 0l2.5-2.5a3.5 3.5 0 0 0-4.95-4.95l-1.25 1.25a.75.75 0 0 0 0 1.06Z"/></svg>';
 				h.insertBefore(a, h.firstChild);
+			});
+
+			// ── Runnable HTML Code Fences ──
+			const codeBlocks = contentArea.querySelectorAll('pre code.language-html');
+			codeBlocks.forEach((codeEl, blockIndex) => {
+				const preEl = codeEl.parentNode;
+				if (!preEl || preEl.tagName !== 'PRE') return;
+
+				// Skip if already wrapped in a runnable container
+				if (preEl.parentNode && preEl.parentNode.classList.contains('runnable-code-container')) {
+					return;
+				}
+
+				// Create wrapper container
+				const container = document.createElement('div');
+				container.className = 'runnable-code-container';
+				container.setAttribute('data-block-index', blockIndex);
+
+				// Insert container in place of preEl
+				preEl.parentNode.insertBefore(container, preEl);
+				container.appendChild(preEl);
+
+				// Floating "Run" button
+				const runBtn = document.createElement('button');
+				runBtn.className = 'btn-run-code';
+				runBtn.innerHTML = `
+					<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+						<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path>
+					</svg>
+					<span>Run</span>
+				`;
+				container.appendChild(runBtn);
+
+				runBtn.onclick = () => {
+					convertToRunnable(container, preEl, blockIndex);
+				};
 			});
 		}
 
