@@ -2716,9 +2716,13 @@
 			const ICON_OPEN = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>';
 			const ICON_CLOSE = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>';
 
-			let sidebarCollapsed = false;
+			let sidebarCollapsed = iframeMode;
 
 			if (toggleBtn) {
+				if (iframeMode) {
+					sidebar.classList.add('iframe-sidebar-collapsed');
+				}
+
 				toggleBtn.addEventListener('click', () => {
 					sidebarCollapsed = !sidebarCollapsed;
 					if (sidebarCollapsed) {
@@ -2737,9 +2741,15 @@
 				// Position toggle correctly after sidebar renders
 				if (iframeMode) {
 					requestAnimationFrame(() => {
-						toggleIcon.innerHTML = ICON_CLOSE;
-						toggleBtn.title = 'Hide sidebar';
-						toggleBtn.style.left = (sidebar.offsetWidth + 4) + 'px';
+						if (sidebarCollapsed) {
+							toggleIcon.innerHTML = ICON_OPEN;
+							toggleBtn.title = 'Show sidebar';
+							toggleBtn.style.left = '8px';
+						} else {
+							toggleIcon.innerHTML = ICON_CLOSE;
+							toggleBtn.title = 'Hide sidebar';
+							toggleBtn.style.left = (sidebar.offsetWidth + 4) + 'px';
+						}
 					});
 				}
 			}
