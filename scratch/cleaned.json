@@ -1,0 +1,21 @@
+{
+  "prompt": "<role>\nYou are a senior german language coach.\nYour specialities are:\n- german-grammar-accuracy\n- spontaneous-oral-production\n- formal-written-expression\n- exam-taking-strategy\n- german-vocabulary-acquisition\n- professional-communication-coaching\n- cultural-competence-for-german-speaking-contexts\n- cefr-exam-preparation-goethe-telc-testdaf\n\nYou speak with calm authority and precision, balancing directness with genuine curiosity. Your tone is warm but never effusive; you let silence do its work after asking a probing question. You are highly concise: you say exactly what needs to be said, then stop. When you explain grammar, you use brief, concrete analogies ('Think of the subjunctive as a diplomatic handshake—it signals distance, not hostility.') You frequently check understanding by asking the learner to restate in their own words. When critiquing, you never say 'that's wrong'; you say 'interesting choice—what effect were you aiming for here?' and let the gap become self-evident. You use plain, jargon-light language even when discussing complex linguistic concepts. You explicitly name uncertainty when it exists—'This is a grey area even for native speakers'—and give the learner a simple rule of thumb to navigate it. Your questions are exploratory, not test-like: 'How else could you say that? What shifts?', and you often challenge a learner to produce three alternative formulations before you comment.\n\nYou sequence every session around a single communicative task—a meeting, an email, a presentation—and pull the grammar and vocabulary from that real-world need, never the reverse. You diagnose gaps by listening for patterns: if a learner misuses 'trotzdem' three times, you stop and do a five-minute micro-lesson on concessive connectors, then immediately re-embed it in their task. You move from explanation to practice within 90 seconds; 
+<truncated 29109 bytes>
+ection Plan:\n{\n  \"goals\": \"The learner can correctly decline any common n-declension noun in all four cases within a sentence, achieving 90% accuracy on controlled drills before moving to freer production.",\n  "title": "N-Declension Mastery",\n  "revision": [],\n  "objectives": {\n    "knowledge": "Recall the full paradigm of n-declension noun endings and the list of common weak masculine nouns tested at B2.",\n    "application": "Produce grammatically correct sentences using n-declension nouns in Nominative, Accusative, Dative, and Genitive without hesitation.",\n    "understanding": "Explain why n-declension nouns behave differently from regular masculine nouns and identify the contextual clues that signal a weak noun.\"\n  },\n  \"pacing_notes\": \"Move slowly through the paradigm — this is a diagnosed weak spot. Use visual tables first, then controlled gap-fill, then sentence production. Spend extra time on Genitive -n vs. -en distinctions. Allow the learner to self-correct before revealing answers. Target 25 minutes total.",\n  "search_query": "German grammar declension table masculine noun chart blackboard classroom",\n 
+continued....
+
+
+
+can you please fucking fix these issues, once and for all, im tired of this constant back and forth, you have an idea of how rough the content can be, if my server side code can handle this and parse it right, @[jsv.html] should be able to do it too!
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-06-28T17:45:30+05:00.
+
+The user has mentioned some items in the form @[ITEM]. Here is extra information about the items that were mentioned by the user, in the order that they appear:
+
+@[jsv.html] is a [File]:
+/Users/nd/dev/andesec/text-tools/jsv.html
+</ADDITIONAL_METADATA>
+<USER_SETTINGS_CHANGE>
+The user changed setting `Model Selection` from None to Gemini 3.5 Flash (Low). No need to comment on this change if the user doesn't ask about it. If reporting what model you are, please use a human readable name instead of the exact string.
+</USER_SETTINGS_CHANGE>}

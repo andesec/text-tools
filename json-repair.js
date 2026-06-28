@@ -325,27 +325,58 @@
 						closingQuoteIndex = candidateIndices[0];
 					}
 				} else {
+					let validCandidates = [];
 					for (let idx = 0; idx < candidateIndices.length; idx++) {
 						const qIndex = candidateIndices[idx];
-						if (isValidFollowUp(text, qIndex, false, stack)) {
-							closingQuoteIndex = qIndex;
-							break;
+						let passes = false;
+						let nextNonWs = '';
+						let nextPos = qIndex + 1;
+						while (nextPos < text.length) {
+							if (!/\s/.test(text[nextPos])) { nextNonWs = text[nextPos]; break; }
+							nextPos++;
+						}
+						if (nextNonWs === '' || nextNonWs === ',' || nextNonWs === '}' || nextNonWs === ']') {
+							passes = true;
+						}
+						if (passes) {
+							validCandidates.push(qIndex);
 						}
 					}
-					// Fallback to original less-strict follow-up check if no index matched
-					if (closingQuoteIndex === -1) {
-						for (let idx = 0; idx < candidateIndices.length; idx++) {
-							const qIndex = candidateIndices[idx];
-							let nextNonWs = '';
-							let nextPos = qIndex + 1;
-							while (nextPos < text.length) {
-								if (!/\s/.test(text[nextPos])) { nextNonWs = text[nextPos]; break; }
-								nextPos++;
-							}
-							if (nextNonWs === '' || nextNonWs === ',' || nextNonWs === '}' || nextNonWs === ']') {
-								closingQuoteIndex = qIndex; break;
+
+					// Validate candidates from end
+					for (let idx = validCandidates.length - 1; idx >= 0; idx--) {
+						const qIndex = validCandidates[idx];
+						const stringContent = text.slice(i + 1, qIndex);
+						let escapedContent = '';
+						for (let j2 = 0; j2 < stringContent.length; j2++) {
+							const curChar = stringContent[j2];
+							if (curChar === '"') {
+								let bc = 0; let k2 = j2 - 1;
+								while (k2 >= 0 && stringContent[k2] === '\\') { bc++; k2--; }
+								escapedContent += (bc % 2 === 0) ? '\\"' : '"';
+							} else {
+								escapedContent += curChar;
 							}
 						}
+						
+						const testRemaining = text.substring(qIndex + 1);
+						try {
+							if (window.JSONRepair) {
+								const testDocument = result + '"' + escapedContent + '"' + testRemaining;
+								const escapedDoc = typeof escapeLiteralNewlinesInStrings === 'function' 
+									? escapeLiteralNewlinesInStrings(testDocument) 
+									: testDocument;
+								window.JSONRepair.jsonrepair(escapedDoc);
+								closingQuoteIndex = qIndex;
+								break;
+							}
+						} catch (e) {
+							// continue
+						}
+					}
+
+					if (closingQuoteIndex === -1 && validCandidates.length > 0) {
+						closingQuoteIndex = validCandidates[validCandidates.length - 1];
 					}
 				}
 
@@ -358,6 +389,113 @@
 							let bc = 0; let k2 = j2 - 1;
 							while (k2 >= 0 && stringContent[k2] === '\\') { bc++; k2--; }
 							escapedContent += (bc % 2 === 0) ? '\\"' : '"';
+						} else {
+							escapedContent += curChar;
+						}
+					}
+					result += '"' + escapedContent + '"';
+					i = closingQuoteIndex + 1;
+				} else {
+					result += ch; i++;
+				}
+				continue;
+			}
+
+			// Single-quoted string (handled by converting to double-quoted string safely)
+			if (ch === "'") {
+				let candidateIndices = [];
+				let j = i + 1;
+				while (j < text.length) {
+					if (text[j] === "'") {
+						let backslashCount = 0;
+						let k = j - 1;
+						while (k > i && text[k] === '\\') { backslashCount++; k--; }
+						if (backslashCount % 2 === 0) candidateIndices.push(j);
+					}
+					j++;
+				}
+
+				let closingQuoteIndex = -1;
+				if (expectKey) {
+					for (let idx = 0; idx < candidateIndices.length; idx++) {
+						const qIndex = candidateIndices[idx];
+						if (isValidFollowUp(text, qIndex, true, stack)) {
+							closingQuoteIndex = qIndex;
+							break;
+						}
+					}
+					if (closingQuoteIndex === -1 && candidateIndices.length > 0) {
+						closingQuoteIndex = candidateIndices[0];
+					}
+				} else {
+					let validCandidates = [];
+					for (let idx = 0; idx < candidateIndices.length; idx++) {
+						const qIndex = candidateIndices[idx];
+						let passes = false;
+						let nextNonWs = '';
+						let nextPos = qIndex + 1;
+						while (nextPos < text.length) {
+							if (!/\s/.test(text[nextPos])) { nextNonWs = text[nextPos]; break; }
+							nextPos++;
+						}
+						if (nextNonWs === '' || nextNonWs === ',' || nextNonWs === '}' || nextNonWs === ']') {
+							passes = true;
+						}
+						if (passes) {
+							validCandidates.push(qIndex);
+						}
+					}
+
+					// Validate candidates from end
+					for (let idx = validCandidates.length - 1; idx >= 0; idx--) {
+						const qIndex = validCandidates[idx];
+						const stringContent = text.slice(i + 1, qIndex);
+						let escapedContent = '';
+						for (let j2 = 0; j2 < stringContent.length; j2++) {
+							const curChar = stringContent[j2];
+							if (curChar === '"') {
+								let bc = 0; let k2 = j2 - 1;
+								while (k2 >= 0 && stringContent[k2] === '\\') { bc++; k2--; }
+								escapedContent += (bc % 2 === 0) ? '\\"' : '"';
+							} else if (curChar === "'" && j2 > 0 && stringContent[j2 - 1] === '\\') {
+								escapedContent = escapedContent.slice(0, -1) + "'";
+							} else {
+								escapedContent += curChar;
+							}
+						}
+						
+						const testRemaining = text.substring(qIndex + 1);
+						try {
+							if (window.JSONRepair) {
+								const testDocument = result + '"' + escapedContent + '"' + testRemaining;
+								const escapedDoc = typeof escapeLiteralNewlinesInStrings === 'function' 
+									? escapeLiteralNewlinesInStrings(testDocument) 
+									: testDocument;
+								window.JSONRepair.jsonrepair(escapedDoc);
+								closingQuoteIndex = qIndex;
+								break;
+							}
+						} catch (e) {
+							// continue
+						}
+					}
+
+					if (closingQuoteIndex === -1 && validCandidates.length > 0) {
+						closingQuoteIndex = validCandidates[validCandidates.length - 1];
+					}
+				}
+
+				if (closingQuoteIndex !== -1) {
+					const stringContent = text.slice(i + 1, closingQuoteIndex);
+					let escapedContent = '';
+					for (let j2 = 0; j2 < stringContent.length; j2++) {
+						const curChar = stringContent[j2];
+						if (curChar === '"') {
+							let bc = 0; let k2 = j2 - 1;
+							while (k2 >= 0 && stringContent[k2] === '\\') { bc++; k2--; }
+							escapedContent += (bc % 2 === 0) ? '\\"' : '"';
+						} else if (curChar === "'" && j2 > 0 && stringContent[j2 - 1] === '\\') {
+							escapedContent = escapedContent.slice(0, -1) + "'";
 						} else {
 							escapedContent += curChar;
 						}
@@ -392,10 +530,7 @@
 		// 1. Remove JavaScript-style comments
 		cleaned = cleaned.replace(/\/\*[\s\S]*?\*\/|([^:]|^)\/\/.*$/gm, '$1');
 
-		// 2. Normalize single quotes to double quotes
-		cleaned = cleaned.replace(/'([^'\\]*(?:\\.[^'\\]*)*)'/g, (match, p1) => {
-			return '"' + p1.replace(/"/g, '\\"') + '"';
-		});
+		// 2. Normalize single quotes to double quotes is now handled safely by robustCleanJson state machine.
 
 		// 3. Fix missing quotes on keys:
 		// 3a. Key with missing leading quote:  name":  ->  "name":
@@ -603,7 +738,8 @@
 			try {
 				let preprocessed = wrapBareKeyValue(text);
 				preprocessed = fixMismatchedBrackets(preprocessed);
-				const cleaned = robustCleanJson(preprocessed);
+				let cleaned = robustCleanJson(preprocessed);
+				cleaned = escapeLiteralNewlinesInStrings(cleaned);
 				const repaired = window.JSONRepair
 					? window.JSONRepair.jsonrepair(cleaned)
 					: cleaned;
