@@ -461,6 +461,9 @@
 
 	<script src="vendor/cm-js-bundle.js"></script>
 	<script src="vendor/jsonrepair.min.js"></script>
+	<script src="json-repair.js"></script>
+	<script src="json-to-markdown.js"></script>
+	<script src="json-tree.js"></script>
 	<script>
 		const { EditorView, basicSetup, javascript, json, oneDark, foldGutter, foldKeymap, keymap } = window.CM_JS;
 		const fileListContainer = document.getElementById("file-list");
@@ -535,16 +538,15 @@
 		let sourceJSON = null; // Store the original JSON when in resolved view
 		let viewMode = "editor"; // 'editor' or 'tree'
 		let lineWrap = true;
-		let currentOffsetMap = null;
-		let currentTreeText = null;
+		// ── Tree View (extracted to json-tree.js) ─────────────────────
+		const treeView = window.createJsonTreeView({
+			roots: [treeRoot, treeMobile],
+			getEditor: () => editor,
+			EditorView
+		});
 
-		let buildTreeTimer = null;
-		function debouncedBuildTree(text) {
-			if (buildTreeTimer) clearTimeout(buildTreeTimer);
-			buildTreeTimer = setTimeout(() => {
-				buildTree(text);
-			}, 300);
-		}
+		function debouncedBuildTree(text) { treeView.debouncedBuildTree(text); }
+		function buildTree(text) { treeView.buildTree(text); }
 
 		// ── Two-way sync state ─────────────────────────────────────────────
 		let syncVersion = 0;           // Monotonically increasing counter
@@ -738,6 +740,44 @@
 				javascript(),
 				isDark ? oneDark : [],
 				keymap.of(foldKeymap),
+				keymap.of([{
+					key: 'Tab',
+					run: (view) => {
+						const { state } = view;
+						const { from, to } = state.selection.main;
+						const fromLine = state.doc.lineAt(from);
+						const toLine = state.doc.lineAt(to);
+						if (fromLine.number !== toLine.number || !state.selection.main.empty) {
+							const changes = [];
+							for (let i = fromLine.number; i <= toLine.number; i++) {
+								const line = state.doc.line(i);
+								changes.push({ from: line.from, insert: '\t' });
+							}
+							view.dispatch({ changes, userEvent: 'input.indent' });
+							return true;
+						}
+						view.dispatch(state.update(state.replaceSelection('\t'), { scrollIntoView: true, userEvent: 'input' }));
+						return true;
+					},
+					shift: (view) => {
+						const { state } = view;
+						const { from, to } = state.selection.main;
+						const fromLine = state.doc.lineAt(from);
+						const toLine = state.doc.lineAt(to);
+						const changes = [];
+						for (let i = fromLine.number; i <= toLine.number; i++) {
+							const line = state.doc.line(i);
+							if (line.text.startsWith('\t')) {
+								changes.push({ from: line.from, to: line.from + 1 });
+							} else {
+								const m = line.text.match(/^ {1,4}/);
+								if (m) changes.push({ from: line.from, to: line.from + m[0].length });
+							}
+						}
+						if (changes.length) view.dispatch({ changes, userEvent: 'delete.dedent' });
+						return true;
+					}
+				}]),
 				EditorView.editable.of(!readOnly),
 				EditorView.theme({
 					"&": { height: "100%", fontSize: "var(--editor-font-size)", backgroundColor: "var(--bg-surface)" },
@@ -867,73 +907,8 @@
 			fileListContainer.appendChild(btn);
 		}
 
-		// Escape literal control characters (newlines, tabs, carriage returns) that
-		// appear inside JSON string literals. Uses a simple state machine to track
-		// whether the current position is inside a double-quoted string, handling
-		// backslash escape sequences correctly.
-		function escapeLiteralNewlinesInStrings(text) {
-			let result = "";
-			let inString = false;
-			let i = 0;
-			while (i < text.length) {
-				const ch = text[i];
-				if (inString) {
-					if (ch === '\\') {
-						// Copy the escape sequence verbatim (backslash + next char)
-						result += ch;
-						i++;
-						if (i < text.length) {
-							result += text[i];
-							i++;
-						}
-					} else if (ch === '"') {
-						// End of string
-						result += ch;
-						i++;
-						inString = false;
-					} else if (ch === '\n') {
-						result += '\\n';
-						i++;
-					} else if (ch === '\r') {
-						result += '\\r';
-						i++;
-					} else if (ch === '\t') {
-						result += '\\t';
-						i++;
-					} else if (ch < '\x20') {
-						// Other control characters (e.g. \x00–\x1f)
-						result += '\\u' + ch.charCodeAt(0).toString(16).padStart(4, '0');
-						i++;
-					} else {
-						result += ch;
-						i++;
-					}
-				} else {
-					if (ch === '"') {
-						result += ch;
-						i++;
-						inString = true;
-					} else {
-						result += ch;
-						i++;
-					}
-				}
-			}
-			return result;
-		}
-
 		function cleanLiteralNewlinesIfJson(text, filename) {
-			if (!text) return text;
-			const isJson = filename?.toLowerCase().endsWith(".json") || (text.trim().startsWith("{") || text.trim().startsWith("["));
-			if (isJson) {
-				try {
-					JSON.parse(text);
-					return text;
-				} catch (e) {
-					return escapeLiteralNewlinesInStrings(text);
-				}
-			}
-			return text;
+			return window.JsonRepair.cleanLiteralNewlinesIfJson(text, filename);
 		}
 
 		async function displayFile(name, element) {
@@ -966,579 +941,12 @@
 		}
 
 		function safeJsonParse(text) {
-			try {
-				return JSON.parse(text);
-			} catch (e) {
-				// If it fails, try to "fix" common issues
-				try {
-					const cleaned = robustCleanJson(text);
-					// Try to run jsonrepair on it
-					const repaired = window.JSONRepair ? window.JSONRepair.jsonrepair(cleaned) : cleaned;
-					return JSON.parse(repaired);
-				} catch (e2) {
-					try {
-						const cleaned = performSophisticatedClean(text);
-						return JSON.parse(cleaned);
-					} catch (e3) {
-						throw e; // throw original error if fix fails
-					}
-				}
-			}
+			return window.JsonRepair.safeJsonParse(text);
 		}
 
-		function robustCleanJson(text) {
-			let i = 0;
-			let result = "";
-			const stack = [];
-			let expectKey = false;
-			
-			while (i < text.length) {
-				const ch = text[i];
-				
-				if (/\s/.test(ch)) {
-					result += ch;
-					i++;
-					continue;
-				}
-				
-				if (ch === '/' && text[i + 1] === '/') {
-					while (i < text.length && text[i] !== '\n' && text[i] !== '\r') {
-						result += text[i];
-						i++;
-					}
-					continue;
-				}
-				if (ch === '/' && text[i + 1] === '*') {
-					result += '/*';
-					i += 2;
-					while (i < text.length && !(text[i] === '*' && text[i + 1] === '/')) {
-						result += text[i];
-						i++;
-					}
-					if (i < text.length) {
-						result += '*/';
-						i += 2;
-					}
-					continue;
-				}
-				
-				if (ch === '{') {
-					stack.push('{');
-					expectKey = true;
-					result += ch;
-					i++;
-					continue;
-				}
-				if (ch === '}') {
-					stack.pop();
-					expectKey = false;
-					result += ch;
-					i++;
-					continue;
-				}
-				if (ch === '[') {
-					stack.push('[');
-					expectKey = false;
-					result += ch;
-					i++;
-					continue;
-				}
-				if (ch === ']') {
-					stack.pop();
-					expectKey = false;
-					result += ch;
-					i++;
-					continue;
-				}
-				if (ch === ':') {
-					expectKey = false;
-					result += ch;
-					i++;
-					continue;
-				}
-				if (ch === ',') {
-					const top = stack[stack.length - 1];
-					if (top === '{') {
-						expectKey = true;
-					} else {
-						expectKey = false;
-					}
-					result += ch;
-					i++;
-					continue;
-				}
-				
-				if (ch === '"') {
-					let candidateIndices = [];
-					let j = i + 1;
-					while (j < text.length) {
-						if (text[j] === '"') {
-							let backslashCount = 0;
-							let k = j - 1;
-							while (k > i && text[k] === '\\') {
-								backslashCount++;
-								k--;
-							}
-							if (backslashCount % 2 === 0) {
-								candidateIndices.push(j);
-							}
-						}
-						j++;
-					}
-					
-					let closingQuoteIndex = -1;
-					if (expectKey) {
-						if (candidateIndices.length > 0) {
-							closingQuoteIndex = candidateIndices[0];
-						}
-					} else {
-						for (let idx = 0; idx < candidateIndices.length; idx++) {
-							const qIndex = candidateIndices[idx];
-							let nextNonWs = "";
-							let nextPos = qIndex + 1;
-							while (nextPos < text.length) {
-								if (!/\s/.test(text[nextPos])) {
-									nextNonWs = text[nextPos];
-									break;
-								}
-								nextPos++;
-							}
-							if (nextNonWs === "" || nextNonWs === ',' || nextNonWs === '}' || nextNonWs === ']') {
-								closingQuoteIndex = qIndex;
-								break;
-							}
-						}
-					}
-					
-					if (closingQuoteIndex !== -1) {
-						const stringContent = text.slice(i + 1, closingQuoteIndex);
-						let escapedContent = "";
-						for (let j = 0; j < stringContent.length; j++) {
-							const curChar = stringContent[j];
-							if (curChar === '"') {
-								let backslashCount = 0;
-								let k = j - 1;
-								while (k >= 0 && stringContent[k] === '\\') {
-									backslashCount++;
-									k--;
-								}
-								if (backslashCount % 2 === 0) {
-									escapedContent += '\\"';
-								} else {
-									escapedContent += '"';
-								}
-							} else {
-								escapedContent += curChar;
-							}
-						}
-						
-						result += '"' + escapedContent + '"';
-						i = closingQuoteIndex + 1;
-					} else {
-						result += ch;
-						i++;
-					}
-					continue;
-				}
-				
-				result += ch;
-				i++;
-			}
-			
-			return result;
-		}
+		// tokenize and buildOffsetMap are now in json-repair.js
 
-		function performSophisticatedClean(text) {
-			let cleaned = text.trim();
-
-			// 1. Remove JavaScript-style comments
-			cleaned = cleaned.replace(/\/\*[\s\S]*?\*\/|([^:]|^)\/\/.*$/gm, '$1');
-
-			// 2. Normalize single quotes to double quotes, escaping existing double quotes
-			cleaned = cleaned.replace(/'([^'\\]*(?:\\.[^'\\]*)*)'/g, (match, p1) => {
-				return '"' + p1.replace(/"/g, '\\"') + '"';
-			});
-
-			// 3. Fix missing quotes on keys (simple version)
-			cleaned = cleaned.replace(/([{,]\s*)([a-zA-Z0-9_$]+)\s*:/g, '$1"$2":');
-
-			// 4. Handle escaped quotes that might be broken
-			cleaned = cleaned.replace(/\\'/g, "'");
-
-			// 5. Remove trailing commas
-			cleaned = cleaned.replace(/,\s*([\]}])/g, "$1");
-
-			// 6. Handle literal newlines in strings
-			cleaned = escapeLiteralNewlinesInStrings(cleaned);
-
-			return cleaned;
-		}
-
-		function tokenize(text) {
-			const tokens = [];
-			let i = 0;
-			while (i < text.length) {
-				// Skip whitespace
-				if (/\s/.test(text[i])) {
-					i++;
-					continue;
-				}
-				// Skip single-line comments
-				if (text[i] === '/' && text[i + 1] === '/') {
-					i += 2;
-					while (i < text.length && text[i] !== '\n' && text[i] !== '\r') i++;
-					continue;
-				}
-				// Skip multi-line comments
-				if (text[i] === '/' && text[i + 1] === '*') {
-					i += 2;
-					while (i < text.length && !(text[i] === '*' && text[i + 1] === '/')) i++;
-					if (i < text.length) i += 2;
-					continue;
-				}
-
-				// Single character tokens
-				if (text[i] === '{' || text[i] === '}' || text[i] === '[' || text[i] === ']' || text[i] === ':' || text[i] === ',') {
-					tokens.push({ type: text[i], value: text[i], start: i, end: i + 1 });
-					i++;
-					continue;
-				}
-
-				// String tokens (double quoted)
-				if (text[i] === '"') {
-					const start = i;
-					i++;
-					while (i < text.length && text[i] !== '"') {
-						if (text[i] === '\\') i += 2;
-						else i++;
-					}
-					if (i < text.length) i++;
-					const value = text.slice(start, i);
-					tokens.push({ type: 'string', value: value, start, end: i });
-					continue;
-				}
-
-				// String tokens (single quoted)
-				if (text[i] === "'") {
-					const start = i;
-					i++;
-					while (i < text.length && text[i] !== "'") {
-						if (text[i] === '\\') i += 2;
-						else i++;
-					}
-					if (i < text.length) i++;
-					const value = text.slice(start, i);
-					tokens.push({ type: 'string', value: value, start, end: i });
-					continue;
-				}
-
-				// Identifier / Word / Number
-				if (/[a-zA-Z0-9_\-\.\+]/.test(text[i])) {
-					const start = i;
-					while (i < text.length && /[a-zA-Z0-9_\-\.\+]/.test(text[i])) i++;
-					const value = text.slice(start, i);
-					tokens.push({ type: 'word', value: value, start, end: i });
-					continue;
-				}
-
-				// Catch-all for any other characters to prevent infinite loops
-				i++;
-			}
-			return tokens;
-		}
-
-		function buildOffsetMap(text) {
-			const map = new Map();
-			const tokens = tokenize(text);
-			let tokenIndex = 0;
-
-			function peek() {
-				return tokens[tokenIndex] || null;
-			}
-
-			function consume() {
-				return tokens[tokenIndex++];
-			}
-
-			const path = [];
-
-			function parseValue() {
-				const tok = peek();
-				if (!tok) return;
-
-				// Save the start offset of the current value/structure
-				map.set(JSON.stringify(path), tok.start);
-
-				if (tok.type === '{') {
-					consume(); // consume '{'
-					let first = true;
-					while (true) {
-						const nextTok = peek();
-						if (!nextTok || nextTok.type === '}') break;
-
-						if (!first) {
-							if (nextTok.type === ',') {
-								consume(); // consume ','
-							}
-						}
-						first = false;
-
-						const keyTok = peek();
-						if (!keyTok || keyTok.type === '}') break;
-
-						// key can be a string or a word (unquoted key)
-						let key = '';
-						if (keyTok.type === 'string') {
-							// Strip enclosing quotes and parse
-							const rawStr = consume().value;
-							try {
-								key = JSON.parse(rawStr.startsWith("'") ? `"${rawStr.slice(1, -1).replace(/"/g, '\\"')}"` : rawStr);
-							} catch (e) {
-								key = rawStr.slice(1, -1);
-							}
-						} else if (keyTok.type === 'word') {
-							key = consume().value;
-						} else {
-							// Fallback to prevent infinite loop
-							consume();
-							continue;
-						}
-
-						const colonTok = peek();
-						if (colonTok && colonTok.type === ':') {
-							consume(); // consume ':'
-						}
-
-						path.push(key);
-						parseValue();
-						path.pop();
-					}
-					if (peek() && peek().type === '}') {
-						consume(); // consume '}'
-					}
-				} else if (tok.type === '[') {
-					consume(); // consume '['
-					let index = 0;
-					let first = true;
-					while (true) {
-						const nextTok = peek();
-						if (!nextTok || nextTok.type === ']') break;
-
-						if (!first) {
-							if (nextTok.type === ',') {
-								consume(); // consume ','
-							}
-						}
-						first = false;
-
-						const elementTok = peek();
-						if (!elementTok || elementTok.type === ']') break;
-
-						path.push(index);
-						parseValue();
-						path.pop();
-						index++;
-					}
-					if (peek() && peek().type === ']') {
-						consume(); // consume ']'
-					}
-				} else {
-					// String, word (number, boolean, null, etc.)
-					consume();
-				}
-			}
-
-			parseValue();
-			return map;
-		}
-
-		function buildTree(text) {
-			const empty = '<div class="json-empty-message">Editor is empty. Paste or type JSON to see the tree view.</div>';
-			const renderTo = [treeRoot, treeMobile];
-			renderTo.forEach(r => r.innerHTML = "");
-			if (!text || text.trim() === "") {
-				currentOffsetMap = null;
-				currentTreeText = null;
-				renderTo.forEach(r => r.innerHTML = empty);
-				return;
-			}
-			try {
-				const data = safeJsonParse(text);
-				currentTreeText = text;
-				currentOffsetMap = buildOffsetMap(text);
-				renderTo.forEach(r => r.appendChild(renderNode(null, data, true, null, [], currentOffsetMap)));
-			} catch (e) {
-				currentOffsetMap = null;
-				currentTreeText = null;
-				const errHtml = `<div class="json-error-container">
-					<div class="json-error-title">Invalid JSON</div>
-					<div class="json-error-message">${e.message}</div>
-					<button onclick="repairJsonAction()" class="json-error-btn">Try to Auto-Fix JSON</button>
-				</div>`;
-				renderTo.forEach(r => r.innerHTML = errHtml);
-			}
-		}
-
-		function renderNode(key, value, isLast = true, index = null, path = [], offsetMap = null) {
-			const node = document.createElement("div");
-			node.className = "json-node collapsed";
-
-			const currentPath = index !== null ? [...path, index] : (key !== null ? [...path, key] : path);
-			const pathKey = JSON.stringify(currentPath);
-			node.dataset.path = pathKey;
-
-			const content = document.createElement("span");
-			content.className = "json-node-content";
-
-			if (index !== null) {
-				const indexSpan = document.createElement("span");
-				indexSpan.className = "text-gray-400 mr-2 opacity-50";
-				indexSpan.textContent = `[${index}]`;
-				content.appendChild(indexSpan);
-			}
-
-			if (key !== null) {
-				const keySpan = document.createElement("span");
-				keySpan.className = "json-key";
-				keySpan.textContent = `"${key}": `;
-				content.appendChild(keySpan);
-			}
-
-			const isObject = value !== null && typeof value === "object";
-
-			if (isObject) {
-				const isArray = Array.isArray(value);
-				const openBracket = isArray ? "[" : "{";
-				const closeBracket = isArray ? "]" : "}";
-				const count = isArray ? value.length : Object.keys(value).length;
-
-				const label = document.createElement("span");
-				label.textContent = openBracket;
-				content.appendChild(label);
-
-				// Ellipsis for collapsed view
-				const ellipsis = document.createElement("span");
-				ellipsis.className = "collapsed-only text-gray-400 mx-1";
-				ellipsis.textContent = "...";
-				content.appendChild(ellipsis);
-
-				const closeLabel = document.createElement("span");
-				closeLabel.className = "collapsed-only";
-				closeLabel.textContent = closeBracket + (isLast ? "" : ",");
-				content.appendChild(closeLabel);
-
-				const meta = document.createElement("span");
-				meta.className = "json-meta";
-				meta.textContent = `${count} ${isArray ? "item" : "field"}${count !== 1 ? "s" : ""}`;
-				content.appendChild(meta);
-
-				const toggle = document.createElement("div");
-				toggle.className = "json-toggle";
-				toggle.onclick = (e) => {
-					e.stopPropagation();
-					node.classList.toggle("collapsed");
-				};
-				node.appendChild(toggle);
-
-				const children = document.createElement("div");
-				children.className = "json-children";
-
-				const keys = Object.keys(value);
-				keys.forEach((k, i) => {
-					children.appendChild(renderNode(isArray ? null : k, value[k], i === keys.length - 1, isArray ? i : null, currentPath, offsetMap));
-				});
-				node.appendChild(content);
-				node.appendChild(children);
-
-				const footer = document.createElement("div");
-				footer.className = "expanded-only opacity-70";
-				footer.style.marginLeft = "0";
-				footer.textContent = closeBracket + (isLast ? "" : ",");
-				node.appendChild(footer);
-			} else {
-				const valSpan = document.createElement("span");
-				const type = value === null ? "null" : typeof value;
-				valSpan.className = `json-value-${type}`;
-				valSpan.textContent = type === "string" ? (value.length > 200 ? `"${value.substring(0, 200)}..."` : `"${value}"`) : String(value);
-				content.appendChild(valSpan);
-
-				// Type badge
-				const badge = document.createElement("span");
-				badge.className = `json-type-badge json-type-${type}`;
-				badge.textContent = type === "string" ? `str·${value.length}` : type;
-				content.appendChild(badge);
-
-				if (!isLast) content.appendChild(document.createTextNode(","));
-				node.appendChild(content);
-			}
-
-			content.onclick = (e) => {
-				e.stopPropagation();
-				if (!editor) return;
-
-				console.log('[TREE-NAV] Click on pathKey:', pathKey);
-
-				// Always use the freshest offset map for the current editor text
-				const editorText = editor.state.doc.toString();
-				let activeMap = currentOffsetMap;
-				if (!activeMap || currentTreeText !== editorText) {
-					try {
-						console.log('[TREE-NAV] Rebuilding offset map (text changed)');
-						activeMap = buildOffsetMap(editorText);
-						currentOffsetMap = activeMap;
-						currentTreeText = editorText;
-					} catch (err) {
-						console.error('[TREE-NAV] Failed to build offset map:', err);
-						return;
-					}
-				}
-
-				if (!activeMap.has(pathKey)) {
-					console.warn('[TREE-NAV] pathKey not found in map:', pathKey);
-					console.log('[TREE-NAV] Available keys:', [...activeMap.keys()]);
-					return;
-				}
-
-				const offset = activeMap.get(pathKey);
-				console.log('[TREE-NAV] offset:', offset, 'char:', JSON.stringify(editorText[offset]), 'docLen:', editorText.length);
-				if (offset < 0 || offset >= editorText.length) {
-					console.error('[TREE-NAV] offset out of bounds');
-					return;
-				}
-
-				let end = offset;
-				// Scan forward to find end of value token
-				if (editorText[offset] === '"') {
-					end++;
-					while (end < editorText.length && editorText[end] !== '"') {
-						if (editorText[end] === '\\') end++;
-						end++;
-					}
-					end++; // include closing quote
-				} else if (editorText[offset] === '{' || editorText[offset] === '[') {
-					end = offset + 1;
-				} else {
-					while (end < editorText.length && /[^,\]\}\s]/.test(editorText[end])) end++;
-				}
-
-				console.log('[TREE-NAV] Dispatching selection anchor:', offset, 'head:', end);
-
-				// Dispatch selection + scroll, then focus in next microtask
-				// to prevent focus() from overriding the scrollIntoView
-				editor.dispatch({
-					selection: { anchor: offset, head: end },
-					effects: EditorView.scrollIntoView(offset, { y: 'center' }),
-					scrollIntoView: true
-				});
-				requestAnimationFrame(() => editor.focus());
-
-				// Flash the tree node for visual feedback
-				node.classList.add('tree-node-active');
-				setTimeout(() => node.classList.remove('tree-node-active'), 600);
-			};
-
-			return node;
-		}
+		// buildTree and renderNode are now in json-tree.js
 
 		function copyToClipboard(text) {
 			navigator.clipboard.writeText(text).then(() => {
@@ -1600,20 +1008,11 @@
 					return;
 				} else if (type === "cleanJSON") {
 					try {
-						const { jsonrepair } = window.JSONRepair;
-						const preCleaned = robustCleanJson(content);
-						const repaired = jsonrepair(preCleaned);
-						const parsed = JSON.parse(repaired);
+						const parsed = safeJsonParse(content);
 						result = JSON.stringify(parsed, null, 2);
 					} catch (e) {
-						try {
-							const cleaned = performSophisticatedClean(content);
-							const parsed = JSON.parse(cleaned);
-							result = JSON.stringify(parsed, null, 2);
-						} catch (e2) {
-							// Final fallback attempt if performSophisticatedClean + JSON.parse fails
-							result = content.replace(/\\n/g, "\n").replace(/\\"/g, '"');
-						}
+						// Final fallback
+						result = content.replace(/\\n/g, "\n").replace(/\\"/g, '"');
 					}
 				}
 
@@ -1634,30 +1033,15 @@
 				return;
 			}
 			try {
-				const { jsonrepair } = window.JSONRepair;
-				const preCleaned = robustCleanJson(content);
-				const repaired = jsonrepair(preCleaned);
-				const parsed = JSON.parse(repaired);
+				const parsed = safeJsonParse(content);
 				const formatted = JSON.stringify(parsed, null, 2);
-				
 				editor.dispatch({
 					changes: { from: 0, to: editor.state.doc.length, insert: formatted }
 				});
 				toast("JSON successfully repaired and formatted!");
 			} catch (e) {
 				console.error("[repairJsonAction] failed:", e);
-				// Fallback to sophisticated clean if jsonrepair failed or JSON.parse failed
-				try {
-					const cleaned = performSophisticatedClean(content);
-					const parsed = JSON.parse(cleaned);
-					const formatted = JSON.stringify(parsed, null, 2);
-					editor.dispatch({
-						changes: { from: 0, to: editor.state.doc.length, insert: formatted }
-					});
-					toast("JSON repaired via fallback cleaner.");
-				} catch (e2) {
-					toast("Failed to repair JSON: " + e.message);
-				}
+				toast("Failed to repair JSON: " + e.message);
 			}
 		};
 
@@ -1673,404 +1057,7 @@
 			// Legacy function
 		};
 
-		// ── JSON → Markdown transformer ─────────────────────────────────────
-		// Walks any JSON value and emits readable markdown. Smart about:
-		//  - top-level title fields (becomes H1)
-		//  - frontmatter (scalar/short fields → bullets at the top)
-		//  - arrays of objects (becomes sections with H2/H3 titles)
-		//  - widget-wrapper pattern: { widgetName: { ... } } (unwraps and
-		//    uses the inner title for the section heading)
-		//  - depth-based heading levels (capped at H6) so we never hit the
-		//    "heading soup" failure mode on deeply nested JSON
-		const J2MD_TITLE_KEYS = ['title', 'name', 'heading', 'label'];
-		const J2MD_META_KEYS = new Set([
-			'study_duration', 'duration_seconds', 'align', 'karut',
-			'keywords', 'lang', 'ai_prompt', 'grader_prompt',
-			'wordlist_csv', 'criteria', 'hint', 'explanation',
-			'structure', 'match', 'id', 'roleplay'
-		]);
-		// Field names that, in a widget config, carry the widget's main
-		// content. We render them as a plain block (no bold label) because
-		// the field name rarely adds meaning when the widget type is
-		// already in the section heading. Note: left_items / right_items
-		// are NOT in this set — the orientation ("left" / "right") is
-		// meaningful for connections exercises, so we keep their labels.
-		const J2MD_NO_LABEL_FIELDS = new Set([
-			'markdown', 'content', 'text', 'html', 'description', 'body',
-			'question', 'q', 'answer', 'a', 'explanation', 'e', 'hint',
-			'prompt', 'rows', 'flow', 'wordlist_csv', 'criteria',
-			'grader_prompt', 'ai_prompt', 'lang', 'structure', 'choices',
-			'fillblank', 'match_pairs'
-		]);
-
-		function j2mdIsScalar(v) {
-			return v === null || v === undefined || typeof v === 'boolean' ||
-				(typeof v !== 'object' && typeof v !== 'string');
-		}
-
-		function j2mdIsShortString(v) {
-			return typeof v === 'string' && v.length < 100 && !v.includes('\n');
-		}
-
-		function j2mdIsPrimitiveArray(v) {
-			// Arrays of scalars and/or strings (any length) render as a
-			// labeled bullet list. Empty arrays are handled at the call
-			// site so the field is omitted entirely.
-			return Array.isArray(v) && v.length > 0 &&
-				v.every(x => j2mdIsScalar(x) || typeof x === 'string');
-		}
-
-		// An object is "small" if every value is a scalar / short string /
-		// primitive array — i.e. it can be inlined into a bullet without
-		// losing readability. Used to render arrays of small config items
-		// (left_items, right_items, criteria, etc.) as bullet lists
-		// instead of as full sections.
-		function j2mdIsSmallObject(obj) {
-			if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return false;
-			const keys = Object.keys(obj);
-			if (keys.length === 0 || keys.length > 6) return false;
-			return keys.every(k => {
-				const v = obj[k];
-				return j2mdIsScalar(v) || j2mdIsShortString(v) || j2mdIsPrimitiveArray(v);
-			});
-		}
-
-		function j2mdRenderObjectList(arr) {
-			return arr.map(v => {
-				const parts = Object.keys(v).map(k => {
-					const val = v[k];
-					if (j2mdIsPrimitiveArray(val)) {
-						return `**${j2mdHumanizeKey(k)}:** ${val.join(', ')}`;
-					}
-					return `**${j2mdHumanizeKey(k)}:** ${val}`;
-				});
-				return `- ${parts.join(' · ')}`;
-			}).join('\n');
-		}
-
-		// Detect an array of arrays-of-primitives that is a natural fit for
-		// a markdown table (all inner arrays same length, ≥ 2 rows).
-		function j2mdIsTable(v) {
-			if (!Array.isArray(v) || v.length < 2) return false;
-			if (!v.every(row => Array.isArray(row))) return false;
-			const colCount = v[0].length;
-			if (colCount === 0) return false;
-			return v.every(row =>
-				row.length === colCount &&
-				row.every(cell => cell === null || ['string', 'number', 'boolean'].includes(typeof cell))
-			);
-		}
-
-		function j2mdRenderTable(arr) {
-			const colCount = arr[0].length;
-			const escape = s => String(s == null ? '' : s)
-				.replace(/\|/g, '\\|')
-				.replace(/\r?\n/g, ' ');
-			const header = `| ${arr[0].map(escape).join(' | ')} |`;
-			const sep = `| ${Array(colCount).fill('---').join(' | ')} |`;
-			const rows = arr.slice(1)
-				.map(row => `| ${row.map(escape).join(' | ')} |`)
-				.join('\n');
-			return [header, sep, rows].join('\n');
-		}
-
-		function j2mdHumanizeKey(key) {
-			return String(key)
-				.replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-				.replace(/[_-]+/g, ' ')
-				.replace(/\s+/g, ' ')
-				.trim()
-				.replace(/\b\w/g, c => c.toUpperCase());
-		}
-
-		function j2mdPickTitle(obj) {
-			if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return null;
-			for (const k of J2MD_TITLE_KEYS) {
-				if (typeof obj[k] === 'string' && obj[k].trim()) return obj[k].trim();
-			}
-			return null;
-		}
-
-		function j2mdStripTitle(obj) {
-			const t = j2mdPickTitle(obj);
-			if (!t) return obj;
-			const out = {};
-			for (const k of Object.keys(obj)) {
-				if (J2MD_TITLE_KEYS.includes(k) && typeof obj[k] === 'string' && obj[k].trim() === t) continue;
-				out[k] = obj[k];
-			}
-			return out;
-		}
-
-		function j2mdIsWidgetWrapper(obj) {
-			if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return false;
-			const keys = Object.keys(obj);
-			if (keys.length !== 1) return false;
-			const v = obj[keys[0]];
-			return v && typeof v === 'object' && !Array.isArray(v);
-		}
-
-		function j2mdUnwrapWidget(obj) {
-			const k = Object.keys(obj)[0];
-			return { key: k, value: obj[k] };
-		}
-
-		function j2mdLooksLikeCode(s) {
-			if (s.length > 150 && /[{};]/.test(s) && /\n/.test(s)) return true;
-			if (/(^|\n)\s*(function|const|let|var|class|import|export|if|for|while|return|def)\b/.test(s)) return true;
-			return false;
-		}
-
-		function j2mdAutoLink(s) {
-			return s.replace(/(https?:\/\/\S+)/g, '[$1]($1)');
-		}
-
-		function j2mdRenderString(s) {
-			if (j2mdLooksLikeCode(s)) return '```\n' + s + '\n```';
-			const linked = j2mdAutoLink(s);
-			return linked.split(/\n\s*\n+/).map(p => p.trim()).filter(Boolean).join('\n\n');
-		}
-
-		function j2mdRenderKeyBlock(key, value, opts) {
-			if (value === null || value === undefined || value === '') return '';
-			if (Array.isArray(value) && value.length === 0) return '';
-			if (typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === 0) return '';
-			const humanKey = j2mdHumanizeKey(key);
-			// Defensive defaults so the heading-level formula never sees NaN
-			// even if a caller forgets to pass these.
-			const depth = opts && opts.depth || 0;
-			const sectionDepth = opts && opts.sectionDepth || 0;
-
-			if (j2mdIsScalar(value)) return `- **${humanKey}:** ${value}`;
-			if (j2mdIsShortString(value)) return `- **${humanKey}:** ${value}`;
-			if (j2mdIsPrimitiveArray(value)) {
-				const items = value.map(v => `  - ${v}`).join('\n');
-				return `**${humanKey}:**\n${items}`;
-			}
-			// Long string → inline bold label + paragraph (avoids "heading
-			// soup" on deeply nested JSON with prose in every leaf).
-			if (typeof value === 'string') {
-				return `**${humanKey}:**\n\n${j2mdRenderString(value)}`;
-			}
-			// Object/array → heading + body. The isTopLevel flag is
-			// set ONLY by j2mdRenderTopLevel on its direct children, so
-			// a top-level array-of-objects becomes H2 (its items become
-			// H3) without double-promoting nested arrays inside
-			// sections or widget configs.
-			const isTopLevelArray = opts.isTopLevel &&
-				Array.isArray(value) && value.length > 0 &&
-				value.every(v => v && typeof v === 'object' && !Array.isArray(v));
-			const headingLevel = isTopLevelArray
-				? Math.min(6, 2)
-				: Math.min(6, sectionDepth + 2 + depth);
-			const body = j2mdToMarkdown(value, { ...opts, depth: depth + 1 });
-			if (!body) return '';
-			return `${'#'.repeat(headingLevel)} ${humanKey}\n\n${body}`;
-		}
-
-		function j2mdRenderWidgetSection(item, opts) {
-			const { key: widgetKey, value: cfg } = j2mdUnwrapWidget(item);
-			const widgetLabel = j2mdHumanizeKey(widgetKey);
-			const title = j2mdPickTitle(cfg);
-			const headingLevel = Math.min(6, opts.sectionDepth + 2);
-
-			const meta = {};
-			const content = {};
-			for (const k of Object.keys(cfg)) {
-				if (J2MD_TITLE_KEYS.includes(k)) continue;
-				if (J2MD_META_KEYS.has(k)) meta[k] = cfg[k];
-				else content[k] = cfg[k];
-			}
-
-			let out = '';
-			const heading = title
-				? (widgetKey && widgetKey.toLowerCase() !== title.toLowerCase()
-					? `${title} _(${widgetLabel})_`
-					: title)
-				: widgetLabel;
-			out += `${'#'.repeat(headingLevel)} ${heading}\n\n`;
-
-			const metaParts = [];
-			if (meta.study_duration != null) metaParts.push(`*Duration: ${meta.study_duration} min*`);
-			if (meta.duration_seconds != null) metaParts.push(`*Duration: ${meta.duration_seconds} sec*`);
-			if (meta.align) metaParts.push(`*Align: ${meta.align}*`);
-			if (meta.lang) metaParts.push(`*Lang: ${meta.lang}*`);
-			if (Array.isArray(meta.karut) && meta.karut.length) metaParts.push(`*KARUT: ${meta.karut.join(', ')}*`);
-			if (Array.isArray(meta.keywords) && meta.keywords.length) metaParts.push(`*Keywords: ${meta.keywords.join(', ')}*`);
-			if (Array.isArray(meta.criteria) && meta.criteria.length) metaParts.push(`*Criteria: ${meta.criteria.length} items*`);
-			if (metaParts.length) out += metaParts.join(' · ') + '\n\n';
-
-			for (const k of Object.keys(content)) {
-				const v = content[k];
-				if (v === null || v === undefined || v === '') continue;
-				// Skip the bold label for fields whose names don't add
-				// meaning inside a widget config (e.g. "markdown" inside a
-				// markdown widget is just the body text).
-				if (J2MD_NO_LABEL_FIELDS.has(k)) {
-					const rendered = j2mdToMarkdown(v, { ...opts, depth: 1 });
-					if (rendered) out += rendered + '\n\n';
-				} else {
-					const block = j2mdRenderKeyBlock(k, v, { ...opts, depth: 1 });
-					if (block) out += block + '\n\n';
-				}
-			}
-			return out.trim();
-		}
-
-		function j2mdRenderSectionItem(item, idx, opts) {
-			if (j2mdIsWidgetWrapper(item)) return j2mdRenderWidgetSection(item, opts);
-			const title = j2mdPickTitle(item);
-			const cleanItem = j2mdStripTitle(item);
-			const headingLevel = Math.min(6, opts.sectionDepth + 2);
-			const heading = title || `Item ${idx + 1}`;
-			const body = j2mdToMarkdown(cleanItem, { ...opts, depth: 1 });
-			if (!body) return `${'#'.repeat(headingLevel)} ${heading}`;
-			return `${'#'.repeat(headingLevel)} ${heading}\n\n${body}`;
-		}
-
-		function j2mdToMarkdown(value, opts) {
-			opts = opts || {};
-			const depth = opts.depth || 0;
-			const sectionDepth = opts.sectionDepth || 0;
-			const seen = opts.seen || new WeakSet();
-
-			if (value === null || value === undefined) return '';
-			if (typeof value === 'object') {
-				if (seen.has(value)) return '_(circular)_';
-				seen.add(value);
-			}
-			if (typeof value === 'boolean') return value ? 'true' : 'false';
-			if (typeof value === 'number') return String(value);
-			if (typeof value === 'string') return j2mdRenderString(value);
-
-			if (Array.isArray(value)) {
-				if (value.length === 0) return '';
-				// Array of arrays with consistent column count → markdown table
-				if (j2mdIsTable(value)) return j2mdRenderTable(value);
-				// Array of objects: either "small" (render as bullet list)
-				// or "rich" (render as named sections).
-				if (value.every(v => v && typeof v === 'object' && !Array.isArray(v))) {
-					if (value.every(j2mdIsSmallObject)) {
-						return j2mdRenderObjectList(value);
-					}
-					const sep = '\n\n---\n\n';
-					return value
-						.map((v, i) => j2mdRenderSectionItem(v, i, { ...opts, sectionDepth: sectionDepth + 1 }))
-						.filter(Boolean)
-						.join(sep);
-				}
-				return value.map(v => {
-					const inner = j2mdToMarkdown(v, { ...opts, depth: depth + 1, sectionDepth });
-					const flat = inner.replace(/\n/g, ' ').trim();
-					return `- ${flat}`;
-				}).join('\n');
-			}
-
-			if (depth === 0) return j2mdRenderTopLevel(value, opts);
-			return j2mdRenderNestedObject(value, opts);
-		}
-
-		function j2mdRenderTopLevel(obj, opts) {
-			const keys = Object.keys(obj);
-			if (keys.length === 0) return '';
-			const titleKey = keys.find(k =>
-				J2MD_TITLE_KEYS.includes(k) && typeof obj[k] === 'string' && obj[k].trim());
-			const title = titleKey ? obj[titleKey].trim() : null;
-
-			// Special case: a top-level object whose only content is a
-			// single array of objects → each item becomes an H2 section
-			// (no "### Sections" wrapper, no frontmatter). Common shape
-			// for course-content JSON, list-of-things, etc. If every item
-			// is "small", render as a bullet list instead.
-			if (!title) {
-				const nonEmptyKeys = keys.filter(k => {
-					const v = obj[k];
-					return !(v === null || v === undefined || v === '' ||
-						(Array.isArray(v) && v.length === 0));
-				});
-				if (nonEmptyKeys.length === 1) {
-					const k = nonEmptyKeys[0];
-					const v = obj[k];
-					if (Array.isArray(v) && v.length > 0 &&
-						v.every(x => x && typeof x === 'object' && !Array.isArray(x))) {
-						if (v.every(j2mdIsSmallObject)) {
-							return j2mdRenderObjectList(v);
-						}
-						return v
-							.map((item, i) => j2mdRenderSectionItem(item, i, { ...opts, sectionDepth: 0 }))
-							.filter(Boolean)
-							.join('\n\n---\n\n')
-							.trim();
-					}
-				}
-			}
-
-			const scalarKeys = keys.filter(k => {
-				if (k === titleKey) return false;
-				const v = obj[k];
-				return j2mdIsScalar(v) || j2mdIsShortString(v) || j2mdIsPrimitiveArray(v);
-			});
-			const complexKeys = keys.filter(k => k !== titleKey && !scalarKeys.includes(k));
-
-			let out = '';
-			if (title) out += `# ${title}\n\n`;
-			if (scalarKeys.length) {
-				const lines = scalarKeys.map(k => {
-					const v = obj[k];
-					if (j2mdIsPrimitiveArray(v)) return `- **${j2mdHumanizeKey(k)}:** ${v.join(', ')}`;
-					return `- **${j2mdHumanizeKey(k)}:** ${v}`;
-				});
-				out += lines.join('\n') + '\n\n';
-			}
-			if (complexKeys.length) {
-				out += complexKeys
-					.map(k => j2mdRenderKeyBlock(k, obj[k], { ...opts, depth: 1, sectionDepth: 0, isTopLevel: true }))
-					.filter(Boolean)
-					.join('\n\n');
-			}
-			return out.trim();
-		}
-
-		function j2mdRenderNestedObject(obj, opts) {
-			const keys = Object.keys(obj);
-			if (keys.length === 0) return '';
-			// Ensure sectionDepth is always set so the heading-level
-			// formula in j2mdRenderKeyBlock never sees NaN.
-			const safeOpts = opts.sectionDepth === undefined
-				? { ...opts, sectionDepth: 0 }
-				: opts;
-			return keys
-				.map(k => j2mdRenderKeyBlock(k, obj[k], safeOpts))
-				.filter(Boolean)
-				.join('\n\n');
-		}
-
-		function j2mdSlugify(s) {
-			return String(s)
-				.toLowerCase()
-				.replace(/[^\w\s-]/g, '')
-				.replace(/[\s_-]+/g, '-')
-				.replace(/^-+|-+$/g, '')
-				.slice(0, 80);
-		}
-
-		// Derive a markdown filename from the JSON's title field, falling
-		// back to the current editor filename (stripped of its .json
-		// extension), and finally to "output.md".
-		function deriveMarkdownFilename(data) {
-			if (data && typeof data === 'object') {
-				const t = j2mdPickTitle(data);
-				if (t) {
-					const slug = j2mdSlugify(t);
-					if (slug) return `${slug}.md`;
-				}
-			}
-			const fn = (currentFileName || '').trim();
-			if (fn && !/^scratchpad-\d+\.json$/i.test(fn)) {
-				return fn.replace(/\.json$/i, '.md');
-			}
-			return 'output.md';
-		}
+		// ── JSON → Markdown transformer (extracted to json-to-markdown.js) ──
 
 		function transformJsonToMarkdown() {
 			if (!editor) return null;
@@ -2092,12 +1079,12 @@
 				}, 3000);
 				return null;
 			}
-			const markdown = j2mdToMarkdown(data);
+			const markdown = window.J2MD.toMarkdown(data);
 			if (!markdown) {
 				toast('JSON produced empty markdown.');
 				return null;
 			}
-			return { markdown, filename: deriveMarkdownFilename(data) };
+			return { markdown, filename: window.J2MD.deriveFilename(data, currentFileName) };
 		}
 
 		window.copyJsonAsMarkdown = async function () {
@@ -2199,21 +1186,9 @@
 			}
 		};
 
-		// Expand/Collapse all nodes across both tree views (desktop + mobile)
-		const forEachTreeNode = (mutator) => {
-			[treeRoot, treeMobile].forEach(root => {
-				if (!root) return;
-				root.querySelectorAll('.json-node').forEach(mutator);
-			});
-		};
-
-		window.expandAllTree = () => {
-			forEachTreeNode(node => node.classList.remove('collapsed'));
-		};
-
-		window.collapseAllTree = () => {
-			forEachTreeNode(node => node.classList.add('collapsed'));
-		};
+		// Expand/Collapse all — delegate to treeView module
+		window.expandAllTree = () => treeView.expandAll();
+		window.collapseAllTree = () => treeView.collapseAll();
 
 
 		// ── Sidebar Panel Toggle & Resize ──────────────────

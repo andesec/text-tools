@@ -6,52 +6,12 @@ const path = require('path');
 
 const html = fs.readFileSync(path.join(__dirname, 'jsv.html'), 'utf8');
 
-// Find the script block that defines j2mdToMarkdown and friends.
-// We grab from the section comment to the end of j2mdRenderNestedObject
-// (the last helper in the transformer before the slugify/etc. helpers).
-const startMarker = '// ── JSON → Markdown transformer ─';
-const endMarker = 'function j2mdSlugify';
-let code;
-{
-  const start = html.indexOf(startMarker);
-  if (start < 0) { console.error('Start marker not found'); process.exit(1); }
-  const end = html.indexOf(endMarker, start);
-  if (end < 0) { console.error('End marker not found'); process.exit(1); }
-  // Walk back from the next-function marker to find the closing `}`
-  // of j2mdRenderNestedObject.
-  let closeEnd = end;
-  while (closeEnd > start && html[closeEnd - 1] !== '}') closeEnd--;
-  // include the `}` itself
-  code = html.substring(start, closeEnd + 1);
-}
-
-// Strip the 'window.x = ' wrappers so the IIFE-bound functions are
-// locally callable for testing.
-code = code.replace(/window\.(copyJsonAsMarkdown|sendJsonToMarkdown)\s*=\s*/g, '');
-
-// Stub the DOM and editor dependencies so the code can run in node.
-const prefix = `
-const editor = null;
-const currentFileName = null;
-const toast = () => {};
-const copyToast = { textContent: '', style: { background: '', opacity: '' } };
-const safeJsonParse = (s) => JSON.parse(s);
-const syncTargetOrigin = '*';
-const window = { parent: null, open: () => null };
-`;
-
-try {
-  // eslint-disable-next-line no-eval
-  eval(prefix + code);
-} catch (e) {
-  console.error('Eval failed:', e.message);
-  console.error('Code length:', code.length);
-  // Print last 500 chars of code for debugging
-  console.error('--- last 500 chars of code ---');
-  console.error(code.slice(-500));
-  console.error('--- end ---');
-  process.exit(1);
-}
+// Stub the window object for browser-style script execution
+global.window = {};
+// Load the script
+require('./json-to-markdown.js');
+// Grab the exposed API
+const j2mdToMarkdown = window.J2MD.toMarkdown;
 
 const j1 = {
   sections: [
