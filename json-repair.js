@@ -175,13 +175,83 @@
 		return text;
 	}
 
+	function isValidFollowUp(text, qIndex, expectKey, stack) {
+		let nextPos = qIndex + 1;
+		while (nextPos < text.length && /\s/.test(text[nextPos])) {
+			nextPos++;
+		}
+		if (nextPos >= text.length) return true;
+
+		const sep = text[nextPos];
+		if (expectKey) {
+			return sep === ':';
+		}
+
+		const top = stack[stack.length - 1];
+		if (sep === '}') {
+			return top === '{';
+		}
+		if (sep === ']') {
+			return top === '[';
+		}
+		if (sep === ',') {
+			let postCommaPos = nextPos + 1;
+			while (postCommaPos < text.length && /\s/.test(text[postCommaPos])) {
+				postCommaPos++;
+			}
+			if (postCommaPos >= text.length) return true;
+
+			const nextChar = text[postCommaPos];
+			if (top === '{') {
+				if (nextChar === '"' || nextChar === "'") {
+					let k = postCommaPos + 1;
+					while (k < text.length) {
+						if (text[k] === nextChar) {
+							let bsCount = 0;
+							let idx = k - 1;
+							while (idx > postCommaPos && text[idx] === '\\') { bsCount++; idx--; }
+							if (bsCount % 2 === 0) {
+								let colonPos = k + 1;
+								while (colonPos < text.length && /\s/.test(text[colonPos])) {
+									colonPos++;
+								}
+								return colonPos < text.length && text[colonPos] === ':';
+							}
+						}
+						k++;
+					}
+					return false;
+				} else if (/[a-zA-Z0-9_$]/.test(nextChar)) {
+					let k = postCommaPos + 1;
+					while (k < text.length && /[a-zA-Z0-9_$]/.test(text[k])) {
+						k++;
+					}
+					let colonPos = k;
+					while (colonPos < text.length && /\s/.test(text[colonPos])) {
+						colonPos++;
+					}
+					return colonPos < text.length && text[colonPos] === ':';
+				} else if (nextChar === '}') {
+					return true;
+				}
+				return false;
+			} else if (top === '[') {
+				if (nextChar === '"' || nextChar === "'" || nextChar === '{' || nextChar === '[' || nextChar === ']' || /[0-9\-+a-zA-Z_$]/.test(nextChar)) {
+					return true;
+				}
+				return false;
+			}
+		}
+		return false;
+	}
+
 	// ── robustCleanJson ──────────────────────────────────────────────
 
 	/**
 	 * State-machine based JSON cleaner.  Walks the text character by
 	 * character, tracking whether we're inside a string and what the
 	 * bracket nesting is, so it can:
-	 *  • Skip comments (// and /&#42; &#42;/)
+	 *  • Skip comments (// and block comments)
 	 *  • Correctly identify double-quoted string boundaries even when
 	 *    the content contains un-escaped quotes (picks the "best"
 	 *    closing quote based on what follows it)
@@ -244,18 +314,37 @@
 
 				let closingQuoteIndex = -1;
 				if (expectKey) {
-					if (candidateIndices.length > 0) closingQuoteIndex = candidateIndices[0];
+					for (let idx = 0; idx < candidateIndices.length; idx++) {
+						const qIndex = candidateIndices[idx];
+						if (isValidFollowUp(text, qIndex, true, stack)) {
+							closingQuoteIndex = qIndex;
+							break;
+						}
+					}
+					if (closingQuoteIndex === -1 && candidateIndices.length > 0) {
+						closingQuoteIndex = candidateIndices[0];
+					}
 				} else {
 					for (let idx = 0; idx < candidateIndices.length; idx++) {
 						const qIndex = candidateIndices[idx];
-						let nextNonWs = '';
-						let nextPos = qIndex + 1;
-						while (nextPos < text.length) {
-							if (!/\s/.test(text[nextPos])) { nextNonWs = text[nextPos]; break; }
-							nextPos++;
+						if (isValidFollowUp(text, qIndex, false, stack)) {
+							closingQuoteIndex = qIndex;
+							break;
 						}
-						if (nextNonWs === '' || nextNonWs === ',' || nextNonWs === '}' || nextNonWs === ']') {
-							closingQuoteIndex = qIndex; break;
+					}
+					// Fallback to original less-strict follow-up check if no index matched
+					if (closingQuoteIndex === -1) {
+						for (let idx = 0; idx < candidateIndices.length; idx++) {
+							const qIndex = candidateIndices[idx];
+							let nextNonWs = '';
+							let nextPos = qIndex + 1;
+							while (nextPos < text.length) {
+								if (!/\s/.test(text[nextPos])) { nextNonWs = text[nextPos]; break; }
+								nextPos++;
+							}
+							if (nextNonWs === '' || nextNonWs === ',' || nextNonWs === '}' || nextNonWs === ']') {
+								closingQuoteIndex = qIndex; break;
+							}
 						}
 					}
 				}
