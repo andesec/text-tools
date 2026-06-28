@@ -343,8 +343,8 @@
 						}
 					}
 
-					// Validate candidates from end
-					for (let idx = validCandidates.length - 1; idx >= 0; idx--) {
+					// Validate candidates from start (to avoid swallowing subsequent fields/structures)
+					for (let idx = 0; idx < validCandidates.length; idx++) {
 						const qIndex = validCandidates[idx];
 						const stringContent = text.slice(i + 1, qIndex);
 						let escapedContent = '';
@@ -734,6 +734,12 @@
 		try {
 			return JSON.parse(text);
 		} catch (e) {
+			// Try a simple escape of literal newlines first, since it's extremely common and safe if the JSON is otherwise valid.
+			try {
+				return JSON.parse(escapeLiteralNewlinesInStrings(text));
+			} catch (ee) {
+				// Proceed with full repair pipeline if that fails
+			}
 			// Pass 2: pre-process + jsonrepair
 			try {
 				let preprocessed = wrapBareKeyValue(text);
