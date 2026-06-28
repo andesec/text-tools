@@ -1796,44 +1796,6 @@
 				basicSetup,
 				markdown(),
 				isDark ? oneDark : [],
-				keymap.of([{
-					key: 'Tab',
-					run: (view) => {
-						const { state } = view;
-						const { from, to } = state.selection.main;
-						const fromLine = state.doc.lineAt(from);
-						const toLine = state.doc.lineAt(to);
-						if (fromLine.number !== toLine.number || !state.selection.main.empty) {
-							const changes = [];
-							for (let i = fromLine.number; i <= toLine.number; i++) {
-								const line = state.doc.line(i);
-								changes.push({ from: line.from, insert: '\t' });
-							}
-							view.dispatch({ changes, userEvent: 'input.indent' });
-							return true;
-						}
-						view.dispatch(state.update(state.replaceSelection('\t'), { scrollIntoView: true, userEvent: 'input' }));
-						return true;
-					},
-					shift: (view) => {
-						const { state } = view;
-						const { from, to } = state.selection.main;
-						const fromLine = state.doc.lineAt(from);
-						const toLine = state.doc.lineAt(to);
-						const changes = [];
-						for (let i = fromLine.number; i <= toLine.number; i++) {
-							const line = state.doc.line(i);
-							if (line.text.startsWith('\t')) {
-								changes.push({ from: line.from, to: line.from + 1 });
-							} else {
-								const m = line.text.match(/^ {1,4}/);
-								if (m) changes.push({ from: line.from, to: line.from + m[0].length });
-							}
-						}
-						if (changes.length) view.dispatch({ changes, userEvent: 'delete.dedent' });
-						return true;
-					}
-				}]),
 				EditorView.theme({
 					"&": { height: "100%", fontSize: "var(--editor-font-size)", backgroundColor: "var(--bg-surface)" },
 					".cm-scroller": { overflow: "auto", fontFamily: "var(--font-mono)" },
