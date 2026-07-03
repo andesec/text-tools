@@ -162,6 +162,36 @@
 			fill: currentColor;
 		}
 
+		/* ── Heading Folding ── */
+		.heading-fold-toggle {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			width: 1rem;
+			height: 1rem;
+			margin-right: 0.35rem;
+			padding: 0;
+			border: none;
+			background: none;
+			cursor: pointer;
+			color: var(--text-tertiary);
+			vertical-align: middle;
+		}
+
+		.heading-fold-toggle:hover {
+			color: var(--text-primary);
+		}
+
+		.heading-fold-toggle svg {
+			width: 14px;
+			height: 14px;
+			transition: transform var(--transition-fast);
+		}
+
+		.heading-folded .heading-fold-toggle svg {
+			transform: rotate(-90deg);
+		}
+
 		/* ── Links ── */
 		.prose a {
 			color: var(--link-color);
@@ -1067,6 +1097,27 @@
 			border: none;
 			background: rgb(255, 255, 255);
 		}
+
+		/* ── Markdown Fence Preview/Editor widget ── */
+		.md-fence-toolbar {
+			position: absolute;
+			top: 8px;
+			right: 8px;
+			z-index: 10;
+			display: flex;
+			gap: 4px;
+		}
+		.md-fence-toolbar .btn-run-code,
+		.runnable-header .btn-run-code {
+			position: static;
+		}
+		.runnable-panel.panel-preview {
+			overflow: auto;
+			background: var(--bg-surface);
+		}
+		.markdown-preview-content {
+			padding: 1rem;
+		}
 	</style>
 </head>
 
@@ -1515,6 +1566,35 @@
 			}
 		}
 
+		function updateMarkdownFenceBlock(blockIndex, newCode) {
+			if (!editor) return;
+			const text = editor.state.doc.toString();
+			let currentIndex = 0;
+			// Match code fences: ```markdown, ```md, or bare ``` fences with no
+			// language info-string at all (case-insensitive).
+			const regex = /(^|\n)([`~]{3,})(markdown|md)?[ \t]*\n([\s\S]*?)\n\2(?=\n|$)/gi;
+			let match;
+
+			while ((match = regex.exec(text)) !== null) {
+				if (currentIndex === blockIndex) {
+					const matchStart = match.index;
+					const matchEnd = regex.lastIndex;
+					// Reconstruct code block with the same delimiter and type
+					const newBlock = match[1] + match[2] + match[3] + "\n" + newCode + "\n" + match[2];
+					const replacedText = text.substring(0, matchStart) + newBlock + text.substring(matchEnd);
+
+					_isEditingWidgetCode = true;
+					const transaction = editor.state.update({
+						changes: { from: 0, to: text.length, insert: replacedText }
+					});
+					editor.dispatch(transaction);
+					_isEditingWidgetCode = false;
+					break;
+				}
+				currentIndex++;
+			}
+		}
+
 		function convertToRunnable(container, preEl, blockIndex) {
 			const codeEl = preEl.querySelector('code');
 			const initialCode = codeEl ? codeEl.textContent : "";
@@ -1638,6 +1718,175 @@
 
 							// 3. Update main editor document
 							updateMarkdownCodeBlock(blockIndex, newCode);
+						}
+					})
+				],
+				parent: panelEditorEl
+			});
+		}
+
+		function buildMdFenceToolbar(container, preEl, codeEl, blockIndex) {
+			const toolbar = document.createElement('div');
+			toolbar.className = 'md-fence-toolbar';
+			toolbar.innerHTML = `
+				<button class="btn-run-code" data-action="preview" title="Render as Markdown">
+					<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+					</svg>
+					<span>Preview</span>
+				</button>
+				<button class="btn-run-code" data-action="editor" title="Edit Markdown">
+					<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+					</svg>
+					<span>Editor</span>
+				</button>
+				<button class="btn-run-code" data-action="copy" title="Copy Markdown">
+					<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+					</svg>
+					<span>Copy</span>
+				</button>
+			`;
+			container.appendChild(toolbar);
+
+			toolbar.querySelector('[data-action="copy"]').onclick = () => {
+				navigator.clipboard.writeText(codeEl.textContent).then(() => {
+					if (window.MdvComments && typeof MdvComments.toast === "function") MdvComments.toast('Markdown copied');
+				}).catch(() => {
+					if (window.MdvComments && typeof MdvComments.toast === "function") MdvComments.toast('Copy failed');
+				});
+			};
+			toolbar.querySelector('[data-action="preview"]').onclick = () => {
+				convertMarkdownToRunnable(container, preEl, blockIndex, 'preview');
+			};
+			toolbar.querySelector('[data-action="editor"]').onclick = () => {
+				convertMarkdownToRunnable(container, preEl, blockIndex, 'editor');
+			};
+
+			return toolbar;
+		}
+
+		function convertMarkdownToRunnable(container, preEl, blockIndex, initialPanel) {
+			const codeEl = preEl.querySelector('code');
+			const initialCode = codeEl ? codeEl.textContent : "";
+
+			// Remove the collapsed toolbar
+			const toolbar = container.querySelector('.md-fence-toolbar');
+			if (toolbar) toolbar.remove();
+
+			// Create the tab header and panels viewport (Editor / Preview only)
+			const header = document.createElement('div');
+			header.className = 'runnable-header';
+			header.innerHTML = `
+				<div class="runnable-tabs">
+					<button class="runnable-tab" data-tab="0">Editor</button>
+					<button class="runnable-tab" data-tab="1">Preview</button>
+				</div>
+				<button class="btn-run-code" data-action="copy" title="Copy Markdown">
+					<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+					</svg>
+				</button>
+				<button class="runnable-close-btn" title="Revert to static code">
+					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+					</svg>
+				</button>
+			`;
+
+			const viewport = document.createElement('div');
+			viewport.className = 'runnable-panels-viewport';
+			viewport.innerHTML = `
+				<div class="runnable-panels-wrapper" style="width: 200%;">
+					<div class="runnable-panel panel-editor" style="width: 50%;">
+						<div class="runnable-editor-el"></div>
+					</div>
+					<div class="runnable-panel panel-preview" style="width: 50%;">
+						<div class="markdown-preview-content prose dark:prose-invert"></div>
+					</div>
+				</div>
+			`;
+
+			container.appendChild(header);
+			container.appendChild(viewport);
+
+			const panelsWrapper = viewport.querySelector('.runnable-panels-wrapper');
+			const panelEditorEl = viewport.querySelector('.runnable-editor-el');
+			const previewContentEl = viewport.querySelector('.markdown-preview-content');
+
+			// Initial render of the preview panel
+			previewContentEl.innerHTML = DOMPurify.sanitize(marked.parse(initialCode));
+
+			// Copy button (always available once expanded too)
+			header.querySelector('[data-action="copy"]').onclick = () => {
+				navigator.clipboard.writeText(codeEl.textContent).then(() => {
+					if (window.MdvComments && typeof MdvComments.toast === "function") MdvComments.toast('Markdown copied');
+				}).catch(() => {
+					if (window.MdvComments && typeof MdvComments.toast === "function") MdvComments.toast('Copy failed');
+				});
+			};
+
+			// Set up tab switching
+			const tabs = header.querySelectorAll('.runnable-tab');
+			const activateTab = (tabIdx) => {
+				tabs.forEach(t => t.classList.remove('active'));
+				tabs[tabIdx].classList.add('active');
+				panelsWrapper.style.transform = `translateX(-${tabIdx * 50}%)`;
+			};
+			tabs.forEach(tab => {
+				tab.onclick = () => activateTab(parseInt(tab.getAttribute('data-tab'), 10));
+			});
+			activateTab(initialPanel === 'editor' ? 0 : 1);
+
+			let innerEditor = null;
+
+			// Close button reverts to the collapsed toolbar state
+			const closeBtn = header.querySelector('.runnable-close-btn');
+			closeBtn.onclick = () => {
+				container.innerHTML = "";
+				container.appendChild(preEl);
+				buildMdFenceToolbar(container, preEl, codeEl, blockIndex);
+
+				if (innerEditor) {
+					innerEditor.destroy();
+				}
+			};
+
+			// Initialize CodeMirror inside the Editor panel
+			const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+			innerEditor = new EditorView({
+				doc: initialCode,
+				extensions: [
+					basicSetup,
+					markdown(),
+					isDark ? oneDark : [],
+					EditorView.theme({
+						"&": { height: "100%", fontSize: "var(--editor-font-size)", backgroundColor: "var(--bg-surface)" },
+						".cm-scroller": { overflow: "auto", fontFamily: "var(--font-mono)" },
+						".cm-content": { fontWeight: "400 !important", fontFamily: "var(--font-mono) !important" },
+						".cm-line": { fontWeight: "400 !important" },
+						".cm-gutters": { backgroundColor: "var(--bg-surface)", borderRightColor: "var(--border-subtle)", color: "var(--text-tertiary)" }
+					}),
+					EditorView.lineWrapping,
+					EditorView.updateListener.of((update) => {
+						if (update.docChanged) {
+							const newCode = update.state.doc.toString();
+
+							// 1. Update the preview pane
+							previewContentEl.innerHTML = DOMPurify.sanitize(marked.parse(newCode));
+
+							// 2. Update the underlying source code and re-highlight
+							if (codeEl) {
+								codeEl.textContent = newCode;
+								if (Array.from(codeEl.classList).some(c => c.startsWith('language-'))) {
+									Prism.highlightElement(codeEl);
+								}
+							}
+
+							// 3. Update main editor document
+							updateMarkdownFenceBlock(blockIndex, newCode);
 						}
 					})
 				],
@@ -1901,6 +2150,17 @@
 			});
 		}
 
+		function setHeadingFolded(heading, folded) {
+			heading.classList.toggle('heading-folded', folded);
+			const level = parseInt(heading.tagName.substring(1), 10);
+			let el = heading.nextElementSibling;
+			while (el) {
+				if (/^H[1-6]$/.test(el.tagName) && parseInt(el.tagName.substring(1), 10) <= level) break;
+				el.style.display = folded ? 'none' : '';
+				el = el.nextElementSibling;
+			}
+		}
+
 		function enhanceContent() {
 			// ── GFM Alerts: transform > [!NOTE] blockquotes ──
 			contentArea.querySelectorAll('blockquote').forEach(bq => {
@@ -1929,7 +2189,7 @@
 				bq.replaceWith(wrapper);
 			});
 
-			// ── Heading Anchor Links ──
+			// ── Heading Anchor Links + Folding ──
 			contentArea.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(h => {
 				if (h.querySelector('.anchor')) return;
 				const id = h.textContent.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
@@ -1940,6 +2200,17 @@
 				a.setAttribute('aria-hidden', 'true');
 				a.innerHTML = '<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M7.775 3.275a.75.75 0 0 1 1.06 0l1.25-1.25a2 2 0 1 1 2.83 2.83l-2.5 2.5a2 2 0 0 1-2.83 0 .75.75 0 0 0-1.06 1.06 3.5 3.5 0 0 0 4.95 0l2.5-2.5a3.5 3.5 0 0 0-4.95-4.95l-1.25 1.25a.75.75 0 0 0 0 1.06Z"/></svg>';
 				h.insertBefore(a, h.firstChild);
+
+				const foldBtn = document.createElement('button');
+				foldBtn.className = 'heading-fold-toggle';
+				foldBtn.setAttribute('aria-label', 'Toggle section');
+				foldBtn.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>';
+				foldBtn.onclick = (e) => {
+					e.preventDefault();
+					e.stopPropagation();
+					setHeadingFolded(h, !h.classList.contains('heading-folded'));
+				};
+				h.insertBefore(foldBtn, h.firstChild);
 			});
 
 			// ── Runnable HTML Code Fences ──
@@ -1976,6 +2247,34 @@
 				runBtn.onclick = () => {
 					convertToRunnable(container, preEl, blockIndex);
 				};
+			});
+
+			// ── Markdown Code Fences (language: markdown, md, or no language at all) ──
+			const markdownBlocks = Array.from(contentArea.querySelectorAll('pre > code')).filter(codeEl => {
+				const langClass = Array.from(codeEl.classList).find(c => c.startsWith('language-'));
+				if (!langClass) return true; // no info-string at all — treat as markdown
+				return /^language-(markdown|md)$/i.test(langClass);
+			});
+			markdownBlocks.forEach((codeEl, blockIndex) => {
+				const preEl = codeEl.parentNode;
+				if (!preEl || preEl.tagName !== 'PRE') return;
+
+				// Skip if already wrapped in a runnable container
+				if (preEl.parentNode && preEl.parentNode.classList.contains('runnable-code-container')) {
+					return;
+				}
+
+				// Create wrapper container
+				const container = document.createElement('div');
+				container.className = 'runnable-code-container';
+				container.setAttribute('data-md-block-index', blockIndex);
+
+				// Insert container in place of preEl
+				preEl.parentNode.insertBefore(container, preEl);
+				container.appendChild(preEl);
+
+				// Always-visible Preview/Editor/Copy toolbar
+				buildMdFenceToolbar(container, preEl, codeEl, blockIndex);
 			});
 		}
 
@@ -2234,6 +2533,12 @@
 		};
 
 		marked.use({ extensions: [mathExtension] });
+
+		// prism-markdown.min.js only registers Prism.languages.markdown; alias
+		// "md" so ```md fences get highlighted too, not just ```markdown.
+		if (Prism.languages.markdown && !Prism.languages.md) {
+			Prism.languages.md = Prism.languages.markdown;
+		}
 
 		marked.setOptions({
 			highlight: (code, lang) => {
