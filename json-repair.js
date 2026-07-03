@@ -446,8 +446,8 @@
 						}
 					}
 
-					// Validate candidates from end
-					for (let idx = validCandidates.length - 1; idx >= 0; idx--) {
+					// Validate candidates from start (to avoid swallowing subsequent fields/structures)
+					for (let idx = 0; idx < validCandidates.length; idx++) {
 						const qIndex = validCandidates[idx];
 						const stringContent = text.slice(i + 1, qIndex);
 						let escapedContent = '';

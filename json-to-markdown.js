@@ -48,7 +48,7 @@
 
 	function isPrimitiveArray(v) {
 		return Array.isArray(v) && v.length > 0 &&
-			v.every(x => isScalar(x) || typeof x === 'string');
+			v.every(x => isScalar(x) || isShortString(x));
 	}
 
 	function isSmallObject(obj) {
@@ -344,10 +344,13 @@
 					.join(sep);
 			}
 			return value.map(v => {
+				if (typeof v === 'string' && !isShortString(v)) {
+					return renderString(v);
+				}
 				const inner = toMarkdown(v, { ...opts, depth: depth + 1, sectionDepth });
 				const flat = inner.replace(/\n/g, ' ').trim();
 				return `- ${flat}`;
-			}).join('\n');
+			}).join('\n\n');
 		}
 
 		if (depth === 0) return renderTopLevel(value, opts);
