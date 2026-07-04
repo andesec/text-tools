@@ -1054,7 +1054,7 @@
 		.runnable-panels-viewport {
 			overflow: hidden;
 			width: 100%;
-			height: 400px;
+			height: 600px;
 			background: var(--code-bg);
 		}
 		.runnable-panels-wrapper {
@@ -1776,13 +1776,14 @@
 			const toolbar = container.querySelector('.md-fence-toolbar');
 			if (toolbar) toolbar.remove();
 
-			// Create the tab header and panels viewport (Editor / Preview only)
+			// Create the tab header and panels viewport
 			const header = document.createElement('div');
 			header.className = 'runnable-header';
 			header.innerHTML = `
 				<div class="runnable-tabs">
 					<button class="runnable-tab" data-tab="0">Editor</button>
 					<button class="runnable-tab" data-tab="1">Preview</button>
+					<button class="runnable-tab" data-tab="2">View</button>
 				</div>
 				<button class="btn-run-code" data-action="copy" title="Copy Markdown">
 					<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1799,52 +1800,109 @@
 			const viewport = document.createElement('div');
 			viewport.className = 'runnable-panels-viewport';
 			viewport.innerHTML = `
-				<div class="runnable-panels-wrapper" style="width: 200%;">
-					<div class="runnable-panel panel-editor" style="width: 50%;">
+				<div class="runnable-panels-wrapper" style="width: 300%;">
+					<div class="runnable-panel panel-editor" style="width: 33.3333%;">
 						<div class="runnable-editor-el"></div>
 					</div>
-					<div class="runnable-panel panel-preview" style="width: 50%;">
+					<div class="runnable-panel panel-preview" style="width: 33.3333%;">
 						<div class="markdown-preview-content prose dark:prose-invert"></div>
+					</div>
+					<div class="runnable-panel panel-source" style="width: 33.3333%; overflow: auto;">
 					</div>
 				</div>
 			`;
 
+			if (preEl.parentNode) preEl.parentNode.removeChild(preEl);
+			container.innerHTML = "";
 			container.appendChild(header);
 			container.appendChild(viewport);
 
 			const panelsWrapper = viewport.querySelector('.runnable-panels-wrapper');
+			const panelSource = viewport.querySelector('.panel-source');
 			const panelEditorEl = viewport.querySelector('.runnable-editor-el');
 			const previewContentEl = viewport.querySelector('.markdown-preview-content');
+
+			// Move the original preEl into panelSource
+			panelSource.appendChild(preEl);
 
 			// Initial render of the preview panel
 			previewContentEl.innerHTML = DOMPurify.sanitize(marked.parse(initialCode));
 
 			// Copy button (always available once expanded too)
 			header.querySelector('[data-action="copy"]').onclick = () => {
-				navigator.clipboard.writeText(codeEl.textContent).then(() => {
+				const text = innerEditor ? innerEditor.state.doc.toString() : codeEl.textContent;
+				navigator.clipboard.writeText(text).then(() => {
 					if (window.MdvComments && typeof MdvComments.toast === "function") MdvComments.toast('Markdown copied');
 				}).catch(() => {
 					if (window.MdvComments && typeof MdvComments.toast === "function") MdvComments.toast('Copy failed');
 				});
 			};
 
+			let innerEditor = null;
+			let editorInitialised = false;
+
 			// Set up tab switching
 			const tabs = header.querySelectorAll('.runnable-tab');
 			const activateTab = (tabIdx) => {
 				tabs.forEach(t => t.classList.remove('active'));
 				tabs[tabIdx].classList.add('active');
-				panelsWrapper.style.transform = `translateX(-${tabIdx * 50}%)`;
+				panelsWrapper.style.transform = `translateX(-${(tabIdx * 100) / 3}%)`;
+
+				if (tabIdx === 0 && !editorInitialised) {
+					editorInitialised = true;
+					const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+					innerEditor = new EditorView({
+						doc: codeEl.textContent,
+						extensions: [
+							basicSetup,
+							markdown(),
+							isDark ? oneDark : [],
+							EditorView.theme({
+								"&": { height: "100%", fontSize: "var(--editor-font-size)", backgroundColor: "var(--bg-surface)" },
+								".cm-scroller": { overflow: "auto", fontFamily: "var(--font-mono)" },
+								".cm-content": { fontWeight: "400 !important", fontFamily: "var(--font-mono) !important" },
+								".cm-line": { fontWeight: "400 !important" },
+								".cm-gutters": { backgroundColor: "var(--bg-surface)", borderRightColor: "var(--border-subtle)", color: "var(--text-tertiary)" }
+							}),
+							EditorView.lineWrapping,
+							EditorView.updateListener.of((update) => {
+								if (update.docChanged) {
+									const newCode = update.state.doc.toString();
+									// 1. Update the preview pane
+									previewContentEl.innerHTML = DOMPurify.sanitize(marked.parse(newCode));
+									// 2. Update the underlying source code and re-highlight
+									if (codeEl) {
+										codeEl.textContent = newCode;
+										if (Array.from(codeEl.classList).some(c => c.startsWith('language-'))) {
+											Prism.highlightElement(codeEl);
+										}
+									}
+									// 3. Update main editor document
+									updateMarkdownFenceBlock(blockIndex, newCode);
+								}
+							})
+						],
+						parent: panelEditorEl
+					});
+				}
+
+				if (tabIdx === 1) {
+					const currentCode = innerEditor ? innerEditor.state.doc.toString() : codeEl.textContent;
+					previewContentEl.innerHTML = DOMPurify.sanitize(marked.parse(currentCode));
+				}
 			};
+
 			tabs.forEach(tab => {
 				tab.onclick = () => activateTab(parseInt(tab.getAttribute('data-tab'), 10));
 			});
-			activateTab(initialPanel === 'editor' ? 0 : 1);
 
-			let innerEditor = null;
+			const initialIdx = initialPanel === 'editor' ? 0 : (initialPanel === 'preview' ? 1 : 2);
+			activateTab(initialIdx);
 
 			// Close button reverts to the collapsed toolbar state
 			const closeBtn = header.querySelector('.runnable-close-btn');
 			closeBtn.onclick = () => {
+				if (preEl.parentNode) preEl.parentNode.removeChild(preEl);
 				container.innerHTML = "";
 				container.appendChild(preEl);
 				buildMdFenceToolbar(container, preEl, codeEl, blockIndex);
@@ -1853,45 +1911,6 @@
 					innerEditor.destroy();
 				}
 			};
-
-			// Initialize CodeMirror inside the Editor panel
-			const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-			innerEditor = new EditorView({
-				doc: initialCode,
-				extensions: [
-					basicSetup,
-					markdown(),
-					isDark ? oneDark : [],
-					EditorView.theme({
-						"&": { height: "100%", fontSize: "var(--editor-font-size)", backgroundColor: "var(--bg-surface)" },
-						".cm-scroller": { overflow: "auto", fontFamily: "var(--font-mono)" },
-						".cm-content": { fontWeight: "400 !important", fontFamily: "var(--font-mono) !important" },
-						".cm-line": { fontWeight: "400 !important" },
-						".cm-gutters": { backgroundColor: "var(--bg-surface)", borderRightColor: "var(--border-subtle)", color: "var(--text-tertiary)" }
-					}),
-					EditorView.lineWrapping,
-					EditorView.updateListener.of((update) => {
-						if (update.docChanged) {
-							const newCode = update.state.doc.toString();
-
-							// 1. Update the preview pane
-							previewContentEl.innerHTML = DOMPurify.sanitize(marked.parse(newCode));
-
-							// 2. Update the underlying source code and re-highlight
-							if (codeEl) {
-								codeEl.textContent = newCode;
-								if (Array.from(codeEl.classList).some(c => c.startsWith('language-'))) {
-									Prism.highlightElement(codeEl);
-								}
-							}
-
-							// 3. Update main editor document
-							updateMarkdownFenceBlock(blockIndex, newCode);
-						}
-					})
-				],
-				parent: panelEditorEl
-			});
 		}
 
 		// ── Two-way sync state ─────────────────────────────────────────────
