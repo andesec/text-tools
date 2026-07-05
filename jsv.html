@@ -306,6 +306,14 @@
 				<button onclick="prettify()" class="btn btn-sm">Format</button>
 				<button onclick="transform('resolveNewlines')" class="btn btn-sm"
 					style="color: var(--accent-text);">Resolve</button>
+				<button onclick="copyEditorContents()" class="btn btn-sm" title="Copy entire editor contents">
+					<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+							d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
+						</path>
+					</svg>
+					<span>Copy</span>
+				</button>
 				<button onclick="toggleWrap()" id="wrap-toggle-btn" class="btn btn-sm font-bold">W</button>
 				<button id="send-to-md-btn" onclick="sendJsonToMarkdown()"
 					class="btn btn-sm shadow-sm hover:shadow-md transition-all"
@@ -1371,6 +1379,12 @@
 				alert("Invalid JSON - cannot format for copy");
 			}
 			saveDropdownMenu.classList.remove('visible');
+		};
+
+		window.copyEditorContents = () => {
+			if (!editor) return;
+			const text = editor.state.doc.toString();
+			navigator.clipboard.writeText(text).then(() => toast("Editor contents copied to clipboard"));
 		};
 
 		function download(text, filename) {
