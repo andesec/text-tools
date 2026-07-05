@@ -32,6 +32,7 @@
 	<script src="vendor/prism-bash.min.js"></script>
 	<script src="vendor/prism-javascript.min.js"></script>
 	<script src="vendor/prism-python.min.js"></script>
+	<script src="vendor/mermaid.min.js"></script>
 	<link rel="stylesheet" href="mdv-comments.css">
 	<link rel="stylesheet" href="theme.css">
 
@@ -1117,6 +1118,28 @@
 		}
 		.markdown-preview-content {
 			padding: 1rem;
+		}
+
+		/* ── Mermaid Diagrams ─────────────────────────────── */
+		.mermaid-wrapper {
+			margin-top: 1rem;
+			margin-bottom: 1rem;
+		}
+
+		.mermaid {
+			display: flex;
+			justify-content: center;
+			overflow-x: auto;
+		}
+
+		.mermaid-error {
+			padding: 0.75rem 1rem;
+			margin-bottom: 0.75rem;
+			border: 1px solid var(--danger);
+			border-radius: var(--radius-md);
+			background-color: var(--bg-surface-raised);
+			color: var(--danger);
+			font-size: var(--font-size-sm);
 		}
 	</style>
 </head>
@@ -2297,6 +2320,80 @@
 			});
 		}
 
+		function getMermaidTheme() {
+			return window.matchMedia("(prefers-color-scheme: dark)").matches ? 'dark' : 'default';
+		}
+
+		function initMermaid() {
+			if (typeof mermaid === 'undefined') {
+				console.warn('[mermaid] library not loaded');
+				return;
+			}
+			mermaid.initialize({
+				startOnLoad: false,
+				theme: getMermaidTheme(),
+				securityLevel: 'strict'
+			});
+			window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+				mermaid.initialize({ theme: getMermaidTheme() });
+				updatePreview();
+			});
+		}
+
+		async function renderMermaidDiagrams() {
+			if (typeof mermaid === 'undefined') return;
+			const codeBlocks = contentArea.querySelectorAll('pre code.language-mermaid');
+			if (codeBlocks.length === 0) return;
+
+			const items = [];
+			codeBlocks.forEach((codeEl, index) => {
+				const preEl = codeEl.parentElement;
+				if (!preEl || preEl.tagName !== 'PRE') return;
+
+				const source = codeEl.textContent;
+				const wrapper = document.createElement('div');
+				wrapper.className = 'mermaid-wrapper';
+
+				const diagramDiv = document.createElement('div');
+				diagramDiv.className = 'mermaid';
+				diagramDiv.id = 'mermaid-' + Date.now() + '-' + index;
+				diagramDiv.textContent = source;
+
+				wrapper.appendChild(diagramDiv);
+				preEl.parentNode.insertBefore(wrapper, preEl);
+				items.push({ preEl, diagramDiv, source });
+			});
+
+			// Remove original code blocks
+			items.forEach(({ preEl }) => {
+				if (preEl.parentNode) preEl.parentNode.removeChild(preEl);
+			});
+
+			try {
+				await mermaid.run({ querySelector: '.mermaid', suppressErrors: true });
+			} catch (err) {
+				console.error('[mermaid] run failed:', err);
+			}
+
+			// Fallback for any block that didn't produce an SVG
+			items.forEach(({ diagramDiv, source }) => {
+				if (!diagramDiv.querySelector('svg')) {
+					diagramDiv.innerHTML = '';
+					const errorBox = document.createElement('div');
+					errorBox.className = 'mermaid-error';
+					errorBox.textContent = 'Mermaid diagram failed to render.';
+					const pre = document.createElement('pre');
+					const code = document.createElement('code');
+					code.className = 'language-mermaid';
+					code.textContent = source;
+					pre.appendChild(code);
+					diagramDiv.appendChild(errorBox);
+					diagramDiv.appendChild(pre);
+					Prism.highlightElement(code);
+				}
+			});
+		}
+
 		function updatePreview() {
 			if (editor) {
 				const text = editor.state.doc.toString();
@@ -2304,6 +2401,7 @@
 				if (!isEditing) enhanceContent();
 				updateOutline();
 				Prism.highlightAllUnder(contentArea);
+				renderMermaidDiagrams();
 				if (window.MdvComments) MdvComments.applyHighlights();
 				updateFooterInfo();
 			}
@@ -2569,6 +2667,8 @@
 			breaks: true,
 			gfm: true
 		});
+
+		initMermaid();
 
 		window.changeZoom = function (delta) {
 			currentZoom = Math.min(Math.max(0.5, currentZoom + delta), 2.5);
