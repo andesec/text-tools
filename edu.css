@@ -1,0 +1,291 @@
+/* ============================================
+   EDU (Encryption/Decryption) — Stylesheet
+   Uses shared theme.css design tokens.
+   Mirrors the mdv/jsv app-shell pattern.
+   ============================================ */
+
+/* Override accent to teal for this tool (theme.css default is purple) */
+:root {
+    --accent: #0d9488;
+    --accent-hover: #0f766e;
+    --accent-muted: rgba(13, 148, 136, 0.15);
+    --accent-text: #2dd4bf;
+}
+
+/* ── Iframe Embed Mode ──────────────────────────────── */
+body.iframe-mode .app-header-row {
+    display: none !important;
+}
+
+body.iframe-mode #tools-panel {
+    display: none !important;
+}
+
+body.iframe-mode #sidebar {
+    display: flex !important;
+    transition: width var(--transition-slow), min-width var(--transition-slow);
+}
+
+body.iframe-mode #sidebar.iframe-sidebar-collapsed {
+    display: flex !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    overflow: hidden;
+}
+
+#iframe-sidebar-toggle {
+    display: none;
+    position: fixed;
+    top: 8px;
+    left: 8px;
+    z-index: 200;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-default);
+    background: var(--bg-surface-raised);
+    color: var(--text-secondary);
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--transition-fast), color var(--transition-fast), left var(--transition-slow);
+    box-shadow: var(--shadow-md);
+}
+
+body.iframe-mode #iframe-sidebar-toggle {
+    display: flex;
+}
+
+#iframe-sidebar-toggle:hover {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+}
+
+#iframe-sidebar-toggle svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* ── Hidden utility (guaranteed to win over layout classes for form panels) ── */
+.hidden {
+    display: none !important;
+}
+
+/* ── Sidebar visibility (decoupled from .hidden to avoid !important conflicts) ──
+   The sidebar must not carry the `.hidden` class, otherwise the rule above
+   would override Tailwind's `md:flex` and keep it invisible on desktop. */
+#sidebar { display: none; }
+@media (min-width: 768px) {
+    #sidebar { display: flex; }
+}
+
+/* ── Glass Panel (form container) ── */
+.glass-panel {
+    background: var(--bg-surface-raised);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.glass-panel h2 {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* ── Form Layout ── */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.form-row {
+    display: flex;
+    gap: var(--space-3);
+}
+
+.form-row>.form-group {
+    flex: 1;
+}
+
+label {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+input[type="text"],
+input[type="password"],
+textarea,
+select {
+    background: var(--bg-root);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    padding: 0.6rem 0.85rem;
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-sm);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    width: 100%;
+    outline: none;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus,
+textarea:focus,
+select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-muted);
+}
+
+textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+select {
+    font-family: var(--font-sans);
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2387878a' stroke-width='2'%3E%3Cpath d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.6rem center;
+    padding-right: 1.8rem;
+}
+
+/* ── Status Messages ── */
+.status {
+    font-size: var(--font-size-sm);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-sm);
+    display: none;
+}
+
+.status.error {
+    display: block;
+    background: var(--danger-muted);
+    color: var(--danger);
+    border: 1px solid var(--danger);
+}
+
+.status.success {
+    display: block;
+    background: var(--success-muted);
+    color: var(--success);
+    border: 1px solid var(--success);
+}
+
+/* ── Result Section ── */
+.result-section {
+    margin-top: var(--space-3);
+    display: none;
+}
+
+.result-section.show {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+/* ── Checkbox Label ── */
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    margin-top: var(--space-1);
+}
+
+.checkbox-label input {
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent);
+}
+
+/* ── Layout Utilities (page-local, no theme collision) ── */
+.flex-2 { flex: 2; }
+.flex-1 { flex: 1; }
+.flex-row { display: flex; gap: var(--space-3); }
+.flex-group { display: flex; flex-direction: column; gap: var(--space-2); }
+.flex-between { display: flex; align-items: center; justify-content: space-between; }
+
+.actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: var(--space-1);
+    gap: var(--space-2);
+    flex-wrap: wrap;
+}
+
+.actions-right {
+    justify-content: flex-end;
+}
+
+/* ── Mode toggle buttons in toolbar ── */
+.mode-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}
+
+/* ── Reference panel content ── */
+.reference-content {
+    padding: var(--space-3);
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.reference-content p {
+    margin-bottom: var(--space-2);
+}
+
+.reference-content b {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.reference-content code {
+    font-family: var(--font-mono);
+    background: var(--bg-surface-hover);
+    padding: 1px 4px;
+    border-radius: 3px;
+    color: var(--accent-text);
+    font-size: 10px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+    .glass-panel {
+        padding: var(--space-4);
+    }
+
+    .form-row {
+        flex-direction: column;
+    }
+
+    .form-row>.form-group {
+        flex: none;
+    }
+
+    .actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}

@@ -4,438 +4,316 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Encryption/Decryption Utility - Andesec Text Tools</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+    <title>EDU Explorer — Andesec</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } }
         }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            color: #f1f5f9;
-        }
-
-        header {
-            padding: 1rem 2rem;
-            border-bottom: 1px solid rgb(51, 65, 85);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: rgb(15, 23, 42);
-        }
-
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .back-btn {
-            color: #4fc3f7;
-            text-decoration: none;
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: color 0.2s;
-        }
-
-        .back-btn:hover {
-            color: #81d4fa;
-        }
-
-        h1 {
-            font-size: 1.5rem;
-            font-weight: 600;
-        }
-
-        .container {
-            max-width: 1000px;
-            margin: 2rem auto;
-            width: 100%;
-            padding: 0 1rem;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .glass-panel {
-            background: rgb(30, 41, 59);
-            border: 1px solid rgb(51, 65, 85);
-            border-radius: 16px;
-            padding: 2rem;
-            box-shadow: 0 10px 30px rgb(0, 0, 0);
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .form-row {
-            display: flex;
-            gap: 1rem;
-        }
-
-        .form-row>.form-group {
-            flex: 1;
-        }
-
-        label {
-            font-size: 0.9rem;
-            color: #a0a0a0;
-            font-weight: 500;
-        }
-
-        input[type="text"],
-        input[type="password"],
-        textarea,
-        select {
-            background: rgb(15, 23, 42);
-            border: 1px solid rgb(51, 65, 85);
-            border-radius: 8px;
-            padding: 0.75rem 1rem;
-            color: rgb(255, 255, 255);
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-            font-size: 0.9rem;
-            transition: border-color 0.2s, box-shadow 0.2s;
-            width: 100%;
-        }
-
-        input[type="text"]:focus,
-        input[type="password"]:focus,
-        textarea:focus,
-        select:focus {
-            outline: none;
-            border-color: rgb(79, 195, 247);
-            box-shadow: 0 0 0 2px rgb(79, 195, 247);
-        }
-
-        textarea {
-            resize: vertical;
-            min-height: 120px;
-        }
-
-        .btn {
-            background: #4fc3f7;
-            color: #000;
-            border: none;
-            border-radius: 8px;
-            padding: 0.75rem 1.5rem;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s, transform 0.1s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-        }
-
-        .btn:hover {
-            background: #29b6f6;
-        }
-
-        .btn:active {
-            transform: scale(0.98);
-        }
-
-        .btn-secondary {
-            background: rgb(51, 65, 85);
-            color: rgb(255, 255, 255);
-        }
-
-        .btn-secondary:hover {
-            background: rgb(71, 85, 105);
-        }
-
-        .actions {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 0.5rem;
-            gap: 1rem;
-        }
-
-        .status {
-            font-size: 0.9rem;
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            display: none;
-        }
-
-        .status.error {
-            display: block;
-            background: rgb(69, 10, 10);
-            color: rgb(252, 165, 165);
-            border: 1px solid rgb(127, 29, 29);
-        }
-
-        .status.success {
-            display: block;
-            background: rgb(20, 83, 45);
-            color: rgb(134, 239, 172);
-            border: 1px solid rgb(21, 128, 61);
-        }
-
-        .result-section {
-            margin-top: 1.5rem;
-            display: none;
-        }
-
-        .result-section.show {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .checkbox-label {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            cursor: pointer;
-            color: #a0a0a0;
-            font-size: 0.85rem;
-            margin-top: 0.5rem;
-        }
-
-        .checkbox-label input {
-            cursor: pointer;
-            width: 16px;
-            height: 16px;
-        }
-
-        .flex-2 {
-            flex: 2;
-        }
-
-        .flex-1 {
-            flex: 1;
-        }
-
-        .flex-row {
-            display: flex;
-            gap: 1rem;
-        }
-
-        .actions-right {
-            justify-content: flex-end;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        .flex-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .flex-between {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .btn-compact {
-            padding: 0.25rem 0.75rem;
-            font-size: 0.8rem;
-        }
-
-        @media (max-width: 768px) {
-            .glass-panel {
-                padding: 1.25rem;
-            }
-
-            .form-row {
-                flex-direction: column;
-            }
-
-            .form-row>.form-group {
-                flex: none;
-            }
-
-            .actions {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .btn {
-                width: 100%;
-            }
-
-            h1 {
-                font-size: 1.2rem;
-            }
-        }
-    </style>
+    </script>
+    <link rel="stylesheet" href="theme.css">
+    <link rel="stylesheet" href="edu.css">
 </head>
 
-<body>
-    <header>
-        <div class="header-left">
-            <a href="index.html" class="back-btn" title="Home">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                </svg>
-            </a>
-            <h1>Encryption Utility</h1>
+<body class="h-screen flex flex-col overflow-hidden transition-colors duration-200">
+    <header class="app-header z-50 shrink-0">
+        <div class="app-header-row">
+            <div class="flex items-center gap-2">
+                <button id="sidebar-toggle-btn" class="btn-icon sidebar-toggle-btn" title="Toggle sidebar" aria-label="Toggle sidebar">
+                    <svg class="w-5 h-5 icon-collapse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 4h18v16H3z M9 4v16"></path>
+                    </svg>
+                    <svg class="w-5 h-5 icon-expand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 4h18v16H3z M11 9l-3 3 3 3"></path>
+                    </svg>
+                </button>
+                <a href="index.html" class="btn-icon" title="Home">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
+                        </path>
+                    </svg>
+                </a>
+                <div class="p-1.5 rounded-lg shadow-sm"
+                    style="background: linear-gradient(to bottom right, #0d9488, #0f766e);">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                        </path>
+                    </svg>
+                </div>
+                <h1 class="text-sm font-bold uppercase tracking-tight sm:text-lg sm:normal-case">EDU Explorer</h1>
+            </div>
+
+            <div class="flex items-center gap-1.5 sm:gap-2">
+                <button id="jsv-btn" class="btn btn-sm sm:px-4 sm:py-2 sm:text-sm"
+                    style="background: linear-gradient(to bottom right, #eab308, #ea580c); color: #fff; border-color: transparent;"
+                    title="Send decrypted result to JSON Viewer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                    </svg>
+                    <span class="hidden sm:inline">View in JSV</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="app-header-toolbar">
+            <div class="flex items-center gap-2 shrink-0">
+                <button id="mode-decrypt-btn" class="btn btn-sm mode-btn active">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span>Decrypt</span>
+                </button>
+                <button id="mode-hash-btn" class="btn btn-sm mode-btn">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 12h14M5 16h6">
+                        </path>
+                    </svg>
+                    <span>Hash</span>
+                </button>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+                <button id="clear-btn" class="btn btn-sm">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3">
+                        </path>
+                    </svg>
+                    <span>Clear</span>
+                </button>
+            </div>
         </div>
     </header>
 
-    <div class="container">
-        <div class="glass-panel">
-            <div class="flex-row flex-between mb-2">
-                <h2 class="text-xl font-semibold">AES-GCM Decryption</h2>
-            </div>
-            <div class="form-group">
-                <div class="flex-row flex-between">
-                    <label for="payload">Encrypted Payload (Base64)</label>
-                    <button class="btn btn-secondary btn-compact" onclick="pasteText('payload')">Paste</button>
-                </div>
-                <textarea id="payload" placeholder="e.g. U2FsdGVkX1+..."></textarea>
-                <label class="checkbox-label">
-                    <input type="checkbox" id="iv-prepended" checked>
-                    IV is prepended to the payload (first 12 bytes)
-                </label>
-            </div>
+    <button id="iframe-sidebar-toggle" title="Toggle sidebar" aria-label="Toggle sidebar">
+        <svg id="iframe-toggle-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+    </button>
 
-            <div class="form-row">
-                <div class="form-group flex-2">
-                    <label for="key">Decryption Key</label>
-                    <input type="text" id="key" placeholder="Enter Key">
-                </div>
-                <div class="form-group flex-1">
-                    <label for="key-format">Key Format</label>
-                    <select id="key-format">
-                        <option value="main-app">Main App Context (UID/Name)</option>
-                        <option value="utf8">UTF-8 String (Raw)</option>
-                        <option value="hex">HEX</option>
-                        <option value="base64">Base64</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="form-group hidden" id="iv-group">
-                <label for="iv">Initialization Vector (IV)</label>
-                <div class="flex-row">
-                    <input type="text" id="iv" placeholder="Enter IV" class="flex-2">
-                    <select id="iv-format" class="flex-1">
-                        <option value="hex">HEX</option>
-                        <option value="base64">Base64</option>
-                        <option value="utf8">UTF-8 String</option>
-                    </select>
-                </div>
-            </div>
-
-            <div id="status-message" class="status"></div>
-
-            <div class="actions">
-                <button class="btn" id="decrypt-btn">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+    <div class="flex-1 flex overflow-hidden relative">
+        <aside id="sidebar" class="w-72 app-sidebar flex flex-col shrink-0">
+            <!-- Tools Panel -->
+            <div id="tools-panel" class="sidebar-panel">
+                <div class="sidebar-panel-header" data-panel="tools">
+                    <svg class="sidebar-panel-caret" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                     </svg>
-                    Decrypt Payload
-                </button>
-                <button class="btn btn-secondary" id="clear-btn">Clear</button>
-            </div>
-
-            <div class="result-section" id="result-section">
-                <div class="form-group">
-                    <label for="result">Decrypted Result (UTF-8)</label>
-                    <textarea id="result" readonly></textarea>
-                </div>
-                <div class="actions actions-right">
-                    <button class="btn btn-secondary" id="resolve-btn">Resolve Escapes</button>
-                    <button class="btn btn-secondary" id="copy-btn">Copy to Clipboard</button>
-                    <button class="btn" id="jsv-btn">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                            <polyline points="14 2 14 8 20 8"></polyline>
-                            <line x1="16" y1="13" x2="8" y2="13"></line>
-                            <line x1="16" y1="17" x2="8" y2="17"></line>
-                            <polyline points="10 9 9 9 8 9"></polyline>
+                    <span class="sidebar-panel-title">Tools</span>
+                    <button id="close-sidebar" class="md:hidden btn-icon ml-auto">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
-                        View in JSV
                     </button>
                 </div>
-            </div>
-        </div>
-
-        <div class="glass-panel mt-8">
-            <div class="flex-row flex-between mb-2">
-                <h2 class="text-xl font-semibold">Hashing Utility</h2>
-            </div>
-            <div class="form-group">
-                <div class="flex-row flex-between">
-                    <label for="hash-input">Input Text</label>
-                    <button class="btn btn-secondary btn-compact" onclick="pasteText('hash-input')">Paste</button>
-                </div>
-                <textarea id="hash-input" placeholder="Enter text to hash..."></textarea>
-            </div>
-            <div class="form-row">
-                <div class="form-group flex-2">
-                    <label for="hash-algo">Algorithm</label>
-                    <select id="hash-algo">
-                        <option value="SHA-256">SHA-256</option>
-                        <option value="SHA-512">SHA-512</option>
-                        <option value="SHA-1">SHA-1</option>
-                    </select>
-                </div>
-                <div class="form-group flex-1">
-                    <label for="hash-output-format">Output Format</label>
-                    <select id="hash-output-format">
-                        <option value="hex">HEX</option>
-                        <option value="base64">Base64</option>
-                    </select>
-                </div>
-            </div>
-            <div id="hash-status" class="status"></div>
-            <div class="actions">
-                <button class="btn" id="hash-btn">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path
-                            d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41">
-                        </path>
-                    </svg>
-                    Generate Hash
-                </button>
-            </div>
-            <div class="result-section" id="hash-result-section">
-                <div class="form-group">
-                    <label for="hash-result">Hash Result</label>
-                    <div class="flex-row">
-                        <input type="text" id="hash-result" readonly>
-                        <button class="btn btn-secondary" id="hash-copy-btn"
-                            style="padding: 0.5rem 1rem; font-size: 0.8rem;">Copy</button>
+                <div class="sidebar-panel-body">
+                    <div id="tool-list" class="flex-1 overflow-y-auto p-2 space-y-0.5">
+                        <button class="file-item active" data-tool="decrypt">
+                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                                </path>
+                            </svg>
+                            <span>AES-GCM Decryption</span>
+                        </button>
+                        <button class="file-item" data-tool="hash">
+                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 8h14M5 12h14M5 16h6"></path>
+                            </svg>
+                            <span>Hashing Utility</span>
+                        </button>
                     </div>
                 </div>
             </div>
-        </div>
+
+            <div class="sidebar-resizer" data-resizer="0"></div>
+
+            <!-- Reference Panel (collapsed) -->
+            <div id="reference-panel" class="sidebar-panel collapsed">
+                <div class="sidebar-panel-header" data-panel="reference">
+                    <svg class="sidebar-panel-caret" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                    <span class="sidebar-panel-title">Reference</span>
+                </div>
+                <div class="sidebar-panel-body">
+                    <div class="reference-content">
+                        <p><b>AES-GCM</b>: 96-bit IV, 128-bit tag. Key lengths: 128/192/256-bit.</p>
+                        <p><b>SHA-256</b> → 32 bytes. <b>SHA-512</b> → 64 bytes. <b>SHA-1</b> → 20 bytes.</p>
+                        <p>Base64 url-safe variant: <code>+→-</code>, <code>/→_</code>, strip <code>=</code>.</p>
+                        <p><b>Main App Context</b> key mode: UTF-8 → SHA-256 → first 32 bytes = AES-256 key.</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <div id="sidebar-h-resizer" class="sidebar-h-resizer border-r border-[var(--border-default)]"></div>
+
+        <main class="flex-1 overflow-hidden bg-[var(--bg-root)] relative flex flex-col">
+            <div class="flex-1 overflow-y-auto p-4 sm:p-8">
+                <!-- AES-GCM Decryption Panel -->
+                <div id="decrypt-panel" class="glass-panel max-w-3xl mx-auto">
+                    <div class="flex-row flex-between">
+                        <h2>AES-GCM Decryption</h2>
+                    </div>
+                    <div class="form-group">
+                        <div class="flex-row flex-between">
+                            <label for="payload">Encrypted Payload (Base64)</label>
+                            <button class="btn btn-sm" onclick="pasteText('payload')">Paste</button>
+                        </div>
+                        <textarea id="payload" placeholder="e.g. U2FsdGVkX1+..."></textarea>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="iv-prepended" checked>
+                            IV is prepended to the payload (first 12 bytes)
+                        </label>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group flex-2">
+                            <label for="key">Decryption Key</label>
+                            <input type="text" id="key" placeholder="Enter Key">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label for="key-format">Key Format</label>
+                            <select id="key-format">
+                                <option value="main-app">Main App Context (UID/Name)</option>
+                                <option value="utf8">UTF-8 String (Raw)</option>
+                                <option value="hex">HEX</option>
+                                <option value="base64">Base64</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group hidden" id="iv-group">
+                        <label for="iv">Initialization Vector (IV)</label>
+                        <div class="flex-row">
+                            <input type="text" id="iv" placeholder="Enter IV" class="flex-2">
+                            <select id="iv-format" class="flex-1">
+                                <option value="hex">HEX</option>
+                                <option value="base64">Base64</option>
+                                <option value="utf8">UTF-8 String</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="status-message" class="status"></div>
+
+                    <div class="actions">
+                        <button class="btn btn-primary btn-sm sm:px-4 sm:py-2 sm:text-sm" id="decrypt-btn">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            </svg>
+                            <span>Decrypt Payload</span>
+                        </button>
+                    </div>
+
+                    <div class="result-section" id="result-section">
+                        <div class="form-group">
+                            <label for="result">Decrypted Result (UTF-8)</label>
+                            <textarea id="result" readonly></textarea>
+                        </div>
+                        <div class="actions actions-right">
+                            <button class="btn btn-sm" id="resolve-btn">Resolve Escapes</button>
+                            <button class="btn btn-sm" id="copy-btn">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-7 4h7m-7 4h7m-7 4h3">
+                                    </path>
+                                </svg>
+                                <span>Copy</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hashing Utility Panel -->
+                <div id="hash-panel" class="glass-panel max-w-3xl mx-auto hidden mt-4">
+                    <div class="flex-row flex-between">
+                        <h2>Hashing Utility</h2>
+                    </div>
+                    <div class="form-group">
+                        <div class="flex-row flex-between">
+                            <label for="hash-input">Input Text</label>
+                            <button class="btn btn-sm" onclick="pasteText('hash-input')">Paste</button>
+                        </div>
+                        <textarea id="hash-input" placeholder="Enter text to hash..."></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group flex-2">
+                            <label for="hash-algo">Algorithm</label>
+                            <select id="hash-algo">
+                                <option value="SHA-256">SHA-256</option>
+                                <option value="SHA-512">SHA-512</option>
+                                <option value="SHA-1">SHA-1</option>
+                            </select>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label for="hash-output-format">Output Format</label>
+                            <select id="hash-output-format">
+                                <option value="hex">HEX</option>
+                                <option value="base64">Base64</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="hash-status" class="status"></div>
+                    <div class="actions">
+                        <button class="btn btn-primary btn-sm sm:px-4 sm:py-2 sm:text-sm" id="hash-btn">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41">
+                                </path>
+                            </svg>
+                            <span>Generate Hash</span>
+                        </button>
+                    </div>
+                    <div class="result-section" id="hash-result-section">
+                        <div class="form-group">
+                            <label for="hash-result">Hash Result</label>
+                            <div class="flex-row">
+                                <input type="text" id="hash-result" readonly>
+                                <button class="btn btn-sm" id="hash-copy-btn">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-7 4h7m-7 4h7m-7 4h3">
+                                        </path>
+                                    </svg>
+                                    <span>Copy</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
+
+    <button id="mobile-menu" class="fixed bottom-6 right-6 md:hidden text-white p-4 rounded-full shadow-2xl z-50"
+        style="background: var(--accent);">
+        <svg id="menu-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+    </button>
+
+    <div id="copy-toast" class="toast">Copied to clipboard!</div>
 
     <script>
         // Utility Functions
         const fromBase64 = (str) => {
-            // Handle URL-safe and standard Base64
             let standardized = str.replace(/-/g, '+').replace(/_/g, '/');
             while (standardized.length % 4 !== 0) standardized += '=';
-
             const binary_string = window.atob(standardized);
             const len = binary_string.length;
             const bytes = new Uint8Array(len);
@@ -474,6 +352,7 @@
         const jsvBtn = document.getElementById('jsv-btn');
         const copyBtn = document.getElementById('copy-btn');
         const resolveBtn = document.getElementById('resolve-btn');
+        const copyToast = document.getElementById('copy-toast');
 
         // Hashing logic UI Elements
         const hashInput = document.getElementById('hash-input');
@@ -485,8 +364,35 @@
         const hashCopyBtn = document.getElementById('hash-copy-btn');
         const hashStatus = document.getElementById('hash-status');
 
-        const EDU_STORAGE_KEY = window.name && window.name.startsWith('tab_') 
-            ? `edu_state_${window.name}` 
+        // Mode switch elements
+        const modeDecryptBtn = document.getElementById('mode-decrypt-btn');
+        const modeHashBtn = document.getElementById('mode-hash-btn');
+        const decryptPanel = document.getElementById('decrypt-panel');
+        const hashPanel = document.getElementById('hash-panel');
+
+        let currentMode = 'decrypt';
+
+        function switchMode(mode) {
+            currentMode = mode;
+            decryptPanel.classList.toggle('hidden', mode !== 'decrypt');
+            hashPanel.classList.toggle('hidden', mode !== 'hash');
+            document.querySelectorAll('#tool-list .file-item').forEach(b => {
+                b.classList.toggle('active', b.dataset.tool === mode);
+            });
+            modeDecryptBtn.classList.toggle('active', mode === 'decrypt');
+            modeHashBtn.classList.toggle('active', mode === 'hash');
+            // View in JSV only makes sense in decrypt mode
+            jsvBtn.style.display = mode === 'decrypt' ? 'inline-flex' : 'none';
+        }
+
+        modeDecryptBtn.onclick = () => switchMode('decrypt');
+        modeHashBtn.onclick = () => switchMode('hash');
+        document.querySelectorAll('#tool-list .file-item').forEach(b => {
+            b.onclick = () => switchMode(b.dataset.tool);
+        });
+
+        const EDU_STORAGE_KEY = window.name && window.name.startsWith('tab_')
+            ? `edu_state_${window.name}`
             : 'edu_state_default';
 
         function loadEduState() {
@@ -511,11 +417,11 @@
                         hashResult.value = data.hashResult;
                         if (data.hashResult) hashResultSection.classList.add('show');
                     }
-                    
+
                     if (ivPrependedCb.checked) ivGroup.classList.add('hidden');
                     else ivGroup.classList.remove('hidden');
                 }
-            } catch (e) {}
+            } catch (e) { }
         }
 
         function saveEduState() {
@@ -533,7 +439,7 @@
                     hashOutputFormat: hashOutputFormat.value,
                     hashResult: hashResult.value
                 }));
-            } catch (e) {}
+            } catch (e) { }
         }
 
         [
@@ -555,12 +461,20 @@
             statusMsg.className = 'status ' + type;
         };
 
+        // Toast helper
+        function showToast(msg) {
+            if (!copyToast) return;
+            copyToast.textContent = msg;
+            copyToast.classList.add('visible');
+            clearTimeout(copyToast._timer);
+            copyToast._timer = setTimeout(() => copyToast.classList.remove('visible'), 2000);
+        }
+
         // Decryption logic
         decryptBtn.addEventListener('click', async () => {
             statusMsg.classList.add('hidden');
             resultSection.classList.remove('show');
 
-            // Strip extra quotes if they exist (common when copying from JSON/JS environments)
             const payloadStr = payloadInput.value.trim().replace(/"/g, '');
             const keyStr = keyInput.value.trim();
 
@@ -568,7 +482,6 @@
             if (!keyStr) return showStatus("Please enter decryption key", "error");
 
             try {
-                // Parse Payload (usually Base64)
                 let payloadBytes;
                 try {
                     payloadBytes = fromBase64(payloadStr);
@@ -576,10 +489,8 @@
                     return showStatus("Invalid Base64 payload", "error");
                 }
 
-                // Parse Key
                 let keyBytes;
                 if (keyFormat.value === 'main-app') {
-                    // Match main app logic: Text -> UTF8 -> SHA256 -> AES-256 Key
                     const hash = await window.crypto.subtle.digest('SHA-256', fromUtf8(keyStr));
                     keyBytes = new Uint8Array(hash);
                 } else if (keyFormat.value === 'utf8') {
@@ -590,7 +501,6 @@
                     keyBytes = fromBase64(keyStr);
                 }
 
-                // For AES, keys must be 16, 24, or 32 bytes.
                 if (![16, 24, 32].includes(keyBytes.length)) {
                     return showStatus(`Invalid key length: ${keyBytes.length} bytes. Needs to be 16, 24, or 32 bytes for raw AES.`, "error");
                 }
@@ -608,7 +518,7 @@
 
                 if (ivPrependedCb.checked) {
                     if (payloadBytes.length < 12) return showStatus("Payload too short to contain a 12-byte IV", "error");
-                    ivBytes = payloadBytes.slice(0, 12); // Standard GCM IV is 12 bytes
+                    ivBytes = payloadBytes.slice(0, 12);
                     ciphertext = payloadBytes.slice(12);
                 } else {
                     const ivStr = ivInput.value.trim();
@@ -621,7 +531,6 @@
                     ciphertext = payloadBytes;
                 }
 
-                // Decrypt
                 const decryptedBuffer = await window.crypto.subtle.decrypt(
                     { name: 'AES-GCM', iv: ivBytes },
                     cryptoKey,
@@ -641,25 +550,36 @@
         });
 
         clearBtn.addEventListener('click', () => {
-            payloadInput.value = '';
-            keyInput.value = '';
-            ivInput.value = '';
-            statusMsg.classList.add('hidden');
-            resultSection.classList.remove('show');
+            if (currentMode === 'decrypt') {
+                payloadInput.value = '';
+                keyInput.value = '';
+                ivInput.value = '';
+                statusMsg.classList.add('hidden');
+                resultSection.classList.remove('show');
+            } else {
+                hashInput.value = '';
+                hashResult.value = '';
+                hashResultSection.classList.remove('show');
+                hashStatus.classList.add('hidden');
+            }
             saveEduState();
         });
 
         copyBtn.addEventListener('click', () => {
             resultInput.select();
             document.execCommand('copy');
-            const originalText = copyBtn.innerText;
-            copyBtn.innerText = "Copied!";
-            setTimeout(() => { copyBtn.innerText = originalText; }, 2000);
+            showToast('Copied to clipboard!');
+            const originalText = copyBtn.querySelector('span').textContent;
+            copyBtn.querySelector('span').textContent = "Copied!";
+            setTimeout(() => { copyBtn.querySelector('span').textContent = originalText; }, 2000);
         });
 
         jsvBtn.addEventListener('click', () => {
             const data = resultInput.value;
-            if (!data) return;
+            if (!data) {
+                showStatus("Decrypt a payload first to send to JSV", "error");
+                return;
+            }
 
             if (window.parent && window.parent !== window) {
                 window.parent.postMessage({
@@ -726,9 +646,10 @@
         hashCopyBtn.addEventListener('click', () => {
             hashResult.select();
             document.execCommand('copy');
-            const originalText = hashCopyBtn.innerText;
-            hashCopyBtn.innerText = "Copied!";
-            setTimeout(() => { hashCopyBtn.innerText = originalText; }, 2000);
+            showToast('Copied to clipboard!');
+            const originalText = hashCopyBtn.querySelector('span').textContent;
+            hashCopyBtn.querySelector('span').textContent = "Copied!";
+            setTimeout(() => { hashCopyBtn.querySelector('span').textContent = originalText; }, 2000);
         });
 
         async function pasteText(target) {
@@ -745,14 +666,103 @@
                 showStatus('Clipboard permission denied', 'error');
             }
         }
-        
+
         loadEduState();
+        // Ensure initial mode state is consistent (decrypt by default)
+        switchMode('decrypt');
+
         if (window.parent && window.parent !== window) {
             window.parent.postMessage({
                 type: 'toolSelection',
                 url: window.location.pathname.split('/').pop() + window.location.search
             }, '*');
         }
+
+        // ── Sidebar panel collapse (click header to toggle) ─────────────────
+        document.querySelectorAll('.sidebar-panel-header').forEach(h => {
+            h.addEventListener('click', (e) => {
+                if (e.target.closest('button')) return;
+                h.parentElement.classList.toggle('collapsed');
+            });
+        });
+
+        // ── Mobile sidebar toggle ───────────────────────────────────────────
+        const mobileMenu = document.getElementById('mobile-menu');
+        const closeSidebar = document.getElementById('close-sidebar');
+        const toggleSidebar = () => {
+            document.body.classList.toggle("mobile-sidebar-active");
+            const isActive = document.body.classList.contains("mobile-sidebar-active");
+            document.getElementById("menu-icon").innerHTML = isActive
+                ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>'
+                : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>';
+        };
+        mobileMenu.onclick = toggleSidebar;
+        closeSidebar.onclick = toggleSidebar;
+
+        // Desktop sidebar collapse toggle (with persistence)
+        if (localStorage.getItem('sidebar_collapsed') === 'true') {
+            document.body.classList.add('sidebar-collapsed');
+        }
+        const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
+        sidebarToggleBtn.onclick = () => {
+            const collapsed = document.body.classList.toggle('sidebar-collapsed');
+            localStorage.setItem('sidebar_collapsed', collapsed ? 'true' : 'false');
+        };
+
+        // ── Iframe embed mode (toggle button + sidebar collapse) ────────────
+        (function setupIframeMode() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const showChrome = urlParams.get('show_chrome') === '1';
+            const isInsideFrame = window.parent && window.parent !== window;
+            const iframeMode = isInsideFrame && !showChrome;
+
+            if (iframeMode) {
+                document.body.classList.add('iframe-mode');
+            }
+
+            const toggleBtn = document.getElementById('iframe-sidebar-toggle');
+            const sidebarEl = document.getElementById('sidebar');
+            const toggleIcon = document.getElementById('iframe-toggle-icon');
+            const ICON_OPEN = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>';
+            const ICON_CLOSE = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>';
+
+            let sidebarCollapsed = iframeMode;
+
+            if (toggleBtn) {
+                if (iframeMode) {
+                    sidebarEl.classList.add('iframe-sidebar-collapsed');
+                }
+
+                toggleBtn.addEventListener('click', () => {
+                    sidebarCollapsed = !sidebarCollapsed;
+                    if (sidebarCollapsed) {
+                        sidebarEl.classList.add('iframe-sidebar-collapsed');
+                        toggleIcon.innerHTML = ICON_OPEN;
+                        toggleBtn.title = 'Show sidebar';
+                        toggleBtn.style.left = '8px';
+                    } else {
+                        sidebarEl.classList.remove('iframe-sidebar-collapsed');
+                        toggleIcon.innerHTML = ICON_CLOSE;
+                        toggleBtn.title = 'Hide sidebar';
+                        toggleBtn.style.left = (sidebarEl.offsetWidth + 4) + 'px';
+                    }
+                });
+
+                if (iframeMode) {
+                    requestAnimationFrame(() => {
+                        if (sidebarCollapsed) {
+                            toggleIcon.innerHTML = ICON_OPEN;
+                            toggleBtn.title = 'Show sidebar';
+                            toggleBtn.style.left = '8px';
+                        } else {
+                            toggleIcon.innerHTML = ICON_CLOSE;
+                            toggleBtn.title = 'Hide sidebar';
+                            toggleBtn.style.left = (sidebarEl.offsetWidth + 4) + 'px';
+                        }
+                    });
+                }
+            }
+        })();
     </script>
     <script src="footer.js"></script>
 </body>

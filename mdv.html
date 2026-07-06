@@ -1148,6 +1148,16 @@
 	<header class="app-header z-50 shrink-0">
 		<div class="app-header-row">
 			<div class="flex items-center gap-2">
+				<button id="sidebar-toggle-btn" class="btn-icon sidebar-toggle-btn" title="Toggle sidebar" aria-label="Toggle sidebar">
+					<svg class="w-5 h-5 icon-collapse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+							d="M3 4h18v16H3z M9 4v16"></path>
+					</svg>
+					<svg class="w-5 h-5 icon-expand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+							d="M3 4h18v16H3z M11 9l-3 3 3 3"></path>
+					</svg>
+				</button>
 				<a href="index.html" class="btn-icon" title="Home">
 					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -2605,6 +2615,16 @@
 
 		mobileMenu.onclick = toggleSidebar;
 		closeSidebar.onclick = toggleSidebar;
+
+		// Desktop sidebar collapse toggle (with persistence)
+		const sidebarToggleBtn = document.getElementById("sidebar-toggle-btn");
+		if (localStorage.getItem("sidebar_collapsed") === "true") {
+			document.body.classList.add("sidebar-collapsed");
+		}
+		sidebarToggleBtn.onclick = () => {
+			const collapsed = document.body.classList.toggle("sidebar-collapsed");
+			localStorage.setItem("sidebar_collapsed", collapsed ? "true" : "false");
+		};
 
 		if (isFileSystemApiSupported) {
 			document.getElementById("btn-text").textContent = "Directory";

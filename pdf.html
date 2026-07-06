@@ -4,630 +4,194 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PDF Splitter - Andesec</title>
-    <script src="vendor/pdf-lib.min.js"></script>
-    <script src="vendor/pdf.min.js"></script>
+    <title>PDF Explorer — Andesec</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: rgb(79, 195, 247);
-            --primary-hover: rgb(129, 212, 250);
-            --bg: rgb(15, 23, 42);
-            --card-bg: rgb(30, 41, 59);
-            --border: rgb(51, 65, 85);
-            --text-main: rgb(241, 245, 249);
-            --text-muted: rgb(148, 163, 184);
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } }
         }
-
-        /* Glassmorphism utility */
-        .glass {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            box-shadow: 0 8px 32px 0 rgb(0, 0, 0);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
-        }
-
-        body {
-            background: radial-gradient(circle at top right, #1e293b, #0f172a);
-            color: var(--text-main);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            padding: 2rem 1.5rem;
-        }
-
-        @media (max-width: 640px) {
-            body {
-                padding: 1rem;
-            }
-        }
-
-        .container {
-            max-width: 900px;
-            width: 100%;
-            margin: 0 auto;
-        }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 3rem;
-        }
-
-        .back-link {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: 500;
-            transition: transform 0.2s;
-            padding: 0.5rem 0;
-            /* Better touch area */
-        }
-
-        .back-link:hover {
-            transform: translateX(-4px);
-            color: var(--primary-hover);
-        }
-
-        h1 {
-            font-size: 2.25rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        /* Upload Area */
-        .upload-area {
-            border: 2px dashed var(--border);
-            border-radius: 20px;
-            padding: 4rem 2rem;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-bottom: 2rem;
-        }
-
-        .upload-area:hover,
-        .upload-area.drag-over {
-            border-color: var(--primary);
-            background: rgba(79, 195, 247, 0.05);
-        }
-
-        .upload-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            display: block;
-        }
-
-        .upload-text {
-            font-size: 1.1rem;
-            color: var(--text-muted);
-        }
-
-        .upload-text b {
-            color: var(--primary);
-        }
-
-        #file-input {
-            display: none;
-        }
-
-        /* File Info Bar */
-        .file-info {
-            display: none;
-            /* Initially hidden */
-            align-items: center;
-            justify-content: space-between;
-            padding: 1.25rem;
-            border-radius: 12px;
-            margin-bottom: 2rem;
-            animation: fadeIn 0.4s ease;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .file-details {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .file-icon {
-            font-size: 1.5rem;
-        }
-
-        .file-name {
-            font-weight: 600;
-            max-width: 300px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .page-count {
-            background: rgba(79, 195, 247, 0.2);
-            color: var(--primary);
-            padding: 0.25rem 0.75rem;
-            border-radius: 99px;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-
-        /* Range List */
-        .range-section {
-            display: none;
-            /* Initially hidden */
-            margin-bottom: 3rem;
-        }
-
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .add-range-btn {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border);
-            color: var(--text-main);
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .add-range-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: var(--primary);
-        }
-
-        .range-list {
-            display: grid;
-            gap: 1rem;
-        }
-
-        .range-item {
-            display: grid;
-            grid-template-columns: 1fr auto auto;
-            align-items: center;
-            gap: 1rem;
-            padding: 1rem;
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--border);
-            animation: slideIn 0.3s ease;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(-10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        .range-input-wrapper {
-            position: relative;
-        }
-
-        .range-input {
-            width: 100%;
-            background: rgba(0, 0, 0, 0.2);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 0.75rem 1rem;
-            color: var(--text-main);
-            font-size: 0.95rem;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-
-        .range-input:focus {
-            border-color: var(--primary);
-        }
-
-        .range-input.invalid {
-            border-color: #ef4444;
-        }
-
-        .download-link {
-            background: var(--primary);
-            color: #000;
-            text-decoration: none;
-            padding: 0.75rem 1.25rem;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            opacity: 0.5;
-            pointer-events: none;
-        }
-
-        .download-link.active {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .download-link.active:hover {
-            background: var(--primary-hover);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(79, 195, 247, 0.3);
-        }
-
-        .remove-range-btn {
-            background: transparent;
-            border: none;
-            color: #ef4444;
-            cursor: pointer;
-            padding: 0.5rem;
-            border-radius: 6px;
-            transition: background 0.2s;
-        }
-
-        .remove-range-btn:hover {
-            background: rgba(239, 68, 68, 0.1);
-        }
-
-        /* Preview Section */
-        .preview-section {
-            display: none;
-            margin-bottom: 2.5rem;
-            animation: fadeIn 0.5s ease;
-        }
-
-        .preview-container {
-            width: 100%;
-            overflow-x: auto;
-            padding: 1.5rem 0.5rem;
-            display: flex;
-            gap: 1.5rem;
-            scrollbar-width: thin;
-            scrollbar-color: var(--primary) transparent;
-            -webkit-overflow-scrolling: touch;
-            /* Momentum scroll */
-        }
-
-        @media (max-width: 480px) {
-            .preview-container {
-                gap: 1rem;
-                padding: 1rem 0.25rem;
-            }
-        }
-
-        .preview-container::-webkit-scrollbar {
-            height: 6px;
-        }
-
-        .preview-container::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-        }
-
-        .preview-container::-webkit-scrollbar-thumb {
-            background: var(--primary);
-            border-radius: 10px;
-        }
-
-        .page-card {
-            flex: 0 0 auto;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.75rem;
-            transition: transform 0.2s ease;
-            background: none;
-            border: none;
-            padding: 0;
-            margin: 0;
-            color: inherit;
-            cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .page-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .page-card:active {
-            transform: scale(0.98);
-        }
-
-        .page-thumbnail-wrapper {
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-            border: 1px solid var(--border);
-            height: 220px;
-            aspect-ratio: 1 / 1.414;
-            /* A4 aspect ratio */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        @media (max-width: 480px) {
-            .page-thumbnail-wrapper {
-                height: 180px;
-            }
-        }
-
-        .page-thumbnail-wrapper canvas {
-            max-width: 100%;
-            max-height: 100%;
-            display: block;
-        }
-
-        .page-number-badge {
-            background: rgba(79, 195, 247, 0.15);
-            color: var(--primary);
-            padding: 0.35rem 0.85rem;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            border: 1px solid rgba(79, 195, 247, 0.3);
-        }
-
-        .preview-loading {
-            width: 100%;
-            height: 200px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 1rem;
-            color: var(--text-muted);
-            background: rgba(255, 255, 255, 0.02);
-            border-radius: 16px;
-            border: 1px dashed var(--border);
-        }
-
-        .spinner {
-            width: 30px;
-            height: 30px;
-            border: 3px solid rgba(79, 195, 247, 0.1);
-            border-top-color: var(--primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        /* Modal Overlay */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(15, 23, 42, 0.95);
-            z-index: 1000;
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            animation: fadeIn 0.3s ease;
-            padding: 1rem;
-            overflow-y: auto;
-            /* Allow scrolling content */
-        }
-
-        .modal-content {
-            position: relative;
-            width: 100%;
-            max-width: 900px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 1.5rem;
-            animation: slideUp 0.3s ease-out;
-            margin: auto;
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .modal-close {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            z-index: 1100;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid var(--border);
-            color: white;
-            font-size: 1.25rem;
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-        }
-
-        .modal-close:hover {
-            background: rgba(239, 68, 68, 0.8);
-            border-color: #ef4444;
-            color: white;
-        }
-
-        #modal-canvas-container {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        #modal-canvas {
-            display: block;
-            width: 100%;
-            height: auto;
-            max-width: 100%;
-        }
-
-        .modal-page-info {
-            background: var(--primary);
-            color: #000;
-            padding: 0.5rem 1.25rem;
-            border-radius: 12px;
-            font-weight: 700;
-            font-size: 0.95rem;
-            box-shadow: 0 4px 15px rgba(79, 195, 247, 0.3);
-        }
-
-        /* Responsive */
-        @media (max-width: 640px) {
-            .range-item {
-                grid-template-columns: 1fr;
-            }
-
-            .download-link {
-                justify-content: center;
-            }
-
-            header {
-                flex-direction: column;
-                gap: 0.5rem;
-                align-items: center;
-                text-align: center;
-                margin-bottom: 2rem;
-            }
-        }
-    </style>
+    </script>
+    <script src="vendor/pdf-lib.min.js"></script>
+    <script src="vendor/pdf.min.js"></script>
+    <link rel="stylesheet" href="theme.css">
+    <link rel="stylesheet" href="pdf.css">
 </head>
 
-<body>
-    <div class="container">
-        <header>
-            <a href="index.html" class="back-link">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M19 12H5M12 19l-7-7 7-7" />
-                </svg>
-                Back to Tools
-            </a>
-            <h1>PDF Splitter</h1>
-        </header>
-
-        <div id="drop-zone" class="upload-area">
-            <span class="upload-icon">📄</span>
-            <p class="upload-text">Drag and drop your PDF here or <b>browse files</b></p>
-            <input type="file" id="file-input" accept=".pdf">
-        </div>
-
-        <div id="file-info" class="file-info glass">
-            <div class="file-details">
-                <span class="file-icon">📄</span>
-                <div>
-                    <div id="file-name" class="file-name">document.pdf</div>
-                    <div id="file-size" class="range-hint">1.2 MB</div>
-                </div>
-            </div>
-            <div id="page-count" class="page-count">0 Pages</div>
-        </div>
-
-        <div id="preview-section" class="preview-section">
-            <div class="section-header">
-                <h2>Page Preview</h2>
-                <div id="preview-status" class="page-count"
-                    style="background: transparent; color: var(--text-muted); padding: 0;">Loading previews...</div>
-            </div>
-            <div id="preview-container" class="preview-container">
-                <div class="preview-loading">
-                    <div class="spinner"></div>
-                    <p>Rendering pages...</p>
-                </div>
-            </div>
-        </div>
-
-        <div id="large-preview-modal" class="modal-overlay">
-            <button id="modal-close" class="modal-close" title="Close">✕</button>
-            <div class="modal-content">
-                <div id="modal-canvas-container" style="background: white;">
-                    <canvas id="modal-canvas"></canvas>
-                </div>
-                <div id="modal-page-info" class="modal-page-info">Page 1</div>
-            </div>
-        </div>
-
-        <div id="range-section" class="range-section">
-            <div class="section-header">
-                <h2>Extraction Ranges</h2>
-                <button id="add-range-btn" class="add-range-btn">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 5v14M5 12h14" />
+<body class="h-screen flex flex-col overflow-hidden transition-colors duration-200">
+    <header class="app-header z-50 shrink-0">
+        <div class="app-header-row">
+            <div class="flex items-center gap-2">
+                <button id="sidebar-toggle-btn" class="btn-icon sidebar-toggle-btn" title="Toggle sidebar" aria-label="Toggle sidebar">
+                    <svg class="w-5 h-5 icon-collapse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 4h18v16H3z M9 4v16"></path>
                     </svg>
-                    Add Range
+                    <svg class="w-5 h-5 icon-expand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 4h18v16H3z M11 9l-3 3 3 3"></path>
+                    </svg>
+                </button>
+                <a href="index.html" class="btn-icon" title="Home">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
+                        </path>
+                    </svg>
+                </a>
+                <div class="p-1.5 rounded-lg shadow-sm"
+                    style="background: linear-gradient(to bottom right, #dc2626, #991b1b);">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z">
+                        </path>
+                    </svg>
+                </div>
+                <h1 class="text-sm font-bold uppercase tracking-tight sm:text-lg sm:normal-case">PDF Explorer</h1>
+            </div>
+
+            <div class="flex items-center gap-1.5 sm:gap-2">
+                <button id="new-pdf-btn" class="btn btn-sm sm:px-4 sm:py-2 sm:text-sm" style="display:none"
+                    title="Start over with a new PDF">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    <span class="hidden sm:inline">New PDF</span>
                 </button>
             </div>
-            <div id="range-list" class="range-list">
-                <!-- Range items will be added here -->
+        </div>
+
+        <div class="app-header-toolbar">
+            <div class="flex items-center gap-2 shrink-0">
+                <span id="page-count" class="badge" style="display:none">0 Pages</span>
+                <span id="preview-status" class="badge-ghost" style="display:none"></span>
             </div>
-            <p class="range-hint">Tip: Use formats like <b>1-3</b>, <b>5</b>, or <b>10-14</b>. Pages are 1-indexed.</p>
+            <div class="flex items-center gap-2 shrink-0">
+                <button id="add-range-btn" class="btn btn-sm" style="display:none">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14M5 12h14"></path>
+                    </svg>
+                    <span>Add Range</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <button id="iframe-sidebar-toggle" title="Toggle sidebar" aria-label="Toggle sidebar">
+        <svg id="iframe-toggle-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+    </button>
+
+    <div class="flex-1 flex overflow-hidden relative">
+        <aside id="sidebar" class="w-72 app-sidebar flex flex-col shrink-0 hidden md:flex">
+            <!-- File Info Panel -->
+            <div id="file-info-panel" class="sidebar-panel">
+                <div class="sidebar-panel-header" data-panel="file-info">
+                    <svg class="sidebar-panel-caret" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                    <span class="sidebar-panel-title">File Info</span>
+                    <button id="close-sidebar" class="md:hidden btn-icon ml-auto">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="sidebar-panel-body">
+                    <p id="file-info-placeholder" class="file-info empty-placeholder">No file loaded.<br>Drop a PDF to begin.</p>
+                    <div id="file-info" class="file-info">
+                        <div class="file-details">
+                            <span class="file-icon">📄</span>
+                            <div style="min-width:0;">
+                                <div id="file-name" class="file-name">document.pdf</div>
+                                <div id="file-size" class="file-meta">0 MB</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-resizer" data-resizer="0"></div>
+
+            <!-- Ranges Panel -->
+            <div id="ranges-panel" class="sidebar-panel">
+                <div class="sidebar-panel-header" data-panel="ranges">
+                    <svg class="sidebar-panel-caret" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                    <span class="sidebar-panel-title">Ranges</span>
+                    <span id="range-count" class="sidebar-panel-badge" style="display:none">0</span>
+                </div>
+                <div class="sidebar-panel-body">
+                    <div id="range-list" class="range-list">
+                        <!-- Range items will be added here -->
+                    </div>
+                    <p class="range-hint">Tip: Combine multiple ranges with commas — <b>1-3, 5, 8-10</b>. Pages are 1-indexed.</p>
+                </div>
+            </div>
+        </aside>
+
+        <div id="sidebar-h-resizer" class="sidebar-h-resizer border-r border-[var(--border-default)]"></div>
+
+        <main class="flex-1 overflow-hidden bg-[var(--bg-root)] relative flex flex-col">
+            <div id="drop-zone" class="upload-area">
+                <span class="upload-icon">📄</span>
+                <p class="upload-text">Drag and drop your PDF here or <b>browse files</b></p>
+                <input type="file" id="file-input" accept=".pdf">
+            </div>
+
+            <div id="preview-section" class="preview-section">
+                <div class="section-header">
+                    <h2>Page Preview</h2>
+                </div>
+                <div id="preview-container" class="preview-container">
+                    <div class="preview-loading">
+                        <div class="spinner"></div>
+                        <p>Rendering pages...</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="large-preview-modal" class="modal-overlay">
+        <button id="modal-close" class="modal-close" title="Close">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+        <div class="modal-content">
+            <div id="modal-canvas-container">
+                <canvas id="modal-canvas"></canvas>
+            </div>
+            <div id="modal-page-info" class="modal-page-info">Page 1</div>
         </div>
     </div>
 
-    <div id="postmsg-toast"
-        style="display:none; position:fixed; bottom:1.5rem; left:50%; transform:translateX(-50%); background:#333; color:#fff; padding:.75rem 1.25rem; border-radius:8px; font-size:.9rem; z-index:2000; opacity:0; transition:opacity .25s; pointer-events:none;">
-    </div>
+    <button id="mobile-menu" class="fixed bottom-6 right-6 md:hidden text-white p-4 rounded-full shadow-2xl z-50"
+        style="background: var(--accent);">
+        <svg id="menu-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+    </button>
+
+    <div id="postmsg-toast" class="toast"></div>
 
     <script>
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('file-input');
         const fileInfo = document.getElementById('file-info');
-        const rangeSection = document.getElementById('range-section');
-        const rangeList = document.getElementById('range-list');
+        const fileInfoPlaceholder = document.getElementById('file-info-placeholder');
         const addRangeBtn = document.getElementById('add-range-btn');
+        const newPdfBtn = document.getElementById('new-pdf-btn');
+        const rangeList = document.getElementById('range-list');
+        const rangeCountBadge = document.getElementById('range-count');
         const fileNameEl = document.getElementById('file-name');
         const fileSizeEl = document.getElementById('file-size');
         const pageCountEl = document.getElementById('page-count');
@@ -650,13 +214,12 @@
         let cachedPdfJsDoc = null;
 
         // ── Two-way sync state ─────────────────────────────────────────────
-        let syncVersion = 0;           // Monotonically increasing counter
-        let syncTargetOrigin = '*';     // Target origin for outbound messages
-        let syncPendingChange = null;   // Pending contentChange payload
-        let syncDebounceTimer = null;   // Debounce timer for contentChange
-        const SYNC_DEBOUNCE_MS = 300;   // Debounce interval for contentChange
+        let syncVersion = 0;
+        let syncTargetOrigin = '*';
+        let syncPendingChange = null;
+        let syncDebounceTimer = null;
+        const SYNC_DEBOUNCE_MS = 300;
 
-        // Helper: post message to parent with proper origin handling
         function syncPostMessage(payload) {
             try {
                 window.parent?.postMessage(payload, syncTargetOrigin);
@@ -665,7 +228,6 @@
             }
         }
 
-        // Flush any pending contentChange immediately (used on unload)
         function syncFlushImmediate() {
             if (syncDebounceTimer) {
                 clearTimeout(syncDebounceTimer);
@@ -685,7 +247,6 @@
             }
         }
 
-        // Schedule a debounced contentChange post for page range changes
         function syncScheduleRangeChange(filename) {
             syncPendingChange = {
                 filename: filename || 'document.pdf',
@@ -708,7 +269,6 @@
             }, SYNC_DEBOUNCE_MS);
         }
 
-        // Build page-based selection from current ranges
         function buildPageSelection() {
             const rangeItems = rangeList.querySelectorAll('.range-item');
             const ranges = [];
@@ -722,11 +282,9 @@
                     }
                 }
             });
-            // If no ranges, return all pages as selection
             if (ranges.length === 0 && totalPages > 0) {
                 return { page: 0, from: 0, to: totalPages - 1 };
             }
-            // Combine into a single range summary (first and last page with content)
             if (ranges.length > 0) {
                 const first = ranges[0];
                 const last = ranges[ranges.length - 1];
@@ -735,7 +293,6 @@
             return null;
         }
 
-        // Beforeunload: flush any pending changes
         window.addEventListener('beforeunload', () => {
             syncFlushImmediate();
         });
@@ -782,11 +339,15 @@
                 totalPages = originalPdfDoc.getPageCount();
 
                 pageCountEl.textContent = totalPages + (totalPages === 1 ? ' Page' : ' Pages');
+                pageCountEl.style.display = 'inline-block';
+                previewStatus.style.display = 'inline-block';
+                addRangeBtn.style.display = 'inline-flex';
+                newPdfBtn.style.display = 'inline-flex';
 
                 // Show UI
                 fileInfo.style.display = 'flex';
-                previewSection.style.display = 'block';
-                rangeSection.style.display = 'block';
+                fileInfoPlaceholder.style.display = 'none';
+                previewSection.style.display = 'flex';
                 dropZone.style.display = 'none';
 
                 // Render Preview
@@ -794,7 +355,6 @@
 
                 // Clear previous ranges if any
                 rangeList.innerHTML = '';
-                // Add initial range
                 addRangeRow();
             } catch (err) {
                 console.error(err);
@@ -802,7 +362,44 @@
             }
         }
 
+        // Reset to drop zone (start over)
+        function resetToDropZone() {
+            originalPdfDoc = null;
+            originalPdfBytes = null;
+            totalPages = 0;
+            cachedPdfJsDoc = null;
+            rangeList.innerHTML = '';
+            previewContainer.innerHTML = '';
+            previewStatus.textContent = '';
+            pageCountEl.textContent = '0 Pages';
+            fileNameEl.textContent = 'document.pdf';
+            fileSizeEl.textContent = '0 MB';
+            fileInfo.style.display = 'none';
+            fileInfoPlaceholder.style.display = 'block';
+            previewSection.style.display = 'none';
+            dropZone.style.display = 'block';
+            pageCountEl.style.display = 'none';
+            previewStatus.style.display = 'none';
+            addRangeBtn.style.display = 'none';
+            newPdfBtn.style.display = 'none';
+            rangeCountBadge.style.display = 'none';
+            fileInput.value = '';
+            syncScheduleRangeChange('document.pdf');
+        }
+
+        newPdfBtn.onclick = () => resetToDropZone();
+
         // --- Range Management ---
+
+        function updateRangeCount() {
+            const count = rangeList.children.length;
+            if (count > 0) {
+                rangeCountBadge.textContent = count;
+                rangeCountBadge.style.display = 'inline-block';
+            } else {
+                rangeCountBadge.style.display = 'none';
+            }
+        }
 
         function addRangeRow() {
             const row = document.createElement('div');
@@ -810,24 +407,26 @@
 
             row.innerHTML = `
                 <div class="range-input-wrapper">
-                    <input type="text" class="range-input" placeholder="e.g. 1-3 or 5" value="">
+                    <input type="text" class="range-input" placeholder="e.g. 1-3, 5, 8-10" value="">
                 </div>
-                <button class="remove-range-btn" title="Remove Range">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/>
+                <button class="range-remove-btn" title="Remove Range">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/>
                     </svg>
                 </button>
-                <a href="#" class="download-link">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                <a href="#" class="range-download-btn">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
                     </svg>
                     Download
                 </a>
             `;
 
             const input = row.querySelector('.range-input');
-            const downloadBtn = row.querySelector('.download-link');
-            const removeBtn = row.querySelector('.remove-range-btn');
+            const downloadBtn = row.querySelector('.range-download-btn');
+            const removeBtn = row.querySelector('.range-remove-btn');
 
             input.oninput = () => {
                 const val = input.value.trim();
@@ -842,73 +441,89 @@
                         input.classList.remove('invalid');
                     }
                 }
-                // Trigger contentChange on any range input change
                 syncScheduleRangeChange(fileNameEl.textContent);
             };
 
             downloadBtn.onclick = async (e) => {
                 e.preventDefault();
-                const range = parseRange(input.value.trim());
+                const val = input.value.trim();
+                if (!val) {
+                    postMsgToast('Enter a page range (e.g. 1-3, 5, 8-10)', true);
+                    input.focus();
+                    return;
+                }
+                if (!validateRange(val)) {
+                    postMsgToast(`Invalid range "${val}" — PDF has ${totalPages} pages. Use comma-separated ranges like 1-3, 5, 8-10.`, true);
+                    input.classList.add('invalid');
+                    input.focus();
+                    return;
+                }
+                const range = parseRange(val);
                 if (range) {
-                    await extractAndDownload(range, input.value.trim());
+                    await extractAndDownload(range, val);
                 }
             };
 
             removeBtn.onclick = () => {
                 row.remove();
+                updateRangeCount();
                 if (rangeList.children.length === 0) {
-                    addRangeRow(); // Always keep at least one
+                    addRangeRow();
                 }
-                // Trigger contentChange on range removal
                 syncScheduleRangeChange(fileNameEl.textContent);
             };
 
             rangeList.appendChild(row);
+            updateRangeCount();
             input.focus();
         }
 
         addRangeBtn.onclick = () => {
             addRangeRow();
-            // Trigger contentChange on new range added
             syncScheduleRangeChange(fileNameEl.textContent);
         };
 
         // --- Logic ---
 
+        // Accepts comma-separated ranges: "1-2, 8-9, 23" or "1-3, 5" or "5"
         function validateRange(str) {
             if (!str) return false;
-            // Matches "1", "1-3", "5-5" etc.
+            const parts = str.split(',').map(p => p.trim()).filter(p => p.length > 0);
+            if (parts.length === 0) return false;
             const regex = /^(\d+)(?:-(\d+))?$/;
-            const match = str.match(regex);
-            if (!match) return false;
-
-            const start = parseInt(match[1]);
-            const end = match[2] ? parseInt(match[2]) : start;
-
-            if (isNaN(start) || isNaN(end)) return false;
-            if (start < 1 || end < 1) return false;
-            if (start > totalPages || end > totalPages) return false;
-            if (start > end) return false;
-
+            for (const part of parts) {
+                const match = part.match(regex);
+                if (!match) return false;
+                const start = parseInt(match[1]);
+                const end = match[2] ? parseInt(match[2]) : start;
+                if (isNaN(start) || isNaN(end)) return false;
+                if (start < 1 || end < 1) return false;
+                if (start > totalPages || end > totalPages) return false;
+                if (start > end) return false;
+            }
             return true;
         }
 
+        // Parses comma-separated ranges into a deduplicated, sorted 0-indexed array.
+        // "1-2, 8-9, 23" → [0, 1, 7, 8, 22]
         function parseRange(str) {
-            const match = str.match(/^(\d+)(?:-(\d+))?$/);
-            if (!match) return null;
-            const start = parseInt(match[1]);
-            const end = match[2] ? parseInt(match[2]) : start;
-            // pdf-lib uses 0-indexed pages
-            let indices = [];
-            for (let i = start; i <= end; i++) {
-                indices.push(i - 1);
+            const parts = str.split(',').map(p => p.trim()).filter(p => p.length > 0);
+            const indices = [];
+            const regex = /^(\d+)(?:-(\d+))?$/;
+            for (const part of parts) {
+                const match = part.match(regex);
+                if (!match) return null;
+                const start = parseInt(match[1]);
+                const end = match[2] ? parseInt(match[2]) : start;
+                for (let i = start; i <= end; i++) {
+                    indices.push(i - 1);
+                }
             }
-            return indices;
+            return [...new Set(indices)].sort((a, b) => a - b);
         }
 
         async function extractAndDownload(pageIndices, rangeStr) {
             try {
-                // Show loading state on button
                 const subDoc = await PDFLib.PDFDocument.create();
                 const copiedPages = await subDoc.copyPages(originalPdfDoc, pageIndices);
                 copiedPages.forEach((page) => subDoc.addPage(page));
@@ -981,7 +596,7 @@
                 previewStatus.textContent = `${numPages} Pages Loaded`;
             } catch (err) {
                 console.error('Error rendering preview:', err);
-                previewContainer.innerHTML = `<p style="color: #ef4444; width: 100%; text-align: center;">Failed to load preview cards.</p>`;
+                previewContainer.innerHTML = `<p style="color: var(--danger); width: 100%; text-align: center;">Failed to load preview cards.</p>`;
                 previewStatus.textContent = 'Preview error';
             }
         }
@@ -995,7 +610,6 @@
                 const pdf = cachedPdfJsDoc;
                 const page = await pdf.getPage(pageIndex);
 
-                // Scale 1.5 for larger but fast preview
                 const viewport = page.getViewport({ scale: 1.5 });
                 const context = modalCanvas.getContext('2d');
 
@@ -1006,8 +620,6 @@
                     canvasContext: context,
                     viewport: viewport
                 }).promise;
-
-                // Track state to prevent body scroll if desired (optional)
             } catch (err) {
                 console.error('Error in large preview:', err);
                 alert('Could not load larger preview.');
@@ -1025,17 +637,17 @@
             }
         }
 
-        // ── Inline toast (for postMessage errors) ─────────────────────────
+        // ── Inline toast (for postMessage feedback) ─────────────────────────
         const postMsgToastEl = document.getElementById('postmsg-toast');
         function postMsgToast(msg, isError) {
             if (!postMsgToastEl) { console.warn(msg); return; }
             postMsgToastEl.textContent = msg;
-            postMsgToastEl.style.background = isError ? '#ef4444' : '#333';
-            postMsgToastEl.style.opacity = '1';
-            postMsgToastEl.style.display = 'block';
-            setTimeout(() => {
-                postMsgToastEl.style.opacity = '0';
-                setTimeout(() => { postMsgToastEl.style.display = 'none'; }, 250);
+            postMsgToastEl.style.background = isError ? 'var(--danger)' : 'var(--bg-surface-raised)';
+            postMsgToastEl.style.color = isError ? '#fff' : 'var(--text-primary)';
+            postMsgToastEl.classList.add('visible');
+            clearTimeout(postMsgToastEl._timer);
+            postMsgToastEl._timer = setTimeout(() => {
+                postMsgToastEl.classList.remove('visible');
             }, 3000);
         }
 
@@ -1044,8 +656,6 @@
             const msg = event.data;
             if (!msg || msg.type !== 'loadContent') return;
 
-            // Text-only payload: pdf.html is a binary PDF tool. Surface a
-            // toast and bail.
             if (!msg.bytes) {
                 postMsgToast('pdf.html requires binary PDF bytes — use ArrayBuffer for the "bytes" field', true);
                 syncPostMessage({
@@ -1059,20 +669,15 @@
             const bytes = msg.bytes;
             const filename = typeof msg.filename === 'string' && msg.filename ? msg.filename : 'document.pdf';
 
-            // Store targetOrigin for outbound messages (default to event.origin)
             if (msg.options?.targetOrigin) {
                 syncTargetOrigin = msg.options.targetOrigin;
             } else {
                 syncTargetOrigin = event.origin || '*';
             }
 
-            // Wrap the ArrayBuffer in a File and feed the existing upload
-            // pipeline (preview + ranges). handleFile() expects a File-like
-            // with .type, .name, .size, .arrayBuffer().
             const file = new File([bytes], filename, { type: 'application/pdf' });
             handleFile(file);
 
-            // Increment version and acknowledge back to sender
             syncVersion++;
             const replyVersion = syncVersion;
             if (event.source) {
@@ -1084,7 +689,6 @@
                 }, syncTargetOrigin);
             }
 
-            // Show visual feedback for successful load
             postMsgToast(`Loaded: ${filename}`, false);
         });
 
@@ -1093,7 +697,6 @@
                 type: 'toolSelection',
                 url: window.location.pathname.split('/').pop() + window.location.search
             }, '*');
-            // Send ready message after PDF.js worker is initialized
             setTimeout(() => {
                 syncPostMessage({
                     type: 'ready',
@@ -1102,6 +705,92 @@
                 });
             }, 100);
         }
+
+        // ── Sidebar panel collapse (click header to toggle) ─────────────────
+        document.querySelectorAll('.sidebar-panel-header').forEach(h => {
+            h.addEventListener('click', (e) => {
+                if (e.target.closest('button')) return;
+                h.parentElement.classList.toggle('collapsed');
+            });
+        });
+
+        // ── Mobile sidebar toggle ───────────────────────────────────────────
+        const mobileMenu = document.getElementById('mobile-menu');
+        const closeSidebar = document.getElementById('close-sidebar');
+        const toggleSidebar = () => {
+            document.body.classList.toggle("mobile-sidebar-active");
+            const isActive = document.body.classList.contains("mobile-sidebar-active");
+            document.getElementById("menu-icon").innerHTML = isActive
+                ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>'
+                : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>';
+        };
+        mobileMenu.onclick = toggleSidebar;
+        closeSidebar.onclick = toggleSidebar;
+
+        // Desktop sidebar collapse toggle (with persistence)
+        if (localStorage.getItem('sidebar_collapsed') === 'true') {
+            document.body.classList.add('sidebar-collapsed');
+        }
+        const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
+        sidebarToggleBtn.onclick = () => {
+            const collapsed = document.body.classList.toggle('sidebar-collapsed');
+            localStorage.setItem('sidebar_collapsed', collapsed ? 'true' : 'false');
+        };
+
+        // ── Iframe embed mode (toggle button + sidebar collapse) ────────────
+        (function setupIframeMode() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const showChrome = urlParams.get('show_chrome') === '1';
+            const isInsideFrame = window.parent && window.parent !== window;
+            const iframeMode = isInsideFrame && !showChrome;
+
+            if (iframeMode) {
+                document.body.classList.add('iframe-mode');
+            }
+
+            const toggleBtn = document.getElementById('iframe-sidebar-toggle');
+            const sidebarEl = document.getElementById('sidebar');
+            const toggleIcon = document.getElementById('iframe-toggle-icon');
+            const ICON_OPEN = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>';
+            const ICON_CLOSE = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>';
+
+            let sidebarCollapsed = iframeMode;
+
+            if (toggleBtn) {
+                if (iframeMode) {
+                    sidebarEl.classList.add('iframe-sidebar-collapsed');
+                }
+
+                toggleBtn.addEventListener('click', () => {
+                    sidebarCollapsed = !sidebarCollapsed;
+                    if (sidebarCollapsed) {
+                        sidebarEl.classList.add('iframe-sidebar-collapsed');
+                        toggleIcon.innerHTML = ICON_OPEN;
+                        toggleBtn.title = 'Show sidebar';
+                        toggleBtn.style.left = '8px';
+                    } else {
+                        sidebarEl.classList.remove('iframe-sidebar-collapsed');
+                        toggleIcon.innerHTML = ICON_CLOSE;
+                        toggleBtn.title = 'Hide sidebar';
+                        toggleBtn.style.left = (sidebarEl.offsetWidth + 4) + 'px';
+                    }
+                });
+
+                if (iframeMode) {
+                    requestAnimationFrame(() => {
+                        if (sidebarCollapsed) {
+                            toggleIcon.innerHTML = ICON_OPEN;
+                            toggleBtn.title = 'Show sidebar';
+                            toggleBtn.style.left = '8px';
+                        } else {
+                            toggleIcon.innerHTML = ICON_CLOSE;
+                            toggleBtn.title = 'Hide sidebar';
+                            toggleBtn.style.left = (sidebarEl.offsetWidth + 4) + 'px';
+                        }
+                    });
+                }
+            }
+        })();
     </script>
     <script src="footer.js"></script>
 </body>
