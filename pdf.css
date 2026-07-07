@@ -33,40 +33,6 @@ body.iframe-mode #sidebar.iframe-sidebar-collapsed {
     overflow: hidden;
 }
 
-#iframe-sidebar-toggle {
-    display: none;
-    position: fixed;
-    top: 8px;
-    left: 8px;
-    z-index: 200;
-    width: 32px;
-    height: 32px;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border-default);
-    background: var(--bg-surface-raised);
-    color: var(--text-secondary);
-    cursor: pointer;
-    align-items: center;
-    justify-content: center;
-    transition: background var(--transition-fast), color var(--transition-fast), left var(--transition-slow);
-    box-shadow: var(--shadow-md);
-}
-
-body.iframe-mode #iframe-sidebar-toggle {
-    display: flex;
-}
-
-#iframe-sidebar-toggle:hover {
-    background: var(--accent);
-    color: #fff;
-    border-color: var(--accent);
-}
-
-#iframe-sidebar-toggle svg {
-    width: 16px;
-    height: 16px;
-}
-
 /* ── Upload Area ── */
 .upload-area {
     border: 2px dashed var(--border-default);

@@ -26,16 +26,6 @@
     <header class="app-header z-50 shrink-0">
         <div class="app-header-row">
             <div class="flex items-center gap-2">
-                <button id="sidebar-toggle-btn" class="btn-icon sidebar-toggle-btn" title="Toggle sidebar" aria-label="Toggle sidebar">
-                    <svg class="w-5 h-5 icon-collapse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M3 4h18v16H3z M9 4v16"></path>
-                    </svg>
-                    <svg class="w-5 h-5 icon-expand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M3 4h18v16H3z M11 9l-3 3 3 3"></path>
-                    </svg>
-                </button>
                 <a href="index.html" class="btn-icon" title="Home">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -67,6 +57,16 @@
 
         <div class="app-header-toolbar">
             <div class="flex items-center gap-2 shrink-0">
+                <button id="sidebar-toggle-btn" class="btn-icon sidebar-toggle-btn" title="Toggle sidebar" aria-label="Toggle sidebar">
+                    <svg class="w-5 h-5 icon-collapse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 4h18v16H3z M9 4v16"></path>
+                    </svg>
+                    <svg class="w-5 h-5 icon-expand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 4h18v16H3z M11 9l-3 3 3 3"></path>
+                    </svg>
+                </button>
                 <span id="page-count" class="badge" style="display:none">0 Pages</span>
                 <span id="preview-status" class="badge-ghost" style="display:none"></span>
             </div>
@@ -81,11 +81,6 @@
         </div>
     </header>
 
-    <button id="iframe-sidebar-toggle" title="Toggle sidebar" aria-label="Toggle sidebar">
-        <svg id="iframe-toggle-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-        </svg>
-    </button>
 
     <div class="flex-1 flex overflow-hidden relative">
         <aside id="sidebar" class="w-72 app-sidebar flex flex-col shrink-0 hidden md:flex">
@@ -727,17 +722,7 @@
         mobileMenu.onclick = toggleSidebar;
         closeSidebar.onclick = toggleSidebar;
 
-        // Desktop sidebar collapse toggle (with persistence)
-        if (localStorage.getItem('sidebar_collapsed') === 'true') {
-            document.body.classList.add('sidebar-collapsed');
-        }
-        const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
-        sidebarToggleBtn.onclick = () => {
-            const collapsed = document.body.classList.toggle('sidebar-collapsed');
-            localStorage.setItem('sidebar_collapsed', collapsed ? 'true' : 'false');
-        };
-
-        // ── Iframe embed mode (toggle button + sidebar collapse) ────────────
+        // ── Iframe Embed Mode + Shared Sidebar Toggle ─────────────────────
         (function setupIframeMode() {
             const urlParams = new URLSearchParams(window.location.search);
             const showChrome = urlParams.get('show_chrome') === '1';
@@ -748,47 +733,36 @@
                 document.body.classList.add('iframe-mode');
             }
 
-            const toggleBtn = document.getElementById('iframe-sidebar-toggle');
+            const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
             const sidebarEl = document.getElementById('sidebar');
-            const toggleIcon = document.getElementById('iframe-toggle-icon');
-            const ICON_OPEN = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>';
-            const ICON_CLOSE = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>';
+            if (!sidebarToggleBtn || !sidebarEl) return;
 
-            let sidebarCollapsed = iframeMode;
+            function updateToggleIcon(collapsed) {
+                const collapseIcon = sidebarToggleBtn.querySelector('.icon-collapse');
+                const expandIcon = sidebarToggleBtn.querySelector('.icon-expand');
+                if (collapseIcon) collapseIcon.style.display = collapsed ? 'none' : 'block';
+                if (expandIcon) expandIcon.style.display = collapsed ? 'block' : 'none';
+                sidebarToggleBtn.title = collapsed ? 'Show sidebar' : 'Hide sidebar';
+            }
 
-            if (toggleBtn) {
-                if (iframeMode) {
-                    sidebarEl.classList.add('iframe-sidebar-collapsed');
-                }
+            if (iframeMode) {
+                let collapsed = true;
+                sidebarEl.classList.add('iframe-sidebar-collapsed');
+                updateToggleIcon(collapsed);
 
-                toggleBtn.addEventListener('click', () => {
-                    sidebarCollapsed = !sidebarCollapsed;
-                    if (sidebarCollapsed) {
-                        sidebarEl.classList.add('iframe-sidebar-collapsed');
-                        toggleIcon.innerHTML = ICON_OPEN;
-                        toggleBtn.title = 'Show sidebar';
-                        toggleBtn.style.left = '8px';
-                    } else {
-                        sidebarEl.classList.remove('iframe-sidebar-collapsed');
-                        toggleIcon.innerHTML = ICON_CLOSE;
-                        toggleBtn.title = 'Hide sidebar';
-                        toggleBtn.style.left = (sidebarEl.offsetWidth + 4) + 'px';
-                    }
+                sidebarToggleBtn.addEventListener('click', () => {
+                    collapsed = !collapsed;
+                    sidebarEl.classList.toggle('iframe-sidebar-collapsed', collapsed);
+                    updateToggleIcon(collapsed);
                 });
-
-                if (iframeMode) {
-                    requestAnimationFrame(() => {
-                        if (sidebarCollapsed) {
-                            toggleIcon.innerHTML = ICON_OPEN;
-                            toggleBtn.title = 'Show sidebar';
-                            toggleBtn.style.left = '8px';
-                        } else {
-                            toggleIcon.innerHTML = ICON_CLOSE;
-                            toggleBtn.title = 'Hide sidebar';
-                            toggleBtn.style.left = (sidebarEl.offsetWidth + 4) + 'px';
-                        }
-                    });
+            } else {
+                if (localStorage.getItem('sidebar_collapsed') === 'true') {
+                    document.body.classList.add('sidebar-collapsed');
                 }
+                sidebarToggleBtn.onclick = () => {
+                    const collapsed = document.body.classList.toggle('sidebar-collapsed');
+                    localStorage.setItem('sidebar_collapsed', collapsed ? 'true' : 'false');
+                };
             }
         })();
     </script>
