@@ -1188,13 +1188,28 @@ iframe.contentWindow.postMessage(<span class="tok-key">{</span> <span class="tok
 
 	<script src="footer.js"></script>
 	<script>
+		function fallbackCopy(text) {
+			const ta = document.createElement("textarea");
+			ta.value = text;
+			ta.style.position = "fixed";
+			ta.style.left = "-9999px";
+			document.body.appendChild(ta);
+			ta.select();
+			try { document.execCommand("copy"); } catch { /* silent */ }
+			document.body.removeChild(ta);
+		}
+
 		// ── Copy buttons ────────────────────────────────────────────────────
 		document.querySelectorAll('.copy-btn').forEach(btn => {
 			btn.addEventListener('click', async () => {
 				const block = btn.closest('.code-block');
 				const code = block.querySelector('pre code').innerText;
 				try {
-					await navigator.clipboard.writeText(code);
+					if (navigator.clipboard && window.isSecureContext) {
+						await navigator.clipboard.writeText(code);
+					} else {
+						fallbackCopy(code);
+					}
 					btn.textContent = 'Copied';
 					btn.classList.add('copied');
 					setTimeout(() => {

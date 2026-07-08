@@ -473,6 +473,9 @@
 		if (pasteBtn) {
 			pasteBtn.onclick = async () => {
 				try {
+					if (!navigator.clipboard || !window.isSecureContext) {
+						throw new Error('Clipboard API unavailable');
+					}
 					const text = await navigator.clipboard.readText();
 					if (text !== undefined && text !== null) {
 						if (!editor) {
@@ -492,7 +495,7 @@
 					}
 				} catch (err) {
 					console.error('Failed to read clipboard contents: ', err);
-					copyToast.textContent = "Clipboard permission denied or unsupported";
+					copyToast.textContent = "Use Ctrl+V / Cmd+V to paste";
 					copyToast.style.background = "#ef4444";
 					copyToast.style.opacity = "1";
 					setTimeout(() => {
@@ -931,10 +934,14 @@
 		// buildTree and renderNode are now in json-tree.js
 
 		function copyToClipboard(text) {
-			navigator.clipboard.writeText(text).then(() => {
-				copyToast.style.opacity = "1";
-				setTimeout(() => (copyToast.style.opacity = "0"), 2000);
-			});
+			if (navigator.clipboard && window.isSecureContext) {
+				navigator.clipboard.writeText(text).then(() => {
+					copyToast.style.opacity = "1";
+					setTimeout(() => (copyToast.style.opacity = "0"), 2000);
+				}).catch(() => fallbackCopy(text));
+			} else {
+				fallbackCopy(text);
+			}
 		}
 
 		window.prettify = () => {
@@ -1073,7 +1080,11 @@
 			const result = transformJsonToMarkdown();
 			if (!result) return;
 			try {
-				await navigator.clipboard.writeText(result.markdown);
+				if (navigator.clipboard && window.isSecureContext) {
+					await navigator.clipboard.writeText(result.markdown);
+				} else {
+					fallbackCopy(result.markdown);
+				}
 				toast(`Copied ${result.filename} (${result.markdown.length} chars)`);
 			} catch (e) {
 				copyToast.textContent = 'Copy failed: ' + e.message;
@@ -1339,7 +1350,11 @@
 		window.copyRawJson = () => {
 			if (!editor) return;
 			const text = sourceJSON !== null ? sourceJSON : editor.state.doc.toString();
-			navigator.clipboard.writeText(text).then(() => toast("RAW JSON copied to clipboard"));
+			if (navigator.clipboard && window.isSecureContext) {
+				navigator.clipboard.writeText(text).then(() => toast("RAW JSON copied to clipboard")).catch(() => fallbackCopy(text));
+			} else {
+				fallbackCopy(text);
+			}
 			saveDropdownMenu.classList.remove('visible');
 		};
 
@@ -1348,7 +1363,11 @@
 			try {
 				const text = sourceJSON !== null ? sourceJSON : editor.state.doc.toString();
 				const formatted = JSON.stringify(JSON.parse(text), null, 2);
-				navigator.clipboard.writeText(formatted).then(() => toast("Formatted JSON copied to clipboard"));
+				if (navigator.clipboard && window.isSecureContext) {
+					navigator.clipboard.writeText(formatted).then(() => toast("Formatted JSON copied to clipboard")).catch(() => fallbackCopy(formatted));
+				} else {
+					fallbackCopy(formatted);
+				}
 			} catch (e) {
 				alert("Invalid JSON - cannot format for copy");
 			}
@@ -1358,8 +1377,28 @@
 		window.copyEditorContents = () => {
 			if (!editor) return;
 			const text = editor.state.doc.toString();
-			navigator.clipboard.writeText(text).then(() => toast("Editor contents copied to clipboard"));
+			if (navigator.clipboard && window.isSecureContext) {
+				navigator.clipboard.writeText(text).then(() => toast("Editor contents copied to clipboard")).catch(() => fallbackCopy(text));
+			} else {
+				fallbackCopy(text);
+			}
 		};
+
+		function fallbackCopy(text) {
+			const ta = document.createElement("textarea");
+			ta.value = text;
+			ta.style.position = "fixed";
+			ta.style.left = "-9999px";
+			document.body.appendChild(ta);
+			ta.select();
+			try {
+				document.execCommand("copy");
+				toast("Editor contents copied to clipboard");
+			} catch {
+				toast("Copy failed — please copy manually");
+			}
+			document.body.removeChild(ta);
+		}
 
 		function download(text, filename) {
 			const blob = new Blob([text], { type: "application/json" });

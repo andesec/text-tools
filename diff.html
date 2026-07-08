@@ -1116,6 +1116,9 @@ document.getElementById('file-input-right').onchange = e => e.target.files[0] &&
 
 async function pasteToDiff(side) {
   try {
+    if (!navigator.clipboard || !window.isSecureContext) {
+      throw new Error('Clipboard API unavailable');
+    }
     const text = await navigator.clipboard.readText();
     if (text !== undefined && text !== null) {
       if (side === 'left' && editorL) {
@@ -1127,7 +1130,7 @@ async function pasteToDiff(side) {
     }
   } catch (err) {
     console.error('Failed to read clipboard: ', err);
-    showToast('Clipboard permission denied');
+    showToast('Use Ctrl+V / Cmd+V to paste');
   }
 }
 
@@ -1181,14 +1184,23 @@ document.getElementById('lang-select').onchange = e => {
 document.getElementById('btn-copy-patch').onclick = () => {
   const dmp = new diff_match_patch();
   const patches = dmp.patch_make(editorL.state.doc.toString(), editorR.state.doc.toString());
-  // Using user-preferred fallback strategy for clipboard security contexts
   const patchText = dmp.patch_toText(patches);
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(patchText);
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(patchText).catch(() => {
+      const textarea = document.createElement('textarea');
+      textarea.value = patchText;
+      textarea.style.position = 'fixed';
+      textarea.style.left = '-9999px';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+    });
   } else {
     const textarea = document.createElement('textarea');
     textarea.value = patchText;
     textarea.style.position = 'fixed';
+    textarea.style.left = '-9999px';
     document.body.appendChild(textarea);
     textarea.select();
     document.execCommand('copy');

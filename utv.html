@@ -260,15 +260,34 @@
             saveState();
         }
 
+        function fallbackCopy(text) {
+            const ta = document.createElement("textarea");
+            ta.value = text;
+            ta.style.position = "fixed";
+            ta.style.left = "-9999px";
+            document.body.appendChild(ta);
+            ta.select();
+            try { document.execCommand("copy"); } catch { /* silent */ }
+            document.body.removeChild(ta);
+        }
+
         function copyOutput() {
             if (!outputEl.value) return;
-            navigator.clipboard.writeText(outputEl.value).then(() => {
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(outputEl.value).then(() => {
+                    showToast('Copied to clipboard!');
+                }).catch(() => { fallbackCopy(outputEl.value); showToast('Copied to clipboard!'); });
+            } else {
+                fallbackCopy(outputEl.value);
                 showToast('Copied to clipboard!');
-            });
+            }
         }
 
         async function pasteText(target) {
             try {
+                if (!navigator.clipboard || !window.isSecureContext) {
+                    throw new Error('Clipboard API unavailable');
+                }
                 const text = await navigator.clipboard.readText();
                 if (text !== undefined && text !== null) {
                     const el = document.getElementById(target);
@@ -278,7 +297,7 @@
                 }
             } catch (err) {
                 console.error('Failed to read clipboard: ', err);
-                showToast('Clipboard permission denied');
+                showToast('Use Ctrl+V / Cmd+V to paste');
             }
         }
 

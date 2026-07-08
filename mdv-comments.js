@@ -355,9 +355,24 @@
 		toast("Comments exported");
 	};
 
+	function fallbackCopy(text) {
+		const ta = document.createElement("textarea");
+		ta.value = text;
+		ta.style.position = "fixed";
+		ta.style.left = "-9999px";
+		document.body.appendChild(ta);
+		ta.select();
+		try { document.execCommand("copy"); } catch { /* silent */ }
+		document.body.removeChild(ta);
+	}
+
 	async function copyToClipboard(text, successMsg) {
 		try {
-			await navigator.clipboard.writeText(text);
+			if (navigator.clipboard && window.isSecureContext) {
+				await navigator.clipboard.writeText(text);
+			} else {
+				fallbackCopy(text);
+			}
 			toast(successMsg || "Copied to clipboard");
 		} catch (err) {
 			console.error("Failed to copy:", err);

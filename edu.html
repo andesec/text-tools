@@ -649,6 +649,9 @@
 
         async function pasteText(target) {
             try {
+                if (!navigator.clipboard || !window.isSecureContext) {
+                    throw new Error('Clipboard API unavailable');
+                }
                 const text = await navigator.clipboard.readText();
                 if (text !== undefined && text !== null) {
                     const el = document.getElementById(target);
@@ -658,7 +661,7 @@
                 }
             } catch (err) {
                 console.error('Failed to read clipboard: ', err);
-                showStatus('Clipboard permission denied', 'error');
+                showStatus('Use Ctrl+V / Cmd+V to paste', 'error');
             }
         }
 

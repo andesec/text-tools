@@ -1748,11 +1748,15 @@
 			container.appendChild(toolbar);
 
 			toolbar.querySelector('[data-action="copy"]').onclick = () => {
-				navigator.clipboard.writeText(codeEl.textContent).then(() => {
+				const text = codeEl.textContent;
+				if (navigator.clipboard && window.isSecureContext) {
+					navigator.clipboard.writeText(text).then(() => {
+						if (window.MdvComments && typeof MdvComments.toast === "function") MdvComments.toast('Markdown copied');
+					}).catch(() => { fallbackCopy(text); if (window.MdvComments && typeof MdvComments.toast === "function") MdvComments.toast('Markdown copied'); });
+				} else {
+					fallbackCopy(text);
 					if (window.MdvComments && typeof MdvComments.toast === "function") MdvComments.toast('Markdown copied');
-				}).catch(() => {
-					if (window.MdvComments && typeof MdvComments.toast === "function") MdvComments.toast('Copy failed');
-				});
+				}
 			};
 			toolbar.querySelector('[data-action="preview"]').onclick = () => {
 				convertMarkdownToRunnable(container, preEl, blockIndex, 'preview');
@@ -1827,11 +1831,14 @@
 			// Copy button (always available once expanded too)
 			header.querySelector('[data-action="copy"]').onclick = () => {
 				const text = innerEditor ? innerEditor.state.doc.toString() : codeEl.textContent;
-				navigator.clipboard.writeText(text).then(() => {
+				if (navigator.clipboard && window.isSecureContext) {
+					navigator.clipboard.writeText(text).then(() => {
+						if (window.MdvComments && typeof MdvComments.toast === "function") MdvComments.toast('Markdown copied');
+					}).catch(() => { fallbackCopy(text); if (window.MdvComments && typeof MdvComments.toast === "function") MdvComments.toast('Markdown copied'); });
+				} else {
+					fallbackCopy(text);
 					if (window.MdvComments && typeof MdvComments.toast === "function") MdvComments.toast('Markdown copied');
-				}).catch(() => {
-					if (window.MdvComments && typeof MdvComments.toast === "function") MdvComments.toast('Copy failed');
-				});
+				}
 			};
 
 			let innerEditor = null;
@@ -2957,6 +2964,9 @@
 		if (pasteBtn) {
 			pasteBtn.onclick = async () => {
 				try {
+					if (!navigator.clipboard || !window.isSecureContext) {
+						throw new Error('Clipboard API unavailable');
+					}
 					let text = await navigator.clipboard.readText();
 					if (text !== undefined && text !== null) {
 						// Parse embedded comments if present
@@ -2984,7 +2994,7 @@
 					}
 				} catch (err) {
 					console.error('Failed to read clipboard contents: ', err);
-					alert("Clipboard permission denied or unsupported");
+					alert("Use Ctrl+V / Cmd+V to paste");
 				}
 			};
 		}
@@ -3093,16 +3103,36 @@
 		window.copyEditorContents = function () {
 			if (!editor) return;
 			const text = editor.state.doc.toString();
-			navigator.clipboard.writeText(text).then(() => {
+			const toastMsg = 'Editor contents copied';
+			if (navigator.clipboard && window.isSecureContext) {
+				navigator.clipboard.writeText(text).then(() => {
+					if (window.MdvComments && typeof window.MdvComments.toast === 'function') {
+						window.MdvComments.toast(toastMsg);
+					}
+				}).catch(() => {
+					fallbackCopy(text);
+					if (window.MdvComments && typeof window.MdvComments.toast === 'function') {
+						window.MdvComments.toast(toastMsg);
+					}
+				});
+			} else {
+				fallbackCopy(text);
 				if (window.MdvComments && typeof window.MdvComments.toast === 'function') {
-					window.MdvComments.toast('Editor contents copied');
+					window.MdvComments.toast(toastMsg);
 				}
-			}).catch(() => {
-				if (window.MdvComments && typeof window.MdvComments.toast === 'function') {
-					window.MdvComments.toast('Copy failed');
-				}
-			});
+			}
 		};
+
+		function fallbackCopy(text) {
+			const ta = document.createElement("textarea");
+			ta.value = text;
+			ta.style.position = "fixed";
+			ta.style.left = "-9999px";
+			document.body.appendChild(ta);
+			ta.select();
+			try { document.execCommand("copy"); } catch { /* silent */ }
+			document.body.removeChild(ta);
+		}
 
 		// Initial setup
 		initEditor(loadMdvState());
