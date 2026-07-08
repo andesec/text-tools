@@ -163,10 +163,6 @@
       top: 96px;
     }
 
-    /* ── Mobile Button ─────────────────────────────────────── */
-    #btn-mobile-menu {
-      background: var(--accent);
-    }
   </style>
 </head>
 
@@ -255,7 +251,7 @@
     </div>
 
     <!-- Options dropdown -->
-    <div class="relative" id="dd-options">
+    <div class="relative shrink-0" id="dd-options">
       <button id="btn-options" class="btn btn-sm transition-all">
         Options <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
       </button>
@@ -283,8 +279,8 @@
       <span class="hidden sm:inline">Typeset</span>
     </button>
 
-    <!-- Outline toggle (desktop) -->
-    <button id="btn-outline" onclick="toggleOutline()" class="hidden md:flex btn btn-sm ml-auto shrink-0">
+    <!-- Outline toggle -->
+    <button id="btn-outline" onclick="toggleOutline()" class="btn btn-sm ml-auto shrink-0">
       <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8M4 18h12"/></svg>
       Outline
     </button>
@@ -394,11 +390,6 @@
     </div>
   </div>
 </div>
-
-<!-- Mobile FAB -->
-<button id="btn-mobile-menu" class="fixed bottom-6 right-6 md:hidden text-white p-4 rounded-full shadow-2xl z-50 border-none cursor-pointer">
-  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8M4 18h16"/></svg>
-</button>
 
 <!-- Toast -->
 <div id="toast" class="toast"></div>
@@ -1052,9 +1043,16 @@ window.setView = function(mode) {
 
 // ── outline toggle ────────────────────────────────────────────
 window.toggleOutline = function() {
-  outlineOpen = !outlineOpen;
   const sidebar = document.getElementById('outline-sidebar');
   const btn     = document.getElementById('btn-outline');
+  if (window.innerWidth < 768) {
+    const active = document.body.classList.toggle('mobile-sidebar-active');
+    btn.classList.toggle('bg-violet-600', active);
+    btn.classList.toggle('text-white', active);
+    btn.classList.toggle('border-violet-600', active);
+    return;
+  }
+  outlineOpen = !outlineOpen;
   if (outlineOpen) {
     sidebar.classList.remove('outline-closed');
     btn.classList.add('bg-violet-600','text-white','border-violet-600');
@@ -1235,12 +1233,30 @@ document.getElementById('btn-clear').onclick = () => {
 [['btn-export','dd-export-menu'], ['btn-options','dd-options-menu']].forEach(([btnId, menuId]) => {
   const btn  = document.getElementById(btnId);
   const menu = document.getElementById(menuId);
-  
-  btn.addEventListener('click', e => { 
-    e.stopPropagation(); 
-    menu.classList.toggle('visible'); 
+
+  function positionMenu() {
+    if (window.innerWidth >= 768) {
+      menu.style.position = '';
+      menu.style.top = '';
+      menu.style.left = '';
+      return;
+    }
+    const r = btn.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const width = menu.offsetWidth || 200;
+    let left = r.left;
+    if (left + width > vw) left = Math.max(8, vw - width - 8);
+    menu.style.position = 'fixed';
+    menu.style.top = `${r.bottom + 4}px`;
+    menu.style.left = `${left}px`;
+  }
+
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    positionMenu();
+    menu.classList.toggle('visible');
   });
-  
+
   // Prevent clicks inside the menu from bubbling up to document and closing the dropdown
   menu.addEventListener('click', e => {
     e.stopPropagation();
@@ -1254,8 +1270,10 @@ document.addEventListener('click', () => {
 });
 
 // ── mobile ───────────────────────────────────────────────────
-document.getElementById('btn-mobile-menu').onclick = () => document.body.classList.toggle('mobile-sidebar-active');
-document.getElementById('btn-close-outline').onclick = () => document.body.classList.remove('mobile-sidebar-active');
+document.getElementById('btn-close-outline').onclick = () => {
+  document.body.classList.remove('mobile-sidebar-active');
+  document.getElementById('btn-outline').classList.remove('bg-violet-600', 'text-white', 'border-violet-600');
+};
 
 // ── toast ────────────────────────────────────────────────────
 let toastTimer;

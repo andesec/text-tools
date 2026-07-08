@@ -153,65 +153,8 @@
 					</svg>
 					<span id="btn-text" class="hidden sm:inline">Open</span>
 				</button>
-				<button id="paste-btn" class="btn btn-sm sm:px-4 sm:py-2 sm:text-sm">
-					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-							d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
-						</path>
-					</svg>
-					<span class="hidden sm:inline">Paste</span>
-				</button>
-				<div class="save-dropdown-wrapper" id="save-dropdown-wrapper">
-					<button id="download-btn"
-						class="save-main-btn btn btn-gradient-green btn-sm sm:px-4 sm:py-2 sm:text-sm shadow-sm hover:shadow-md transition-all transform active:scale-95">
-						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-								d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-						</svg>
-						<span class="hidden sm:inline">Save</span>
-					</button>
-					<button id="save-chevron-btn"
-						class="save-chevron-btn btn btn-gradient-green btn-sm sm:py-2 sm:text-sm shadow-sm hover:shadow-md transition-all transform active:scale-95">
-						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
-							</path>
-						</svg>
-					</button>
 
-					<div id="save-dropdown-menu" class="save-dropdown-menu">
-						<button class="save-dropdown-item" onclick="saveJson()">
-							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-									d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-							</svg>
-							Save RAW
-						</button>
-						<button class="save-dropdown-item" onclick="saveFormattedJson()">
-							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-									d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-							</svg>
-							Save Formatted
-						</button>
-						<div class="save-dropdown-divider"></div>
-						<button class="save-dropdown-item" onclick="copyRawJson()">
-							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-									d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m-7 4h7m-7 4h7m-7 4h3">
-								</path>
-							</svg>
-							Copy RAW
-						</button>
-						<button class="save-dropdown-item" onclick="copyFormattedJson()">
-							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-									d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m-7 4h7m-7 4h7m-7 4h3">
-								</path>
-							</svg>
-							Copy Formatted
-						</button>
-					</div>
-				</div>
+
 			</div>
 		</div>
 
@@ -230,7 +173,7 @@
 				</button>
 				<button id="source-view-btn" onclick="revertToSource()" class="hidden btn btn-sm"
 					style="color: var(--warning);">Source</button>
-				<div class="relative" id="dropdown-tools">
+				<div class="relative shrink-0" id="dropdown-tools">
 					<button id="tools-menu-btn" class="btn btn-sm">
 						<span>Tools</span>
 						<svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -261,7 +204,7 @@
 			</div>
 
 			<div class="flex items-center gap-2 shrink-0">
-				<div class="relative" id="dropdown-instance">
+				<div class="relative shrink-0" id="dropdown-instance">
 					<button id="instance-menu-btn" class="btn btn-sm">
 						<span id="instance-label">JSON 1</span>
 						<svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -294,6 +237,65 @@
 					</svg>
 					<span>Copy</span>
 				</button>
+				<button id="paste-btn" class="btn btn-sm shrink-0 sm:px-4 sm:py-2 sm:text-sm">
+					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+							d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
+						</path>
+					</svg>
+					<span class="hidden sm:inline">Paste</span>
+				</button>
+				<div class="save-dropdown-wrapper shrink-0" id="save-dropdown-wrapper">
+					<button id="download-btn"
+						class="save-main-btn btn btn-gradient-green btn-sm sm:px-4 sm:py-2 sm:text-sm shadow-sm hover:shadow-md transition-all transform active:scale-95">
+						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+								d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+						</svg>
+						<span class="hidden sm:inline">Save</span>
+					</button>
+					<button id="save-chevron-btn"
+						class="save-chevron-btn btn btn-gradient-green btn-sm sm:py-2 sm:text-sm shadow-sm hover:shadow-md transition-all transform active:scale-95">
+						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
+							</path>
+						</svg>
+					</button>
+
+					<div id="save-dropdown-menu" class="save-dropdown-menu">
+						<button class="save-dropdown-item" onclick="saveJson()">
+							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+									d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+								</svg>
+							Save RAW
+						</button>
+						<button class="save-dropdown-item" onclick="saveFormattedJson()">
+							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+									d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+								</svg>
+							Save Formatted
+						</button>
+						<div class="save-dropdown-divider"></div>
+						<button class="save-dropdown-item" onclick="copyRawJson()">
+							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+									d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m-7 4h7m-7 4h7m-7 4h3">
+								</path>
+							</svg>
+							Copy RAW
+						</button>
+						<button class="save-dropdown-item" onclick="copyFormattedJson()">
+							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+									d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m-7 4h7m-7 4h7m-7 4h3">
+								</path>
+							</svg>
+							Copy Formatted
+						</button>
+					</div>
+				</div>
 				<button onclick="toggleWrap()" id="wrap-toggle-btn" class="btn btn-sm font-bold">W</button>
 				<button id="send-to-md-btn" onclick="sendJsonToMarkdown()"
 					class="btn btn-sm shadow-sm hover:shadow-md transition-all"
@@ -432,13 +434,6 @@
 		</main>
 	</div>
 
-	<button id="mobile-menu" class="fixed bottom-6 right-6 md:hidden text-white p-4 rounded-full shadow-2xl z-50"
-		style="background: var(--accent);">
-		<svg id="menu-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-			<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-		</svg>
-	</button>
-
 	<div id="copy-toast" class="toast">Copied to clipboard!</div>
 
 	<script src="vendor/cm-js-bundle.js"></script>
@@ -467,7 +462,6 @@
 		const pasteBtn = document.getElementById("paste-btn");
 		const newBtn = document.getElementById("new-btn");
 		const fileInput = document.getElementById("file-input");
-		const mobileMenu = document.getElementById("mobile-menu");
 		const closeSidebar = document.getElementById("close-sidebar");
 
 		if (pasteBtn) {
@@ -508,13 +502,8 @@
 
 		const toggleSidebar = () => {
 			document.body.classList.toggle("mobile-sidebar-active");
-			const isActive = document.body.classList.contains("mobile-sidebar-active");
-			document.getElementById("menu-icon").innerHTML = isActive
-				? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>'
-				: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>';
 		};
 
-		mobileMenu.onclick = toggleSidebar;
 		closeSidebar.onclick = toggleSidebar;
 
 		let loadedFiles = new Map();
@@ -609,11 +598,24 @@
 		const toolsDropdown = document.getElementById('tools-menu-dropdown');
 		const toolsBtn = document.getElementById('tools-menu-btn');
 
+		function positionToolbarDropdown(menu, btn) {
+			if (window.innerWidth >= 768) return;
+			const r = btn.getBoundingClientRect();
+			const vw = window.innerWidth;
+			const width = menu.offsetWidth || 200;
+			let left = r.left;
+			if (left + width > vw) left = Math.max(8, vw - width - 8);
+			menu.style.position = 'fixed';
+			menu.style.top = `${r.bottom + 4}px`;
+			menu.style.left = `${left}px`;
+		}
+
 		instanceBtn.addEventListener('click', (e) => {
 			e.stopPropagation();
 			const isHidden = instanceDropdown.classList.contains('hidden');
 			toolsDropdown.classList.add('hidden'); // Close the other dropdown
 			if (isHidden) {
+				positionToolbarDropdown(instanceDropdown, instanceBtn);
 				instanceDropdown.classList.remove('hidden');
 			} else {
 				instanceDropdown.classList.add('hidden');
@@ -625,6 +627,7 @@
 			const isHidden = toolsDropdown.classList.contains('hidden');
 			instanceDropdown.classList.add('hidden'); // Close the other dropdown
 			if (isHidden) {
+				positionToolbarDropdown(toolsDropdown, toolsBtn);
 				toolsDropdown.classList.remove('hidden');
 			} else {
 				toolsDropdown.classList.add('hidden');
@@ -632,8 +635,27 @@
 		});
 
 		// Save dropdown handling
+		function positionSaveDropdown() {
+			if (window.innerWidth >= 768) {
+				saveDropdownMenu.style.position = '';
+				saveDropdownMenu.style.top = '';
+				saveDropdownMenu.style.left = '';
+				return;
+			}
+			const r = saveChevronBtn.getBoundingClientRect();
+			const vw = window.innerWidth;
+			const width = saveDropdownMenu.offsetWidth || 220;
+			let left = r.right - width;
+			if (left < 8) left = 8;
+			if (left + width > vw) left = Math.max(8, vw - width - 8);
+			saveDropdownMenu.style.position = 'fixed';
+			saveDropdownMenu.style.top = `${r.bottom + 4}px`;
+			saveDropdownMenu.style.left = `${left}px`;
+		}
+
 		saveChevronBtn.addEventListener('click', (e) => {
 			e.stopPropagation();
+			positionSaveDropdown();
 			saveDropdownMenu.classList.toggle('visible');
 			instanceDropdown.classList.add('hidden');
 			toolsDropdown.classList.add('hidden');
@@ -1627,8 +1649,12 @@
 					document.body.classList.add('sidebar-collapsed');
 				}
 				sidebarToggleBtn.onclick = () => {
-					const collapsed = document.body.classList.toggle('sidebar-collapsed');
-					localStorage.setItem('sidebar_collapsed', collapsed ? 'true' : 'false');
+					if (window.innerWidth < 768) {
+						toggleSidebar();
+					} else {
+						const collapsed = document.body.classList.toggle('sidebar-collapsed');
+						localStorage.setItem('sidebar_collapsed', collapsed ? 'true' : 'false');
+					}
 				};
 			}
 		})();

@@ -417,8 +417,27 @@
 		const mainBtn = document.getElementById("save-main-btn");
 		const menu = document.getElementById("save-dropdown-menu");
 
+		function positionMenu() {
+			if (window.innerWidth >= 768) {
+				menu.style.position = '';
+				menu.style.top = '';
+				menu.style.left = '';
+				return;
+			}
+			const r = chevron.getBoundingClientRect();
+			const vw = window.innerWidth;
+			const width = menu.offsetWidth || 220;
+			let left = r.right - width;
+			if (left < 8) left = 8;
+			if (left + width > vw) left = Math.max(8, vw - width - 8);
+			menu.style.position = 'fixed';
+			menu.style.top = `${r.bottom + 4}px`;
+			menu.style.left = `${left}px`;
+		}
+
 		chevron.addEventListener("click", (e) => {
 			e.stopPropagation();
+			positionMenu();
 			menu.classList.toggle("visible");
 		});
 
