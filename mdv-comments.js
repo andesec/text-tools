@@ -419,6 +419,20 @@
 		const menu = document.getElementById("save-dropdown-menu");
 		if (!chevron || !mainBtn || !menu) return;
 
+		const originalParent = menu.parentNode;
+
+		function mountToBody() {
+			if (menu.parentNode !== document.body) {
+				document.body.appendChild(menu);
+			}
+		}
+
+		function unmountFromBody() {
+			if (originalParent && menu.parentNode !== originalParent) {
+				originalParent.appendChild(menu);
+			}
+		}
+
 		function measureMenu() {
 			// Briefly show the menu off-screen so we can read its real size
 			const prevVisible = menu.classList.contains("visible");
@@ -440,7 +454,11 @@
 			const r = chevron.getBoundingClientRect();
 			const vw = window.innerWidth;
 			const vh = window.innerHeight;
-			const { width, height } = measureMenu();
+			const { width: measuredWidth, height } = measureMenu();
+
+			// Constrain width so a fixed-position menu doesn't stretch to fill the viewport
+			const width = Math.min(Math.max(measuredWidth, 220), vw - 16);
+			menu.style.width = `${width}px`;
 
 			let left = r.right - width;
 			if (left < 8) left = 8;
@@ -457,19 +475,10 @@
 			menu.style.left = `${left}px`;
 		}
 
-		function resetMenuPosition() {
-			menu.style.position = "";
-			menu.style.top = "";
-			menu.style.left = "";
-		}
-
 		function openMenu() {
 			if (typeof closeOpenDropdown === "function") closeOpenDropdown();
-			if (window.innerWidth >= 768) {
-				resetMenuPosition();
-			} else {
-				positionMenu();
-			}
+			mountToBody();
+			positionMenu();
 			menu.classList.add("visible");
 			chevron.setAttribute("aria-expanded", "true");
 		}
@@ -477,14 +486,33 @@
 		function closeMenu() {
 			menu.classList.remove("visible");
 			chevron.setAttribute("aria-expanded", "false");
+			// Move back so it stays with the component when hidden
+			unmountFromBody();
+			menu.style.width = "";
 		}
 
-		chevron.addEventListener("click", (e) => {
+		function toggleFromPointer(e) {
 			e.stopPropagation();
 			if (menu.classList.contains("visible")) {
 				closeMenu();
 			} else {
 				openMenu();
+				// Force a reflow so iOS reliably renders the fixed menu
+				void menu.offsetHeight;
+			}
+		}
+
+		chevron.addEventListener("click", toggleFromPointer);
+
+		// iOS PWA / Safari sometimes swallows click inside scroll containers;
+		// also listen to touch end and deduplicate against the click.
+		let touchHandled = false;
+		chevron.addEventListener("touchend", (e) => {
+			e.preventDefault();
+			if (!touchHandled) {
+				touchHandled = true;
+				toggleFromPointer(e);
+				setTimeout(() => { touchHandled = false; }, 300);
 			}
 		});
 
@@ -517,7 +545,12 @@
 	function closeSaveDropdown() {
 		const menu = document.getElementById("save-dropdown-menu");
 		const chevron = document.getElementById("save-chevron-btn");
-		if (menu) menu.classList.remove("visible");
+		const wrapper = document.getElementById("save-dropdown-wrapper");
+		if (menu) {
+			menu.classList.remove("visible");
+			menu.style.width = "";
+			if (wrapper && menu.parentNode !== wrapper) wrapper.appendChild(menu);
+		}
 		if (chevron) chevron.setAttribute("aria-expanded", "false");
 	}
 

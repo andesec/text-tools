@@ -178,6 +178,50 @@ body {
   }
 }
 
+.toolbar-fixed-left,
+.toolbar-fixed-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.toolbar-scrollable {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.toolbar-scrollable::-webkit-scrollbar {
+  display: none;
+}
+
+.toolbar-scrollable > * {
+  flex-shrink: 0;
+}
+
+/* When the toolbar uses the fixed-left / scrollable-middle / fixed-right layout,
+   keep it on one line so the middle area scrolls instead of wrapping. */
+.app-header-toolbar--scrollable-middle {
+  flex-wrap: nowrap;
+}
+
+@media (max-width: 767px) {
+  .app-header-toolbar--scrollable-middle {
+    overflow-x: visible;
+  }
+
+  .app-header-toolbar--scrollable-middle > * {
+    flex-shrink: unset;
+  }
+}
+
 /* ── Shared Sidebar ── */
 .app-sidebar {
   background: var(--bg-surface);

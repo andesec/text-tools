@@ -1168,8 +1168,8 @@
 		</div>
 
 		<!-- Bottom Row: Secondary Toolbar (Responsive) -->
-		<div class="app-header-toolbar">
-			<div class="flex items-center gap-2 shrink-0">
+		<div class="app-header-toolbar app-header-toolbar--scrollable-middle">
+			<div class="toolbar-fixed-left flex items-center gap-2 shrink-0">
 				<button id="sidebar-toggle-btn" class="btn-icon sidebar-toggle-btn" title="Toggle sidebar" aria-label="Toggle sidebar">
 					<svg class="w-5 h-5 icon-collapse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -1181,18 +1181,19 @@
 					</svg>
 				</button>
 			</div>
-			<div
-				class="flex items-center border border-[var(--border-default)] rounded-md overflow-hidden bg-[var(--bg-surface)] shrink-0">
-				<button onclick="changeZoom(-0.1)"
-					class="px-2 py-1 hover:bg-[var(--bg-surface-hover)] border-r border-[var(--border-default)] transition-colors">−</button>
-				<span id="zoom-level" class="px-2 text-[10px] font-mono min-w-[2.5rem] text-center">100%</span>
-				<button onclick="changeZoom(0.1)"
-					class="px-2 py-1 hover:bg-[var(--bg-surface-hover)] border-l border-[var(--border-default)] transition-colors">+</button>
-				<button onclick="toggleWrap()" id="wrap-toggle-btn" title="Toggle Line Wrap"
-					class="px-2 py-1 hover:bg-[var(--bg-surface-hover)] border-l border-[var(--border-default)] transition-colors text-[10px] font-bold">W</button>
-			</div>
+			<div class="toolbar-scrollable">
+				<div
+					class="flex items-center border border-[var(--border-default)] rounded-md overflow-hidden bg-[var(--bg-surface)] shrink-0">
+					<button onclick="changeZoom(-0.1)"
+						class="px-2 py-1 hover:bg-[var(--bg-surface-hover)] border-r border-[var(--border-default)] transition-colors">−</button>
+					<span id="zoom-level" class="px-2 text-[10px] font-mono min-w-[2.5rem] text-center">100%</span>
+					<button onclick="changeZoom(0.1)"
+						class="px-2 py-1 hover:bg-[var(--bg-surface-hover)] border-l border-[var(--border-default)] transition-colors">+</button>
+					<button onclick="toggleWrap()" id="wrap-toggle-btn" title="Toggle Line Wrap"
+						class="px-2 py-1 hover:bg-[var(--bg-surface-hover)] border-l border-[var(--border-default)] transition-colors text-[10px] font-bold">W</button>
+				</div>
 
-			<div id="edit-controls" class="flex items-center gap-2 shrink-0">
+				<div id="edit-controls" class="flex items-center gap-2 shrink-0">
 				<!-- TTS Toggle Button -->
 				<button id="tts-toggle-btn" class="btn btn-sm tts-toggle-btn" title="Toggle Read-Aloud mode"
 					onclick="window.ttsToggleSpeakMode && window.ttsToggleSpeakMode()">
@@ -1231,7 +1232,7 @@
 					</svg>
 					<span>Copy</span>
 				</button>
-				<button id="paste-btn" class="btn btn-sm shrink-0 sm:px-4 sm:py-2 sm:text-sm">
+				<button id="paste-btn" class="btn btn-sm shrink-0">
 					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
 							d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
@@ -1241,7 +1242,7 @@
 				</button>
 				<div class="save-dropdown-wrapper shrink-0" id="save-dropdown-wrapper" style="z-index: 90;">
 					<button id="save-main-btn"
-						class="save-main-btn btn btn-gradient-green btn-sm sm:px-4 sm:py-2 sm:text-sm shadow-sm hover:shadow-md transition-all transform active:scale-95">
+						class="save-main-btn btn btn-gradient-green btn-sm shadow-sm hover:shadow-md transition-all transform active:scale-95">
 						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
 								d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
@@ -1249,8 +1250,9 @@
 						<span class="hidden sm:inline">Save</span>
 					</button>
 					<button id="save-chevron-btn"
-						class="save-chevron-btn btn btn-gradient-green btn-sm sm:py-2 sm:text-sm shadow-sm hover:shadow-md transition-all transform active:scale-95">
-						<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						class="save-chevron-btn btn btn-gradient-green btn-sm shadow-sm hover:shadow-md transition-all"
+						style="touch-action: manipulation; -webkit-tap-highlight-color: transparent; cursor: pointer; min-width: 32px;">
+						<svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
 							</path>
 						</svg>
@@ -1324,16 +1326,20 @@
 						</button>
 					</div>
 				</div>
-				<button id="toggle-edit-btn" class="btn btn-sm">
-					<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-							d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
-						</path>
-					</svg>
-					<span id="toggle-text">View</span>
-				</button>
 			</div>
 		</div>
+
+		<div class="toolbar-fixed-right flex items-center gap-2 shrink-0">
+			<button id="toggle-edit-btn" class="btn btn-sm">
+				<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+						d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+					</path>
+				</svg>
+				<span id="toggle-text">View</span>
+			</button>
+		</div>
+	</div>
 	</header>
 
 
