@@ -22,6 +22,7 @@
 		setComments: (c) => { comments = c; renderSidebarComments(); updateBadge(); },
 		clearComments: () => { comments = []; renderSidebarComments(); updateBadge(); if (window.saveMdvState) window.saveMdvState(); },
 		toast,
+		closeSaveDropdown,
 	};
 
 	// ── DOM refs (set in init) ─────────────────────
@@ -416,29 +417,86 @@
 		const chevron = document.getElementById("save-chevron-btn");
 		const mainBtn = document.getElementById("save-main-btn");
 		const menu = document.getElementById("save-dropdown-menu");
+		if (!chevron || !mainBtn || !menu) return;
+
+		function measureMenu() {
+			// Briefly show the menu off-screen so we can read its real size
+			const prevVisible = menu.classList.contains("visible");
+			const prevVisibility = menu.style.visibility;
+			if (!prevVisible) {
+				menu.style.visibility = "hidden";
+				menu.classList.add("visible");
+			}
+			const width = menu.offsetWidth || 220;
+			const height = menu.offsetHeight || 0;
+			if (!prevVisible) {
+				menu.classList.remove("visible");
+				menu.style.visibility = prevVisibility;
+			}
+			return { width, height };
+		}
 
 		function positionMenu() {
-			if (window.innerWidth >= 768) {
-				menu.style.position = '';
-				menu.style.top = '';
-				menu.style.left = '';
-				return;
-			}
 			const r = chevron.getBoundingClientRect();
 			const vw = window.innerWidth;
-			const width = menu.offsetWidth || 220;
+			const vh = window.innerHeight;
+			const { width, height } = measureMenu();
+
 			let left = r.right - width;
 			if (left < 8) left = 8;
-			if (left + width > vw) left = Math.max(8, vw - width - 8);
-			menu.style.position = 'fixed';
-			menu.style.top = `${r.bottom + 4}px`;
+			if (left + width > vw - 8) left = Math.max(8, vw - width - 8);
+
+			let top = r.bottom + 4;
+			// If the menu would overflow the bottom, open it upward when there is room
+			if (top + height > vh - 8 && r.top - height - 4 > 8) {
+				top = r.top - height - 4;
+			}
+
+			menu.style.position = "fixed";
+			menu.style.top = `${top}px`;
 			menu.style.left = `${left}px`;
+		}
+
+		function resetMenuPosition() {
+			menu.style.position = "";
+			menu.style.top = "";
+			menu.style.left = "";
+		}
+
+		function openMenu() {
+			if (typeof closeOpenDropdown === "function") closeOpenDropdown();
+			if (window.innerWidth >= 768) {
+				resetMenuPosition();
+			} else {
+				positionMenu();
+			}
+			menu.classList.add("visible");
+			chevron.setAttribute("aria-expanded", "true");
+		}
+
+		function closeMenu() {
+			menu.classList.remove("visible");
+			chevron.setAttribute("aria-expanded", "false");
 		}
 
 		chevron.addEventListener("click", (e) => {
 			e.stopPropagation();
-			positionMenu();
-			menu.classList.toggle("visible");
+			if (menu.classList.contains("visible")) {
+				closeMenu();
+			} else {
+				openMenu();
+			}
+		});
+
+		chevron.addEventListener("keydown", (e) => {
+			if (e.key === "Enter" || e.key === " ") {
+				e.preventDefault();
+				if (menu.classList.contains("visible")) {
+					closeMenu();
+				} else {
+					openMenu();
+				}
+			}
 		});
 
 		mainBtn.addEventListener("click", () => {
@@ -447,13 +505,20 @@
 
 		document.addEventListener("click", (e) => {
 			if (!menu.contains(e.target) && !chevron.contains(e.target)) {
-				menu.classList.remove("visible");
+				closeMenu();
 			}
+		});
+
+		document.addEventListener("keydown", (e) => {
+			if (e.key === "Escape") closeMenu();
 		});
 	}
 
 	function closeSaveDropdown() {
-		document.getElementById("save-dropdown-menu").classList.remove("visible");
+		const menu = document.getElementById("save-dropdown-menu");
+		const chevron = document.getElementById("save-chevron-btn");
+		if (menu) menu.classList.remove("visible");
+		if (chevron) chevron.setAttribute("aria-expanded", "false");
 	}
 
 	// ── Sidebar Comments Panel ─────────────────────

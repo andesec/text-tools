@@ -583,8 +583,8 @@
 		}
 
 		.open-dropdown-menu {
-			left: 0 !important;
-			right: auto !important;
+			right: 0 !important;
+			left: auto !important;
 		}
 
 		/* ─── TTS Reader Styles ─────────────────────────────── */
@@ -1239,7 +1239,7 @@
 					</svg>
 					<span class="hidden sm:inline">Paste</span>
 				</button>
-				<div class="save-dropdown-wrapper shrink-0" id="save-dropdown-wrapper">
+				<div class="save-dropdown-wrapper shrink-0" id="save-dropdown-wrapper" style="z-index: 90;">
 					<button id="save-main-btn"
 						class="save-main-btn btn btn-gradient-green btn-sm sm:px-4 sm:py-2 sm:text-sm shadow-sm hover:shadow-md transition-all transform active:scale-95">
 						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2935,6 +2935,9 @@
 		if (openChevron) {
 			openChevron.addEventListener("click", (e) => {
 				e.stopPropagation();
+				if (window.MdvComments && typeof window.MdvComments.closeSaveDropdown === "function") {
+					window.MdvComments.closeSaveDropdown();
+				}
 				openMenu.classList.toggle("visible");
 			});
 		}
