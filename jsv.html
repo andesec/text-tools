@@ -470,7 +470,7 @@
 					if (!navigator.clipboard || !window.isSecureContext) {
 						throw new Error('Clipboard API unavailable');
 					}
-					const text = await navigator.clipboard.readText();
+					const text = normalizePastedText(await navigator.clipboard.readText());
 					if (text !== undefined && text !== null) {
 						if (!editor) {
 							initEditor(text, currentFileName?.endsWith(".json") ? "json" : "javascript");
@@ -796,6 +796,21 @@
 					".ͼ1 .cm-typeName": { fontWeight: "500 !important" },
 					".cm-gutters": { backgroundColor: "var(--bg-surface)", borderRightColor: "var(--border-subtle)", color: "var(--text-tertiary)" }
 				}),
+				EditorView.domEventHandlers({
+					paste(event, view) {
+						const raw = event.clipboardData?.getData('text');
+						if (typeof raw !== 'string') return false;
+						const normalized = normalizePastedText(raw);
+						if (normalized === raw) return false;
+						event.preventDefault();
+						const { from, to } = view.state.selection.main;
+						view.dispatch({
+							changes: { from, to, insert: normalized },
+							selection: { anchor: from + normalized.length }
+						});
+						return true;
+					}
+				}),
 				EditorView.updateListener.of((update) => {
 					if (update.docChanged) {
 						// Skip changes that originated from our own loadContent
@@ -916,6 +931,30 @@
 
 		function cleanLiteralNewlinesIfJson(text, filename) {
 			return window.JsonRepair.cleanLiteralNewlinesIfJson(text, filename);
+		}
+
+		function normalizePastedText(text) {
+			if (typeof text !== 'string') return text;
+			let result = text;
+			let prev;
+			do {
+				prev = result;
+				result = result.trim();
+				const leadingFence = result.match(/^```(?:json|javascript|js)?\s*(?:\r?\n)?/i);
+				if (leadingFence) {
+					result = result.slice(leadingFence[0].length);
+				}
+				result = result.trimEnd();
+				if (result.endsWith('```')) {
+					result = result.slice(0, -3);
+				}
+				result = result.trim();
+				if (result.length >= 2 && result.startsWith('"') && result.endsWith('"')) {
+					result = result.slice(1, -1);
+				}
+				result = result.trim();
+			} while (result !== prev);
+			return result;
 		}
 
 		async function displayFile(name, element) {
