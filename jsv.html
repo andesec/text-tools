@@ -935,25 +935,57 @@
 
 		function normalizePastedText(text) {
 			if (typeof text !== 'string') return text;
-			let result = text;
+			let result = text.trim();
+			if (!result) return result;
+
 			let prev;
 			do {
 				prev = result;
-				result = result.trim();
-				const leadingFence = result.match(/^```(?:json|javascript|js)?\s*(?:\r?\n)?/i);
+				// Trim spaces, actual newlines, and literal newlines (\n, \r, \t)
+				result = result.replace(/^(?:\\n|\\r|\\t|\s)+|(?:\\n|\\r|\\t|\s)+$/gi, '');
+
+				// 1. Handle markdown code fences
+				const leadingFence = result.match(/^```(?:json|javascript|js|typescript|ts)?\s*/i);
 				if (leadingFence) {
 					result = result.slice(leadingFence[0].length);
+					result = result.trimEnd();
+					if (result.endsWith('```')) {
+						result = result.slice(0, -3);
+					}
+					result = result.trim();
+					continue;
 				}
-				result = result.trimEnd();
-				if (result.endsWith('```')) {
-					result = result.slice(0, -3);
+
+				// 2. Handle stringified double-quoted or single-quoted JS/JSON strings
+				if ((result.startsWith('"') && result.endsWith('"')) || (result.startsWith("'") && result.endsWith("'"))) {
+					try {
+						if (result.startsWith('"')) {
+							const parsed = JSON.parse(result);
+							if (typeof parsed === 'string') {
+								result = parsed;
+								continue;
+							}
+						} else {
+							const unescaped = result.slice(1, -1)
+								.replace(/\\'/g, "'")
+								.replace(/\\"/g, '"')
+								.replace(/\\n/g, '\n')
+								.replace(/\\r/g, '\r')
+								.replace(/\\t/g, '\t')
+								.replace(/\\\\/g, '\\');
+							result = unescaped;
+							continue;
+						}
+					} catch (e) {
+						if (result.length >= 2) {
+							result = result.slice(1, -1);
+						}
+					}
 				}
-				result = result.trim();
-				if (result.length >= 2 && result.startsWith('"') && result.endsWith('"')) {
-					result = result.slice(1, -1);
-				}
-				result = result.trim();
 			} while (result !== prev);
+
+			// One final trim of literal and actual whitespace/newlines
+			result = result.replace(/^(?:\\n|\\r|\\t|\s)+|(?:\\n|\\r|\\t|\s)+$/gi, '');
 			return result;
 		}
 
@@ -964,7 +996,8 @@
 			sourceJSON = null; // Reset sourceJSON when a new file is displayed
 			sourceBtn.classList.add("hidden"); // Hide source button
 
-			const cleanedText = cleanLiteralNewlinesIfJson(text, name);
+			const normalizedText = normalizePastedText(text);
+			const cleanedText = cleanLiteralNewlinesIfJson(normalizedText, name);
 
 			// Save to current instance
 			instances[currentInstance].content = cleanedText;
@@ -1516,10 +1549,11 @@
 					if (importData) {
 						localStorage.removeItem('jsv_import_data');
 						currentFileName = 'decrypted.json';
-						instances[currentInstance].content = importData;
+						const normalizedImport = normalizePastedText(importData);
+						instances[currentInstance].content = normalizedImport;
 						instances[currentInstance].fileName = currentFileName;
-						initEditor(importData, 'json');
-						buildTree(importData);
+						initEditor(normalizedImport, 'json');
+						buildTree(normalizedImport);
 						saveJsvState();
 						updateTabTitle();
 						document.getElementById("instance-label").textContent = `JSON ${currentInstance + 1}`;
@@ -1534,7 +1568,8 @@
 				} catch (e) { /* localStorage unavailable */ }
 			}
 
-			const cleanedContent = cleanLiteralNewlinesIfJson(instances[currentInstance].content, currentFileName);
+			const normalizedContent = normalizePastedText(instances[currentInstance].content);
+			const cleanedContent = cleanLiteralNewlinesIfJson(normalizedContent, currentFileName);
 			instances[currentInstance].content = cleanedContent;
 			initEditor(cleanedContent, isJson ? "json" : "javascript");
 
@@ -1611,7 +1646,8 @@
 			currentFileName = filename;
 			sourceJSON = null;
 			sourceBtn.classList.add('hidden');
-			const cleanedText = cleanLiteralNewlinesIfJson(text, filename);
+			const normalizedText = normalizePastedText(text);
+			const cleanedText = cleanLiteralNewlinesIfJson(normalizedText, filename);
 			instances[currentInstance].content = cleanedText;
 			instances[currentInstance].fileName = filename;
 
