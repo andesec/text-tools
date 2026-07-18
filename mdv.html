@@ -1081,6 +1081,14 @@
 
 		/* ── Mermaid Diagrams ─────────────────────────────── */
 		.mermaid-wrapper {
+			position: relative;
+			cursor: zoom-in;
+			display: block;
+			width: 100%;
+			text-align: left;
+			background: transparent;
+			border: none;
+			padding: 0;
 			margin-top: 1rem;
 			margin-bottom: 1rem;
 		}
@@ -1215,10 +1223,7 @@
 			max-height: none !important;
 		}
 
-		.mermaid-wrapper {
-			position: relative;
-			cursor: zoom-in;
-		}
+
 
 		.mermaid-zoom-hint {
 			position: absolute;
@@ -2466,7 +2471,8 @@
 				if (!preEl || preEl.tagName !== 'PRE') return;
 
 				const source = codeEl.textContent;
-				const wrapper = document.createElement('div');
+				const wrapper = document.createElement('button');
+				wrapper.type = 'button';
 				wrapper.className = 'mermaid-wrapper';
 
 				const diagramDiv = document.createElement('div');
@@ -2691,6 +2697,18 @@
 			viewport.addEventListener('pointerup', onPointerUp);
 			viewport.addEventListener('pointercancel', onPointerUp);
 
+			// iOS touch overrides to prevent native zoom/scrolling inside diagram modal
+			const onTouchStart = (e) => {
+				if (e.touches.length > 1) {
+					e.preventDefault();
+				}
+			};
+			const onTouchMove = (e) => {
+				e.preventDefault();
+			};
+			viewport.addEventListener('touchstart', onTouchStart, { passive: false });
+			viewport.addEventListener('touchmove', onTouchMove, { passive: false });
+
 			function getDistance(p1, p2) {
 				const dx = p1.clientX - p2.clientX;
 				const dy = p1.clientY - p2.clientY;
@@ -2707,6 +2725,8 @@
 				viewport.removeEventListener('pointermove', onPointerMove);
 				viewport.removeEventListener('pointerup', onPointerUp);
 				viewport.removeEventListener('pointercancel', onPointerUp);
+				viewport.removeEventListener('touchstart', onTouchStart);
+				viewport.removeEventListener('touchmove', onTouchMove);
 				svgContainer.innerHTML = '';
 			};
 			modal.addEventListener('close', onModalClose);
