@@ -23,73 +23,53 @@
 <body class="h-screen flex flex-col overflow-hidden transition-colors duration-200">
     <header class="app-header z-50 shrink-0">
         <div class="app-header-row">
+            <!-- Left Edge: Home navigation icon -->
             <div class="flex items-center gap-2">
-                <a href="index.html" class="btn-icon" title="Home">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
-                        </path>
-                    </svg>
+                <a href="index.html" class="btn-icon" title="Home" aria-label="Home">
+                    <i class="ph ph-house text-base"></i>
                 </a>
-                <div class="p-1.5 rounded-lg shadow-sm"
-                    style="background: linear-gradient(to bottom right, #0d9488, #0f766e);">
-                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
-                        </path>
-                    </svg>
-                </div>
-                <h1 class="text-sm font-bold uppercase tracking-tight sm:text-lg sm:normal-case">EDU Explorer</h1>
             </div>
 
-            <div class="flex items-center gap-1.5 sm:gap-2">
-                <button id="jsv-btn" class="btn btn-sm sm:px-4 sm:py-2 sm:text-sm"
+            <!-- Center: Tool Logo Badge + Tool Title -->
+            <div class="app-header-row-center">
+                <div class="app-header-logo-badge" style="background: linear-gradient(to bottom right, #0d9488, #0f766e);">
+                    <i class="ph ph-lock-key text-lg text-white"></i>
+                </div>
+                <h1 class="text-base sm:text-lg font-bold tracking-tight text-[var(--text-primary)]">EDU Explorer</h1>
+            </div>
+
+            <!-- Right Edge: View in JSV -->
+            <div class="flex items-center gap-1.5 justify-end">
+                <button id="jsv-btn" class="btn btn-sm"
                     style="background: linear-gradient(to bottom right, #eab308, #ea580c); color: #fff; border-color: transparent;"
                     title="Send decrypted result to JSON Viewer">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
-                    </svg>
-                    <span class="hidden sm:inline">View in JSV</span>
+                    <i class="ph ph-code text-base"></i>
+                    <span class="btn-text">View in JSV</span>
                 </button>
             </div>
         </div>
 
+        <!-- Sub-Toolbar (Row 2) -->
         <div class="app-header-toolbar">
-            <div class="flex items-center gap-2 shrink-0">
+            <div class="toolbar-pinned-left">
                 <button id="sidebar-toggle-btn" class="btn-icon sidebar-toggle-btn" title="Toggle sidebar" aria-label="Toggle sidebar">
-                    <svg class="w-5 h-5 icon-collapse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M3 4h18v16H3z M9 4v16"></path>
-                    </svg>
-                    <svg class="w-5 h-5 icon-expand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M3 4h18v16H3z M11 9l-3 3 3 3"></path>
-                    </svg>
-                </button>
-                <button id="mode-decrypt-btn" class="btn btn-sm mode-btn active">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    <span>Decrypt</span>
-                </button>
-                <button id="mode-hash-btn" class="btn btn-sm mode-btn">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 12h14M5 16h6">
-                        </path>
-                    </svg>
-                    <span>Hash</span>
+                    <i class="ph ph-sidebar-simple text-base"></i>
                 </button>
             </div>
-            <div class="flex items-center gap-2 shrink-0">
-                <button id="clear-btn" class="btn btn-sm">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3">
-                        </path>
-                    </svg>
-                    <span>Clear</span>
+            <div class="toolbar-middle-scroll">
+                <button id="mode-decrypt-btn" class="btn btn-sm mode-btn active" title="Switch to Decryption mode">
+                    <i class="ph ph-lock-key-open text-base text-[var(--accent-text)]"></i>
+                    <span class="btn-text">Decrypt</span>
+                </button>
+                <button id="mode-hash-btn" class="btn btn-sm mode-btn" title="Switch to Hashing mode">
+                    <i class="ph ph-hash text-base text-[var(--warning)]"></i>
+                    <span class="btn-text">Hash</span>
+                </button>
+            </div>
+            <div class="toolbar-pinned-right">
+                <button id="clear-btn" class="btn btn-sm" title="Clear input fields">
+                    <i class="ph ph-trash text-base"></i>
+                    <span class="btn-text">Clear</span>
                 </button>
             </div>
         </div>
@@ -101,32 +81,20 @@
             <!-- Tools Panel -->
             <div id="tools-panel" class="sidebar-panel">
                 <div class="sidebar-panel-header" data-panel="tools">
-                    <svg class="sidebar-panel-caret" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                    </svg>
+                    <i class="ph ph-caret-down sidebar-panel-caret text-xs"></i>
                     <span class="sidebar-panel-title">Tools</span>
                     <button id="close-sidebar" class="md:hidden btn-icon ml-auto">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
+                        <i class="ph ph-x text-base"></i>
                     </button>
                 </div>
                 <div class="sidebar-panel-body">
                     <div id="tool-list" class="flex-1 overflow-y-auto p-2 space-y-0.5">
                         <button class="file-item active" data-tool="decrypt">
-                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
-                                </path>
-                            </svg>
+                            <i class="ph ph-lock-key text-base shrink-0"></i>
                             <span>AES-GCM Decryption</span>
                         </button>
                         <button class="file-item" data-tool="hash">
-                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M5 8h14M5 12h14M5 16h6"></path>
-                            </svg>
+                            <i class="ph ph-hash text-base shrink-0"></i>
                             <span>Hashing Utility</span>
                         </button>
                     </div>
@@ -138,9 +106,7 @@
             <!-- Reference Panel (collapsed) -->
             <div id="reference-panel" class="sidebar-panel collapsed">
                 <div class="sidebar-panel-header" data-panel="reference">
-                    <svg class="sidebar-panel-caret" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                    </svg>
+                    <i class="ph ph-caret-down sidebar-panel-caret text-xs"></i>
                     <span class="sidebar-panel-title">Reference</span>
                 </div>
                 <div class="sidebar-panel-body">
@@ -206,11 +172,8 @@
                     <div id="status-message" class="status"></div>
 
                     <div class="actions">
-                        <button class="btn btn-primary btn-sm sm:px-4 sm:py-2 sm:text-sm" id="decrypt-btn">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                            </svg>
+                        <button class="btn btn-primary btn-sm" id="decrypt-btn">
+                            <i class="ph ph-lock-key-open text-base"></i>
                             <span>Decrypt Payload</span>
                         </button>
                     </div>
@@ -223,11 +186,7 @@
                         <div class="actions actions-right">
                             <button class="btn btn-sm" id="resolve-btn">Resolve Escapes</button>
                             <button class="btn btn-sm" id="copy-btn">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-7 4h7m-7 4h7m-7 4h3">
-                                    </path>
-                                </svg>
+                                <i class="ph ph-copy text-base"></i>
                                 <span>Copy</span>
                             </button>
                         </div>
@@ -265,12 +224,8 @@
                     </div>
                     <div id="hash-status" class="status"></div>
                     <div class="actions">
-                        <button class="btn btn-primary btn-sm sm:px-4 sm:py-2 sm:text-sm" id="hash-btn">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41">
-                                </path>
-                            </svg>
+                        <button class="btn btn-primary btn-sm" id="hash-btn">
+                            <i class="ph ph-hash text-base"></i>
                             <span>Generate Hash</span>
                         </button>
                     </div>
@@ -280,11 +235,7 @@
                             <div class="flex-row">
                                 <input type="text" id="hash-result" readonly>
                                 <button class="btn btn-sm" id="hash-copy-btn">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-7 4h7m-7 4h7m-7 4h3">
-                                        </path>
-                                    </svg>
+                                    <i class="ph ph-copy text-base"></i>
                                     <span>Copy</span>
                                 </button>
                             </div>

@@ -606,39 +606,65 @@
   </style>
 </head>
 <body>
-  
-  <div class="tts-container">
-    
-    <!-- Top Header Navigation -->
-    <header class="header-section">
-      <div class="header-title-group">
-        <a href="index.html" class="btn-icon" title="Home" style="border:none; background:transparent; display:flex; align-items:center;">
-          <svg style="width: 20px; height: 20px; color: var(--text-secondary);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-          </svg>
+  <header class="app-header z-50 shrink-0">
+    <div class="app-header-row">
+      <!-- Left Edge: Home navigation icon -->
+      <div class="flex items-center gap-2">
+        <a href="index.html" class="btn-icon" title="Home" aria-label="Home">
+          <i class="ph ph-house text-base"></i>
         </a>
-        <div class="header-logo">S</div>
-        <div class="header-text">
-          <h1>Supertonic TTS</h1>
-          <p>Browser-based Text-to-Speech synthesizer running via WebGPU / WebAssembly</p>
+      </div>
+
+      <!-- Center: Tool Logo Badge + Tool Title -->
+      <div class="app-header-row-center">
+        <div class="app-header-logo-badge" style="background: linear-gradient(to bottom right, #6c5ce7, #7c6ff0);">
+          <i class="ph ph-speaker-high text-lg text-white"></i>
+        </div>
+        <h1 class="text-base sm:text-lg font-bold tracking-tight text-[var(--text-primary)]">Supersonic TTS</h1>
+      </div>
+
+      <!-- Right Edge: Hardware Acceleration Badge -->
+      <div class="flex items-center gap-1.5 justify-end">
+        <div class="hardware-badge">
+          <div class="hardware-dot" id="hardware-status-dot"></div>
+          <span id="hardware-status-text">Detecting Acceleration...</span>
         </div>
       </div>
-      
-      <div class="hardware-badge">
-        <div class="hardware-dot" id="hardware-status-dot"></div>
-        <span id="hardware-status-text">Detecting Acceleration...</span>
-      </div>
-    </header>
+    </div>
 
+    <!-- Sub-Toolbar (Row 2) -->
+    <div class="app-header-toolbar">
+      <div class="toolbar-pinned-left">
+        <button class="btn-icon" title="Voice Synthesizer" aria-label="Voice Synthesizer">
+          <i class="ph ph-wave-sine text-base"></i>
+        </button>
+      </div>
+      <div class="toolbar-middle-scroll">
+        <button class="btn btn-sm" onclick="loadSampleText(1)" title="Load short greeting sample text">
+          <i class="ph ph-chat-text text-base text-[var(--info)]"></i>
+          <span class="btn-text">Sample Greeting</span>
+        </button>
+        <button class="btn btn-sm" onclick="loadSampleText(2)" title="Load paragraph sample text">
+          <i class="ph ph-article text-base text-[var(--accent-text)]"></i>
+          <span class="btn-text">Paragraph</span>
+        </button>
+        <button class="btn btn-sm" onclick="loadSampleText(3)" title="Load technical explanation sample text">
+          <i class="ph ph-code text-base text-[var(--warning)]"></i>
+          <span class="btn-text">Tech Explanation</span>
+        </button>
+      </div>
+      <div class="toolbar-pinned-right"></div>
+    </div>
+  </header>
+
+  <div class="tts-container">
     <!-- Main Grid Dashboard -->
     <main class="main-grid">
       
       <!-- Input Panel -->
       <section class="card-panel">
         <div class="panel-title">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-          </svg>
+          <i class="ph ph-file-text text-base text-[var(--accent-text)]"></i>
           Synthesis Text Input
         </div>
         
@@ -658,9 +684,7 @@
       <!-- Settings & Trigger Panel -->
       <section class="card-panel">
         <div class="panel-title">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
-          </svg>
+          <i class="ph ph-sliders text-base text-[var(--accent-text)]"></i>
           Inference Parameters
         </div>
 
@@ -706,10 +730,7 @@
 
         <div class="action-btn-row">
           <button class="synthesize-btn" id="synthesize-trigger">
-            <svg style="width: 18px; height: 18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
+            <i class="ph ph-play-circle text-lg"></i>
             <div class="loading-spinner"></div>
             <span>Synthesize Audio</span>
           </button>
@@ -719,9 +740,7 @@
       <!-- Player Panel -->
       <section class="player-panel">
         <div class="panel-title">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>
-          </svg>
+          <i class="ph ph-speaker-high text-base text-[var(--accent-text)]"></i>
           Premium Player Interface
         </div>
 
@@ -732,9 +751,7 @@
 
         <div class="player-controls-row">
           <button class="player-button play-trigger-btn" id="player-play-btn" disabled>
-            <svg style="width: 18px; height: 18px;" fill="currentColor" viewBox="0 0 24 24" id="play-icon-svg">
-              <path d="M8 5v14l11-7z"></path>
-            </svg>
+            <i class="ph ph-play text-base" id="play-icon-svg"></i>
           </button>
           
           <div class="time-tracker">
@@ -746,16 +763,12 @@
           </div>
 
           <div class="volume-control-wrapper">
-            <svg style="width: 16px; height: 16px; color: var(--text-secondary);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>
-            </svg>
+            <i class="ph ph-speaker-high text-base text-[var(--text-secondary)]"></i>
             <input type="range" class="volume-slider" id="player-volume" min="0" max="100" value="100">
           </div>
 
           <button class="download-audio-btn" id="player-download-btn" disabled>
-            <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-            </svg>
+            <i class="ph ph-download-simple text-base"></i>
             <span>Download WAV</span>
           </button>
         </div>
@@ -765,9 +778,7 @@
       <section class="console-panel">
         <div class="console-header">
           <div class="panel-title">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-            </svg>
+            <i class="ph ph-terminal-window text-base text-[var(--accent-text)]"></i>
             Inference System Logs
           </div>
           <button class="console-clear-btn" id="console-clear-btn">Clear Logs</button>
@@ -1065,29 +1076,17 @@
     playerPlayBtn.onclick = () => {
       if (audioPlayer.paused) {
         audioPlayer.play();
-        playerPlayBtn.innerHTML = `
-          <svg style="width: 18px; height: 18px;" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path>
-          </svg>
-        `;
+        playerPlayBtn.innerHTML = `<i class="ph ph-pause text-base"></i>`;
         startVisualizer();
       } else {
         audioPlayer.pause();
-        playerPlayBtn.innerHTML = `
-          <svg style="width: 18px; height: 18px;" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M8 5v14l11-7z"></path>
-          </svg>
-        `;
+        playerPlayBtn.innerHTML = `<i class="ph ph-play text-base"></i>`;
         stopVisualizer();
       }
     };
 
     audioPlayer.onended = () => {
-      playerPlayBtn.innerHTML = `
-        <svg style="width: 18px; height: 18px;" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M8 5v14l11-7z"></path>
-        </svg>
-      `;
+      playerPlayBtn.innerHTML = `<i class="ph ph-play text-base"></i>`;
       stopVisualizer();
       playerTimeline.value = 0;
       playerTimeElapsed.textContent = "0:00";

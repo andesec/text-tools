@@ -2,320 +2,284 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>UTV - URI & Base64 Utility</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
-        rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    },
-                }
-            }
-        }
-    </script>
-    <style>
-        :root {
-            --primary: rgb(99, 102, 241);
-            --primary-hover: rgb(79, 70, 229);
-            --bg-dark: rgb(2, 6, 23);
-            --panel-dark: rgb(30, 41, 59);
-        }
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+	<title>Base64 & URI Utility — Andesec</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+	<script src="https://cdn.tailwindcss.com"></script>
+	<script>
+		tailwind.config = {
+			theme: {
+				extend: {
+					fontFamily: {
+						sans: ['Inter', 'sans-serif'],
+						mono: ['JetBrains Mono', 'monospace'],
+					},
+				}
+			}
+		}
+	</script>
+	<link rel="stylesheet" href="theme.css">
+	<style>
+		body {
+			background-color: var(--bg-root);
+			color: var(--text-primary);
+		}
 
-        body {
-            background-color: var(--bg-dark);
-            color: #f1f5f9;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        .glass {
-            background: var(--panel-dark);
-            border: 1px solid rgb(51, 65, 85);
-            border-radius: 1.5rem;
-        }
-
-        textarea {
-            background: rgb(15, 23, 42) !important;
-            border: 1px solid rgb(51, 65, 85) !important;
-            color: rgb(226, 232, 240) !important;
-            resize: none;
-            transition: all 0.2s ease;
-        }
-
-        textarea:focus {
-            outline: none;
-            border-color: var(--primary) !important;
-            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
-        }
-
-        .action-btn {
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .action-btn:active {
-            transform: scale(0.95);
-        }
-
-        .copy-toast {
-            position: fixed;
-            bottom: 2rem;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #1e293b;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 9999px;
-            font-size: 0.875rem;
-            z-index: 1000;
-            opacity: 0;
-            pointer-events: none;
-            transition: all 0.3s ease;
-        }
-
-        .copy-toast.show {
-            opacity: 1;
-            transform: translateX(-50%) translateY(-0.5rem);
-        }
-    </style>
+		textarea {
+			font-family: var(--font-mono);
+		}
+	</style>
 </head>
 
-<body class="p-3 md:p-8">
-    <div class="max-w-6xl mx-auto space-y-8">
-        <!-- Header -->
-        <header class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <a href="index.html"
-                    class="p-2 hover:bg-slate-800 rounded-xl transition-colors text-slate-400 hover:text-white">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                    </svg>
-                </a>
-                <div
-                    class="bg-gradient-to-br from-indigo-500 to-purple-600 p-2 rounded-xl shadow-lg shadow-indigo-500/20">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
-                    </svg>
-                </div>
-                <h1 class="text-2xl font-bold tracking-tight">UTV Utility</h1>
-            </div>
-            <div class="hidden sm:block text-slate-500 text-sm font-medium">URI & Base64 Transformer</div>
-        </header>
+<body class="h-screen flex flex-col overflow-hidden transition-colors duration-200">
+	<header class="app-header z-50 shrink-0">
+		<div class="app-header-row">
+			<!-- Left Edge: Home navigation icon -->
+			<div class="flex items-center gap-2">
+				<a href="index.html" class="btn-icon" title="Home" aria-label="Home">
+					<i class="ph ph-house text-base"></i>
+				</a>
+			</div>
 
-        <!-- Main Content -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 relative">
-            <!-- Input Panel -->
-            <section class="glass p-6 space-y-4">
-                <div class="flex items-center justify-between">
-                    <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400">Input</h2>
-                    <div class="flex gap-4">
-                        <button onclick="clearText('input')"
-                            class="text-xs text-slate-500 hover:text-red-400 transition-colors">Clear</button>
-                        <button onclick="pasteText('input')"
-                            class="text-xs text-indigo-400 hover:text-indigo-300 transition-colors font-medium">Paste</button>
-                    </div>
-                </div>
-                <textarea id="input" class="w-full h-80 p-4 rounded-xl font-mono text-sm leading-relaxed"
-                    placeholder="Paste your text here..."></textarea>
-            </section>
+			<!-- Center: Tool Logo Badge + Tool Title -->
+			<div class="app-header-row-center">
+				<div class="app-header-logo-badge" style="background: linear-gradient(to bottom right, #6366f1, #a855f7);">
+					<i class="ph ph-arrows-left-right text-lg text-white"></i>
+				</div>
+				<h1 class="text-base sm:text-lg font-bold tracking-tight text-[var(--text-primary)]">Base64 & URI</h1>
+			</div>
 
-            <!-- Action Column (Mobile: Row, Desktop: Vertical Overlay) -->
-            <div
-                class="flex lg:flex-col items-center justify-center gap-4 lg:absolute lg:inset-y-0 lg:left-1/2 lg:-translate-x-1/2 z-10 py-4 lg:py-0">
-                <button onclick="swap()"
-                    class="bg-slate-800 hover:bg-slate-700 p-3 rounded-full shadow-xl border border-white/5 transition-all hover:scale-110 active:scale-90"
-                    title="Swap Input/Output">
-                    <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
-                    </svg>
-                </button>
-            </div>
+			<!-- Right Edge: Quick Actions -->
+			<div class="flex items-center gap-1.5 justify-end">
+				<button onclick="clearText('input'); clearText('output')" class="btn btn-sm" title="Clear all input and output fields">
+					<i class="ph ph-trash text-base"></i>
+					<span class="btn-text">Clear All</span>
+				</button>
+				<button onclick="copyOutput()" class="btn btn-primary btn-sm" title="Copy output text to clipboard">
+					<i class="ph ph-copy text-base"></i>
+					<span class="btn-text">Copy Output</span>
+				</button>
+			</div>
+		</div>
 
-            <!-- Output Panel -->
-            <section class="glass p-6 space-y-4">
-                <div class="flex items-center justify-between">
-                    <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400">Output</h2>
-                    <div class="flex gap-4">
-                        <button onclick="clearText('output')"
-                            class="text-xs text-slate-500 hover:text-red-400 transition-colors">Clear</button>
-                        <button onclick="copyOutput()"
-                            class="text-xs text-indigo-400 hover:text-indigo-300 transition-colors font-medium">Copy
-                            Output</button>
-                    </div>
-                </div>
-                <textarea id="output" class="w-full h-80 p-4 rounded-xl font-mono text-sm leading-relaxed"
-                    placeholder="Result will appear here..."></textarea>
-            </section>
-        </div>
+		<!-- Sub-Toolbar (Row 2) -->
+		<div class="app-header-toolbar">
+			<div class="toolbar-pinned-left">
+				<button onclick="swap()" class="btn-icon" title="Swap Input and Output" aria-label="Swap Input and Output">
+					<i class="ph ph-arrows-down-up text-base"></i>
+				</button>
+			</div>
 
-        <!-- Actions Bar -->
-        <div class="glass p-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-            <button onclick="transform('b64e')"
-                class="action-btn bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 p-4 rounded-2xl shadow-lg shadow-indigo-900/20 text-sm font-bold tracking-wide uppercase">
-                Base64 Encode
-            </button>
-            <button onclick="transform('b64d')"
-                class="action-btn bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 p-4 rounded-2xl shadow-lg shadow-purple-900/20 text-sm font-bold tracking-wide uppercase">
-                Base64 Decode
-            </button>
-            <button onclick="transform('urie')"
-                class="action-btn bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 p-4 rounded-2xl shadow-lg shadow-blue-900/20 text-sm font-bold tracking-wide uppercase">
-                URI Encode
-            </button>
-            <button onclick="transform('urid')"
-                class="action-btn bg-gradient-to-r from-cyan-600 to-cyan-700 hover:from-cyan-500 hover:to-cyan-600 p-4 rounded-2xl shadow-lg shadow-cyan-900/20 text-sm font-bold tracking-wide uppercase">
-                URI Decode
-            </button>
-            <button onclick="transform('resolve')"
-                class="action-btn bg-gradient-to-r from-pink-600 to-pink-700 hover:from-pink-500 hover:to-pink-600 p-4 rounded-2xl shadow-lg shadow-pink-900/20 text-sm font-bold tracking-wide uppercase">
-                Resolve Escapes
-            </button>
-        </div>
-    </div>
+			<div class="toolbar-middle-scroll">
+				<button onclick="transform('b64e')" class="btn btn-sm" title="Base64 Encode input text">
+					<i class="ph ph-lock-key text-base text-[var(--accent-text)]"></i>
+					<span class="btn-text">Base64 Encode</span>
+				</button>
+				<button onclick="transform('b64d')" class="btn btn-sm" title="Base64 Decode input text">
+					<i class="ph ph-lock-key-open text-base text-[var(--accent-text)]"></i>
+					<span class="btn-text">Base64 Decode</span>
+				</button>
+				<button onclick="transform('urie')" class="btn btn-sm" title="URI Encode input text">
+					<i class="ph ph-link text-base text-[var(--info)]"></i>
+					<span class="btn-text">URI Encode</span>
+				</button>
+				<button onclick="transform('urid')" class="btn btn-sm" title="URI Decode input text">
+					<i class="ph ph-link-break text-base text-[var(--info)]"></i>
+					<span class="btn-text">URI Decode</span>
+				</button>
+				<button onclick="transform('resolve')" class="btn btn-sm" title="Resolve Unicode and escape sequences">
+					<i class="ph ph-magic-wand text-base text-[var(--warning)]"></i>
+					<span class="btn-text">Resolve Escapes</span>
+				</button>
+			</div>
 
-    <div id="toast" class="copy-toast">Copied to clipboard!</div>
+			<div class="toolbar-pinned-right">
+				<button onclick="pasteText('input')" class="btn btn-sm" title="Paste text from clipboard into input">
+					<i class="ph ph-clipboard-text text-base"></i>
+					<span class="btn-text">Paste</span>
+				</button>
+			</div>
+		</div>
+	</header>
 
-    <script>
-        const inputEl = document.getElementById('input');
-        const outputEl = document.getElementById('output');
-        const toastEl = document.getElementById('toast');
+	<!-- Main Layout -->
+	<main class="flex-1 overflow-y-auto p-4 sm:p-6 bg-[var(--bg-root)]">
+		<div class="max-w-6xl mx-auto space-y-6">
+			<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 relative">
+				<!-- Input Panel -->
+				<section class="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-xl p-4 sm:p-5 flex flex-col gap-3">
+					<div class="flex items-center justify-between">
+						<div class="flex items-center gap-2">
+							<i class="ph ph-text-align-left text-sm text-[var(--text-tertiary)]"></i>
+							<h2 class="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]">Input</h2>
+						</div>
+						<div class="flex items-center gap-2">
+							<button onclick="clearText('input')" class="btn btn-ghost btn-sm text-xs text-[var(--text-tertiary)] hover:text-[var(--danger)]">Clear</button>
+							<button onclick="pasteText('input')" class="btn btn-ghost btn-sm text-xs text-[var(--accent-text)]">Paste</button>
+						</div>
+					</div>
+					<textarea id="input" class="w-full h-80 sm:h-[calc(100vh-280px)] p-3 rounded-lg font-mono text-sm leading-relaxed bg-[var(--code-bg)] border border-[var(--border-default)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)] transition-colors resize-none" placeholder="Paste or type text here..."></textarea>
+				</section>
 
-        const UTV_STORAGE_KEY = window.name && window.name.startsWith('tab_') 
-            ? `utv_state_${window.name}` 
-            : 'utv_state_default';
+				<!-- Swap Overlay Button -->
+				<div class="flex lg:flex-col items-center justify-center gap-4 lg:absolute lg:inset-y-0 lg:left-1/2 lg:-translate-x-1/2 z-10 py-2 lg:py-0 pointer-events-none">
+					<button onclick="swap()" class="pointer-events-auto btn-icon bg-[var(--bg-surface-raised)] border border-[var(--border-strong)] hover:bg-[var(--bg-surface-hover)] shadow-lg rounded-full w-10 h-10 text-[var(--accent-text)] transition-transform active:scale-95 flex items-center justify-center" title="Swap Input and Output">
+						<i class="ph ph-arrows-down-up text-lg"></i>
+					</button>
+				</div>
 
-        function loadState() {
-            try {
-                const stored = localStorage.getItem(UTV_STORAGE_KEY);
-                if (stored) {
-                    const data = JSON.parse(stored);
-                    inputEl.value = data.input || '';
-                    outputEl.value = data.output || '';
-                }
-            } catch (e) {}
-        }
+				<!-- Output Panel -->
+				<section class="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-xl p-4 sm:p-5 flex flex-col gap-3">
+					<div class="flex items-center justify-between">
+						<div class="flex items-center gap-2">
+							<i class="ph ph-check-circle text-sm text-[var(--text-tertiary)]"></i>
+							<h2 class="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]">Output</h2>
+						</div>
+						<div class="flex items-center gap-2">
+							<button onclick="clearText('output')" class="btn btn-ghost btn-sm text-xs text-[var(--text-tertiary)] hover:text-[var(--danger)]">Clear</button>
+							<button onclick="copyOutput()" class="btn btn-ghost btn-sm text-xs text-[var(--accent-text)]">Copy</button>
+						</div>
+					</div>
+					<textarea id="output" class="w-full h-80 sm:h-[calc(100vh-280px)] p-3 rounded-lg font-mono text-sm leading-relaxed bg-[var(--code-bg)] border border-[var(--border-default)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)] transition-colors resize-none" placeholder="Result will appear here..."></textarea>
+				</section>
+			</div>
+		</div>
+	</main>
 
-        function saveState() {
-            try {
-                localStorage.setItem(UTV_STORAGE_KEY, JSON.stringify({
-                    input: inputEl.value,
-                    output: outputEl.value
-                }));
-            } catch (e) {}
-        }
+	<div id="toast" class="toast">Copied to clipboard!</div>
 
-        inputEl.addEventListener('input', saveState);
-        outputEl.addEventListener('input', saveState);
+	<script>
+		const inputEl = document.getElementById('input');
+		const outputEl = document.getElementById('output');
+		const toastEl = document.getElementById('toast');
 
-        function transform(type) {
-            const text = inputEl.value;
-            if (!text) return;
+		const UTV_STORAGE_KEY = window.name && window.name.startsWith('tab_') 
+			? `utv_state_${window.name}` 
+			: 'utv_state_default';
 
-            try {
-                let result = '';
-                switch (type) {
-                    case 'b64e': result = btoa(unescape(encodeURIComponent(text))); break;
-                    case 'b64d': result = decodeURIComponent(escape(atob(text))); break;
-                    case 'urie': result = encodeURIComponent(text); break;
-                    case 'urid': result = decodeURIComponent(text); break;
-                    case 'resolve':
-                        result = text.replace(/\\n/g, "\n")
-                            .replace(/\\r/g, "\r")
-                            .replace(/\\t/g, "\t")
-                            .replace(/\\"/g, '"')
-                            .replace(/\\u([0-9a-fA-F]{4})/g, (match, grp) => {
-                                return String.fromCharCode(parseInt(grp, 16));
-                            });
-                        break;
-                }
-                outputEl.value = result;
-                saveState();
-                showToast('Transformation successful!');
-            } catch (e) {
-                alert('Operation failed: ' + e.message);
-            }
-        }
+		function loadState() {
+			try {
+				const stored = localStorage.getItem(UTV_STORAGE_KEY);
+				if (stored) {
+					const data = JSON.parse(stored);
+					inputEl.value = data.input || '';
+					outputEl.value = data.output || '';
+				}
+			} catch (e) {}
+		}
 
-        function swap() {
-            const temp = inputEl.value;
-            inputEl.value = outputEl.value;
-            outputEl.value = temp;
-            saveState();
-        }
+		function saveState() {
+			try {
+				localStorage.setItem(UTV_STORAGE_KEY, JSON.stringify({
+					input: inputEl.value,
+					output: outputEl.value
+				}));
+			} catch (e) {}
+		}
 
-        function clearText(target) {
-            document.getElementById(target).value = '';
-            saveState();
-        }
+		inputEl.addEventListener('input', saveState);
+		outputEl.addEventListener('input', saveState);
 
-        function fallbackCopy(text) {
-            const ta = document.createElement("textarea");
-            ta.value = text;
-            ta.style.position = "fixed";
-            ta.style.left = "-9999px";
-            document.body.appendChild(ta);
-            ta.select();
-            try { document.execCommand("copy"); } catch { /* silent */ }
-            document.body.removeChild(ta);
-        }
+		function transform(type) {
+			const text = inputEl.value;
+			if (!text) return;
 
-        function copyOutput() {
-            if (!outputEl.value) return;
-            if (navigator.clipboard && window.isSecureContext) {
-                navigator.clipboard.writeText(outputEl.value).then(() => {
-                    showToast('Copied to clipboard!');
-                }).catch(() => { fallbackCopy(outputEl.value); showToast('Copied to clipboard!'); });
-            } else {
-                fallbackCopy(outputEl.value);
-                showToast('Copied to clipboard!');
-            }
-        }
+			try {
+				let result = '';
+				switch (type) {
+					case 'b64e': result = btoa(unescape(encodeURIComponent(text))); break;
+					case 'b64d': result = decodeURIComponent(escape(atob(text))); break;
+					case 'urie': result = encodeURIComponent(text); break;
+					case 'urid': result = decodeURIComponent(text); break;
+					case 'resolve':
+						result = text.replace(/\\n/g, "\n")
+							.replace(/\\r/g, "\r")
+							.replace(/\\t/g, "\t")
+							.replace(/\\"/g, '"')
+							.replace(/\\u([0-9a-fA-F]{4})/g, (match, grp) => {
+								return String.fromCharCode(parseInt(grp, 16));
+							});
+						break;
+				}
+				outputEl.value = result;
+				saveState();
+				showToast('Transformation successful!');
+			} catch (e) {
+				alert('Operation failed: ' + e.message);
+			}
+		}
 
-        async function pasteText(target) {
-            try {
-                if (!navigator.clipboard || !window.isSecureContext) {
-                    throw new Error('Clipboard API unavailable');
-                }
-                const text = await navigator.clipboard.readText();
-                if (text !== undefined && text !== null) {
-                    const el = document.getElementById(target);
-                    el.value = text;
-                    saveState();
-                    showToast('Pasted from clipboard!');
-                }
-            } catch (err) {
-                console.error('Failed to read clipboard: ', err);
-                showToast('Use Ctrl+V / Cmd+V to paste');
-            }
-        }
+		function swap() {
+			const temp = inputEl.value;
+			inputEl.value = outputEl.value;
+			outputEl.value = temp;
+			saveState();
+		}
 
-        function showToast(msg) {
-            toastEl.textContent = msg;
-            toastEl.classList.add('show');
-            setTimeout(() => toastEl.classList.remove('show'), 2000);
-        }
+		function clearText(target) {
+			document.getElementById(target).value = '';
+			saveState();
+		}
 
-        loadState();
-        if (window.parent && window.parent !== window) {
-            window.parent.postMessage({
-                type: 'toolSelection',
-                url: window.location.pathname.split('/').pop() + window.location.search
-            }, '*');
-        }
-    </script>
-    <script src="footer.js"></script>
+		function fallbackCopy(text) {
+			const ta = document.createElement("textarea");
+			ta.value = text;
+			ta.style.position = "fixed";
+			ta.style.left = "-9999px";
+			document.body.appendChild(ta);
+			ta.select();
+			try { document.execCommand("copy"); } catch { /* silent */ }
+			document.body.removeChild(ta);
+		}
+
+		function copyOutput() {
+			if (!outputEl.value) return;
+			if (navigator.clipboard && window.isSecureContext) {
+				navigator.clipboard.writeText(outputEl.value).then(() => {
+					showToast('Copied to clipboard!');
+				}).catch(() => { fallbackCopy(outputEl.value); showToast('Copied to clipboard!'); });
+			} else {
+				fallbackCopy(outputEl.value);
+				showToast('Copied to clipboard!');
+			}
+		}
+
+		async function pasteText(target) {
+			try {
+				if (!navigator.clipboard || !window.isSecureContext) {
+					throw new Error('Clipboard API unavailable');
+				}
+				const text = await navigator.clipboard.readText();
+				if (text !== undefined && text !== null) {
+					const el = document.getElementById(target);
+					el.value = text;
+					saveState();
+					showToast('Pasted from clipboard!');
+				}
+			} catch (err) {
+				console.error('Failed to read clipboard: ', err);
+				showToast('Use Ctrl+V / Cmd+V to paste');
+			}
+		}
+
+		function showToast(msg) {
+			toastEl.textContent = msg;
+			toastEl.classList.add('visible');
+			setTimeout(() => toastEl.classList.remove('visible'), 2000);
+		}
+
+		loadState();
+		if (window.parent && window.parent !== window) {
+			window.parent.postMessage({
+				type: 'toolSelection',
+				url: window.location.pathname.split('/').pop() + window.location.search
+			}, '*');
+		}
+	</script>
+	<script src="footer.js"></script>
 </body>
 
 </html>

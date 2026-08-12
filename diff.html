@@ -55,14 +55,14 @@
 
 
     /* ── CM sizing ────────────────────────────────────────── */
-    .cm-editor       { height: 100% !important; }
-    .cm-scroller     { overflow: auto !important; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 13px; }
-    .editor-wrap     { flex: 1; min-width: 0; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
-    .editor-wrap > .cm-editor { flex: 1; min-height: 0; }
+    .editor-wrap     { flex: 1 1 0%; min-width: 0; min-height: 0; height: 100%; overflow: hidden; display: flex; flex-direction: column; }
+    .editor-wrap > .cm-editor { flex: 1 1 0% !important; min-height: 0 !important; height: 100% !important; display: flex !important; flex-direction: column !important; }
+    .cm-scroller     { flex: 1 1 0% !important; min-height: 0 !important; height: 100% !important; overflow: auto !important; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 13px; }
 
     /* CodeMirror Theme Custom Matches */
-    .cm-editor.theme-light { background: #ffffff; }
-    .cm-editor.theme-dark { background: rgb(40, 44, 52); }
+    .cm-editor.theme-light { background: #ffffff; color: #1a1a1a; }
+    .cm-editor.theme-dark { background: rgb(40, 44, 52); color: #abb2bf; }
+    .cm-editor .cm-content { color: inherit; }
 
     /* ── Outline sidebar force-hide override ─────────────── */
     #outline-sidebar.outline-closed { display: none !important; }
@@ -284,6 +284,8 @@
         <i class="ph ph-quotes text-base"></i>
         <span class="btn-text">Typeset</span>
       </button>
+
+      <div id="diff-stats" class="hidden items-center gap-1.5 text-xs shrink-0 font-mono"></div>
     </div>
 
     <!-- Pinned Right Edge: Paste Modified Button -->
@@ -315,13 +317,13 @@
   </aside>
 
   <!-- Main content -->
-  <div class="flex-1 flex flex-col overflow-hidden min-w-0 bg-[var(--bg-root)] p-0 sm:p-4">
+  <main class="flex-1 overflow-hidden bg-[var(--bg-root)] relative p-0 sm:p-4">
 
     <!-- Split view -->
-    <div id="view-split" class="flex-1 flex flex-col md:flex-row gap-3 overflow-hidden">
+    <div id="view-split" class="w-full h-full flex flex-col md:flex-row gap-3 overflow-hidden">
 
       <!-- Left pane (Original) -->
-      <div class="flex-1 flex flex-col overflow-hidden min-w-0 border border-[var(--border-default)] rounded-lg bg-[var(--bg-surface)]">
+      <div class="flex-1 h-full flex flex-col overflow-hidden min-w-0 border border-[var(--border-default)] rounded-lg bg-[var(--bg-surface)]">
         <div class="flex items-center gap-2 px-3 py-2 border-b border-[var(--border-subtle)] bg-[var(--bg-surface-raised)] shrink-0">
           <span class="text-[10px] font-semibold text-[var(--text-tertiary)] uppercase tracking-wider">Original</span>
           <span id="lbl-left" class="text-[10px] text-[var(--text-secondary)] truncate"></span>
@@ -336,11 +338,11 @@
             </button>
           </div>
         </div>
-        <div id="editor-left" class="editor-wrap flex-1 min-h-0 bg-[var(--bg-surface)]"></div>
+        <div id="editor-left" class="editor-wrap flex-1 min-h-0 h-full bg-[var(--bg-surface)]"></div>
       </div>
 
       <!-- Right pane (Modified) -->
-      <div class="flex-1 flex flex-col overflow-hidden min-w-0 border border-[var(--border-default)] rounded-lg bg-[var(--bg-surface)]">
+      <div class="flex-1 h-full flex flex-col overflow-hidden min-w-0 border border-[var(--border-default)] rounded-lg bg-[var(--bg-surface)]">
         <div class="flex items-center gap-2 px-3 py-2 border-b border-[var(--border-subtle)] bg-[var(--bg-surface-raised)] shrink-0">
           <span class="text-[10px] font-semibold text-[var(--text-tertiary)] uppercase tracking-wider">Modified</span>
           <span id="lbl-right" class="text-[10px] text-[var(--text-secondary)] truncate"></span>
@@ -355,12 +357,12 @@
             </button>
           </div>
         </div>
-        <div id="editor-right" class="editor-wrap flex-1 min-h-0 bg-[var(--bg-surface)]"></div>
+        <div id="editor-right" class="editor-wrap flex-1 min-h-0 h-full bg-[var(--bg-surface)]"></div>
       </div>
     </div>
 
     <!-- Unified view (hidden by default) -->
-    <div id="view-unified" class="hidden flex-1 flex flex-col overflow-hidden border border-[var(--border-default)] rounded-lg bg-[var(--bg-surface)]">
+    <div id="view-unified" class="hidden w-full h-full flex flex-col overflow-hidden border border-[var(--border-default)] rounded-lg bg-[var(--bg-surface)]">
       <div class="px-3 py-2 border-b border-[var(--border-default)] bg-[var(--bg-surface-raised)] shrink-0 flex items-center gap-3">
         <span class="text-[10px] font-semibold text-[var(--text-tertiary)] uppercase tracking-wider">Unified diff</span>
         <!-- File load buttons visible in unified/mobile mode -->
@@ -382,12 +384,13 @@
             <span class="btn-text">Modified</span>
           </button>
         </div>
+      </div>
       <div id="unified-content" class="flex-1 overflow-auto p-0 font-mono text-[12px] bg-[var(--bg-surface)]"></div>
     </div>
 
     <!-- Empty state card -->
     <div id="empty-state" class="hidden absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-      <div class="bg-[var(--bg-surface-raised)] border border-[var(--border-default)] rounded-xl p-6 shadow-2xl text-center max-w-sm mx-auto pointer-events-auto">
+      <div class="bg-[var(--bg-surface-raised)] border border-[var(--border-default)] rounded-xl p-6 shadow-2xl text-center max-w-sm mx-auto pointer-events-none">
         <div class="w-10 h-10 mx-auto mb-3 rounded-lg bg-[var(--bg-surface-hover)] border border-[var(--border-default)] flex items-center justify-center text-[var(--accent)]">
           <i class="ph ph-git-diff text-xl"></i>
         </div>
@@ -832,16 +835,17 @@ function addIntraLineDiffs(dmp, leftCharDecos, rightCharDecos, lineDiffs, movedF
 
 // ── stats ───────────────────────────────────────────────────
 function updateStats(left, right) {
+  const el = document.getElementById('diff-stats');
+  if (!el) return;
   const dmp   = new diff_match_patch();
   const diffs = dmp.diff_main(norm(left), norm(right));
   dmp.diff_cleanupSemantic(diffs);
   let added = 0, removed = 0;
   diffs.forEach(([op]) => { if (op === 1) added++; else if (op === -1) removed++; });
-  const el = document.getElementById('diff-stats');
   el.innerHTML = `
-    <span class="stat-add inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold">+${added}</span>
-    <span class="stat-del inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold">−${removed}</span>
-    <span class="text-gray-400 text-[11px]">${(left||'').split('\n').length}↔${(right||'').split('\n').length} lines</span>`;
+    <span class="stat-add inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold text-emerald-600 bg-emerald-500/10">+${added}</span>
+    <span class="stat-del inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold text-rose-600 bg-rose-500/10">−${removed}</span>
+    <span class="text-[var(--text-tertiary)] text-[11px]">${(left||'').split('\n').length}↔${(right||'').split('\n').length} lines</span>`;
   el.classList.remove('hidden');
   el.classList.add('flex');
 }

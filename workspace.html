@@ -120,9 +120,7 @@
 <body>
   <div class="workspace-tabs-bar">
     <a href="index.html" class="back-btn" title="Back to Home">
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-      </svg>
+      <i class="ph ph-house text-base"></i>
     </a>
     <div id="tabs-container"></div>
     <label class="workspace-redirect-toggle">
@@ -130,9 +128,7 @@
       AOW
     </label>
     <button class="workspace-add-tab" id="add-tab-btn" title="New Tab" type="button" aria-haspopup="menu" aria-expanded="false">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-        </svg>
+      <i class="ph ph-plus text-base"></i>
     </button>
   </div>
   
@@ -158,22 +154,33 @@
     const toolPicker = document.getElementById('tool-picker');
 
     const TOOL_MAP = {
-      'mdv.html': { name: 'Markdown', icon: '📝' },
-      'jsv.html': { name: 'JSON', icon: '📋' },
-      'diff.html': { name: 'Diff', icon: '⚖️' },
-      'utv.html': { name: 'UTV', icon: '🛠️' },
-      'edu.html': { name: 'Encryption', icon: '🔐' },
-      'pdf.html': { name: 'PDF', icon: '📄' },
-      'pdf2md.html': { name: 'PDF→MD', icon: '📑' },
-      'tts.html': { name: 'TTS Player', icon: '🔊' }
+      'mdv.html': { name: 'Markdown Viewer', icon: 'ph ph-file-md', bg: 'tool-bg-mdv' },
+      'jsv.html': { name: 'JSON Viewer', icon: 'ph ph-code', bg: 'tool-bg-jsv' },
+      'diff.html': { name: 'Diff Tool', icon: 'ph ph-git-diff', bg: 'tool-bg-diff' },
+      'utv.html': { name: 'Base64 & URI', icon: 'ph ph-arrows-left-right', bg: 'tool-bg-utv' },
+      'edu.html': { name: 'Encryption Utility', icon: 'ph ph-lock-key', bg: 'tool-bg-edu' },
+      'pdf.html': { name: 'PDF Splitter', icon: 'ph ph-file-pdf', bg: 'tool-bg-pdf' },
+      'pdf2md.html': { name: 'PDF → Markdown', icon: 'ph ph-file-text', bg: 'tool-bg-pdf2md' },
+      'tts.html': { name: 'Supersonic TTS', icon: 'ph ph-speaker-high', bg: 'tool-bg-tts' }
     };
 
     function getToolItems() {
       return Object.entries(TOOL_MAP).map(([url, info]) => ({
         url,
         name: info.name,
-        icon: info.icon
+        icon: info.icon,
+        bg: info.bg
       }));
+    }
+
+    /** Create a tool-badge DOM element */
+    function createToolBadge(icon, bg, extraClass) {
+      const badge = document.createElement('span');
+      badge.className = `tool-badge ${bg || ''}${extraClass ? ' ' + extraClass : ''}`;
+      const i = document.createElement('i');
+      i.className = icon || '';
+      badge.appendChild(i);
+      return badge;
     }
 
     let toolPickerOpen = false;
@@ -183,7 +190,7 @@
       if (!toolPicker) return;
       toolPicker.innerHTML = '';
       const items = getToolItems();
-      items.forEach(({ url, name, icon }, index) => {
+      items.forEach(({ url, name, icon, bg }, index) => {
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'tool-picker-item';
@@ -192,9 +199,7 @@
         btn.dataset.name = name;
         btn.dataset.index = String(index);
 
-        const iconEl = document.createElement('span');
-        iconEl.className = 'tool-picker-icon';
-        iconEl.textContent = icon || '';
+        const badgeEl = createToolBadge(icon, bg);
 
         const labelEl = document.createElement('span');
         labelEl.textContent = name;
@@ -203,7 +208,7 @@
         metaEl.className = 'tool-picker-meta';
         metaEl.textContent = url;
 
-        btn.appendChild(iconEl);
+        btn.appendChild(badgeEl);
         btn.appendChild(labelEl);
         btn.appendChild(metaEl);
 
@@ -381,6 +386,14 @@
       }, true);
     }
 
+    function getToolInfo(url) {
+      if (!url) return null;
+      const cleanUrl = url.split('?')[0].split('#')[0];
+      const pathParts = cleanUrl.split('/');
+      const filename = pathParts[pathParts.length - 1];
+      return TOOL_MAP[filename] || null;
+    }
+
     function loadState() {
       try {
         const stored = localStorage.getItem(STORAGE_KEY);
@@ -388,9 +401,20 @@
           const parsed = JSON.parse(stored);
           tabs = parsed.tabs || [];
           activeTabId = parsed.activeTabId || null;
-          // Find max id to avoid collisions
+          // Find max id, resolve tool info, and clean up legacy data
           tabs.forEach(t => {
             if (t.id >= tabIdCounter) tabIdCounter = t.id + 1;
+            // Clean up legacy iconClass property
+            delete t.iconClass;
+            const info = getToolInfo(t.url);
+            if (info) {
+              t.icon = info.icon;
+              t.bg = info.bg;
+              // Fix corrupted titles from migration (raw class strings or stale emoji icons)
+              if (t.title && (t.title.startsWith('ph ') || t.title.startsWith('ph-'))) {
+                t.title = t.assignedName || info.name;
+              }
+            }
           });
         }
       } catch (e) {
@@ -400,7 +424,7 @@
 
     function saveState() {
       const stateToSave = {
-        tabs: tabs.map(t => ({ id: t.id, url: t.url, title: t.title, assignedName: t.assignedName, icon: t.icon })),
+        tabs: tabs.map(t => ({ id: t.id, url: t.url, title: t.title, assignedName: t.assignedName, icon: t.icon, bg: t.bg })),
         activeTabId: activeTabId
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
@@ -408,7 +432,8 @@
 
     function createTab(url, title) {
       const id = tabIdCounter++;
-      const tab = { id, url, title };
+      const info = getToolInfo(url);
+      const tab = { id, url, title, icon: info ? info.icon : null, bg: info ? info.bg : null };
       tabs.push(tab);
       activeTabId = id;
       saveState();
@@ -512,22 +537,34 @@
             if (t) {
               t.url = newUrl;
               if (toolInfo) {
+                t.icon = toolInfo.icon;
+                t.bg = toolInfo.bg;
                 if (!t.assignedName) {
                   const num = getNextToolNumber(toolInfo.name);
                   t.assignedName = `${toolInfo.name}-${num}`;
-                  t.icon = toolInfo.icon;
                 }
                 const defaultTitles = [
+                  'Markdown Viewer',
                   'Markdown Explorer', 
                   'JSON Viewer', 
                   'New Tab', 
                   'Tool', 
                   'Text Tools - Andesec', 
                   'Select a Tool',
+                  'Diff Tool',
                   'Diff Tool — Text Tools',
+                  'Base64 & URI',
+                  'Base64 & URI Utility — Andesec',
                   'UTV - URI & Base64 Utility',
+                  'Encryption Utility',
+                  'EDU Explorer — Andesec',
                   'Encryption/Decryption Utility - Andesec Text Tools',
+                  'PDF Splitter',
+                  'PDF Explorer — Andesec',
                   'PDF Splitter - Andesec',
+                  'PDF → Markdown',
+                  'PDF → Markdown — Andesec',
+                  'Supersonic TTS',
                   'Supertonic TTS Player - Andesec'
                 ];
                 if (defaultTitles.includes(newTitle)) {
@@ -536,6 +573,7 @@
               } else {
                 t.assignedName = null;
                 t.icon = null;
+                t.bg = null;
               }
               
               t.title = newTitle;
@@ -544,11 +582,8 @@
               const titleEl = document.getElementById(`tab-title-${id}`);
               if (titleEl) {
                 titleEl.innerHTML = '';
-                if (t.icon) {
-                  const iconSpan = document.createElement('span');
-                  iconSpan.style.marginRight = '6px';
-                  iconSpan.textContent = t.icon;
-                  titleEl.appendChild(iconSpan);
+                if (t.icon && t.bg) {
+                  titleEl.appendChild(createToolBadge(t.icon, t.bg));
                 }
                 const textNode = document.createTextNode(newTitle);
                 titleEl.appendChild(textNode);
@@ -599,11 +634,12 @@
         titleEl.className = 'workspace-tab-title';
         titleEl.id = `tab-title-${tab.id}`;
         
-        if (tab.icon) {
-          const iconSpan = document.createElement('span');
-          iconSpan.style.marginRight = '6px';
-          iconSpan.textContent = tab.icon;
-          titleEl.appendChild(iconSpan);
+        // Resolve icon/bg from TOOL_MAP if not already on tab
+        const info = getToolInfo(tab.url);
+        const icon = tab.icon || (info ? info.icon : null);
+        const bg = tab.bg || (info ? info.bg : null);
+        if (icon && bg) {
+          titleEl.appendChild(createToolBadge(icon, bg));
         }
         const textNode = document.createTextNode(tab.title);
         titleEl.appendChild(textNode);
@@ -611,7 +647,7 @@
         
         const closeBtn = document.createElement('div');
         closeBtn.className = 'workspace-tab-close';
-        closeBtn.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+        closeBtn.innerHTML = '<i class="ph ph-x text-xs"></i>';
         closeBtn.onclick = (e) => closeTab(tab.id, e);
         
         tabEl.appendChild(titleEl);
@@ -709,12 +745,14 @@
           if (!t.assignedName) {
             const num = getNextToolNumber(toolInfo.name);
             t.assignedName = `${toolInfo.name}-${num}`;
-            t.icon = toolInfo.icon;
           }
+          t.icon = toolInfo.icon;
+          t.bg = toolInfo.bg;
           t.title = t.assignedName;
         } else {
           t.assignedName = null;
           t.icon = null;
+          t.bg = null;
           t.title = 'New Tab';
         }
         
@@ -722,11 +760,8 @@
         const titleEl = document.getElementById(`tab-title-${id}`);
         if (titleEl) {
           titleEl.innerHTML = '';
-          if (t.icon) {
-            const iconSpan = document.createElement('span');
-            iconSpan.style.marginRight = '6px';
-            iconSpan.textContent = t.icon;
-            titleEl.appendChild(iconSpan);
+          if (t.icon && t.bg) {
+            titleEl.appendChild(createToolBadge(t.icon, t.bg));
           }
           const textNode = document.createTextNode(t.title);
           titleEl.appendChild(textNode);
@@ -749,11 +784,8 @@
         const titleEl = document.getElementById(`tab-title-${id}`);
         if (titleEl) {
           titleEl.innerHTML = '';
-          if (t.icon) {
-            const iconSpan = document.createElement('span');
-            iconSpan.style.marginRight = '6px';
-            iconSpan.textContent = t.icon;
-            titleEl.appendChild(iconSpan);
+          if (t.icon && t.bg) {
+            titleEl.appendChild(createToolBadge(t.icon, t.bg));
           }
           const textNode = document.createTextNode(t.title);
           titleEl.appendChild(textNode);

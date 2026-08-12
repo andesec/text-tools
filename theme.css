@@ -930,5 +930,37 @@ body.sidebar-collapsed .sidebar-toggle-btn .icon-expand {
 }
 
 
+/* ── Tool Badge System ── */
+/* Small badge for tabs, menus, dropdowns */
+.tool-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 18px;
+  border-radius: 4px;
+  color: rgb(255, 255, 255);
+  font-size: 0.7rem;
+  flex-shrink: 0;
+  line-height: 1;
+  margin-right: 6px;
+}
 
+/* Large badge for homepage cards */
+.tool-badge-lg {
+  width: 40px;
+  height: 36px;
+  border-radius: 8px;
+  font-size: 1.25rem;
+}
 
+/* Per-tool gradient backgrounds (matching each page's header logo badge) */
+.tool-bg-mdv       { background: linear-gradient(to bottom right, rgb(56, 189, 248), rgb(14, 165, 233)); }
+.tool-bg-jsv       { background: linear-gradient(to bottom right, rgb(234, 179, 8), rgb(202, 138, 4)); }
+.tool-bg-diff      { background: linear-gradient(to bottom right, rgb(34, 197, 94), rgb(22, 163, 74)); }
+.tool-bg-utv       { background: linear-gradient(to bottom right, rgb(99, 102, 241), rgb(168, 85, 247)); }
+.tool-bg-edu       { background: linear-gradient(to bottom right, rgb(13, 148, 136), rgb(15, 118, 110)); }
+.tool-bg-pdf       { background: linear-gradient(to bottom right, rgb(220, 38, 38), rgb(153, 27, 27)); }
+.tool-bg-pdf2md    { background: linear-gradient(to bottom right, rgb(14, 165, 233), rgb(2, 132, 199)); }
+.tool-bg-tts       { background: linear-gradient(to bottom right, rgb(108, 92, 231), rgb(124, 111, 240)); }
+.tool-bg-workspace { background: var(--accent); }
