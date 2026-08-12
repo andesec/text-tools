@@ -2,13 +2,9 @@
 	--reader-font-size: 0.9rem;
 }
 
-body {
-	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-}
-
 /* ── JSON Tree ── */
 .json-tree {
-	font-family: inherit;
+	font-family: var(--font-mono);
 	font-size: 13px;
 	line-height: 1.5;
 }
@@ -71,22 +67,22 @@ body {
 }
 
 .json-type-string {
-	background: rgb(74, 222, 128, 0.12);
+	background: rgb(20, 45, 30);
 	color: var(--code-string);
 }
 
 .json-type-number {
-	background: rgb(96, 165, 250, 0.12);
+	background: rgb(20, 35, 60);
 	color: var(--code-number);
 }
 
 .json-type-boolean {
-	background: rgb(251, 191, 36, 0.12);
+	background: rgb(55, 45, 15);
 	color: var(--code-boolean);
 }
 
 .json-type-null {
-	background: rgb(135, 135, 138, 0.12);
+	background: rgb(35, 35, 40);
 	color: var(--code-null);
 }
 
@@ -493,4 +489,29 @@ body {
 	.bottom-resizer {
 		display: none !important;
 	}
+}
+
+/* ── Semantic UI Helper Classes for JSV ── */
+.jsv-logo-badge {
+	background: linear-gradient(to bottom right, rgb(234, 179, 8), rgb(234, 88, 12));
+}
+
+.jsv-btn-source {
+	color: var(--warning);
+}
+
+.jsv-menu-item-clean {
+	color: var(--success);
+}
+
+.jsv-menu-item-info {
+	color: var(--info);
+}
+
+.jsv-menu-item-accent {
+	color: var(--accent-text);
+}
+
+.jsv-btn-resolve {
+	color: var(--accent-text);
 }

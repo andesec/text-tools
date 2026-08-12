@@ -35,7 +35,7 @@ function buildFooterLinks() {
 	}
 
 	const f = document.createElement('footer');
-	f.style.cssText = 'text-align:center;padding:1rem;color:var(--text-tertiary, #999);font-size:0.8rem;border-top:1px solid var(--border-default, #eee);margin-top:auto';
+	f.id = 'app-footer';
 	f.appendChild(buildFooterLinks());
 	document.body.appendChild(f);
 })();

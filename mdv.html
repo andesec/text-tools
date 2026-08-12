@@ -1241,228 +1241,95 @@
 			pointer-events: none;
 			user-select: none;
 		}
+		.mdv-logo-badge {
+			background: linear-gradient(to bottom right, rgb(37, 99, 235), rgb(67, 56, 202));
+		}
 	</style>
 </head>
 
 <body class="h-screen flex flex-col overflow-hidden transition-colors duration-200">
 	<header class="app-header z-50 shrink-0">
 		<div class="app-header-row">
+			<!-- Left Edge: Home navigation icon -->
 			<div class="flex items-center gap-2">
-				<a href="index.html" class="btn-icon" title="Home">
-					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-							d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
-						</path>
-					</svg>
+				<a href="index.html" class="btn-icon" title="Home" aria-label="Home">
+					<i class="ph ph-house text-base"></i>
 				</a>
-				<div class="p-1.5 rounded-lg shadow-sm"
-					style="background: linear-gradient(to bottom right, #2563eb, #4338ca);">
-					<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-							d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
-						</path>
-					</svg>
-				</div>
-				<h1 class="text-sm font-bold uppercase tracking-tight sm:text-lg sm:normal-case">MD Explorer</h1>
 			</div>
 
-			<div class="flex items-center gap-1.5 sm:gap-2">
-				<input type="file" id="file-input" multiple accept=".md,.markdown,.txt,text/markdown,text/plain"
-					class="hidden" />
+			<!-- Center: Tool Logo Badge + Tool Title -->
+			<div class="app-header-row-center">
+				<div class="app-header-logo-badge">
+					<i class="ph ph-file-md text-lg text-white"></i>
+				</div>
+				<h1 class="text-base sm:text-lg font-bold tracking-tight text-[var(--text-primary)]">MD Explorer</h1>
+			</div>
+
+			<!-- Right Edge: File Actions (Open & Save) -->
+			<div class="flex items-center gap-1.5 justify-end">
+				<input type="file" id="file-input" multiple accept=".md,.markdown,.txt,text/markdown,text/plain" class="hidden" />
 				<div class="save-dropdown-wrapper" id="open-dropdown-wrapper">
-					<button id="open-btn"
-						class="btn btn-gradient-blue btn-sm sm:px-4 sm:py-2 sm:text-sm shadow-sm hover:shadow-md transition-all transform active:scale-95">
-						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4">
-							</path>
-						</svg>
-						<span class="hidden sm:inline" id="btn-text">Open</span>
+					<button id="open-btn" class="btn btn-primary btn-sm">
+						<i class="ph ph-folder-open text-base"></i>
+						<span id="btn-text" class="btn-text">Open</span>
 					</button>
-					<button id="open-chevron-btn"
-						class="open-chevron-btn btn btn-gradient-blue btn-sm sm:py-2 sm:text-sm shadow-sm hover:shadow-md transition-all transform active:scale-95 hidden">
-						<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
-							</path>
-						</svg>
+					<button id="open-chevron-btn" class="open-chevron-btn btn btn-primary btn-sm hidden">
+						<i class="ph ph-caret-down text-xs"></i>
 					</button>
 					<div id="open-dropdown-menu" class="save-dropdown-menu open-dropdown-menu">
 						<button class="save-dropdown-item" onclick="openDirectoryPicker()">
-							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-									d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z">
-								</path>
-							</svg>
+							<i class="ph ph-folder-open text-base"></i>
 							Open Directory
 						</button>
 						<button class="save-dropdown-item" onclick="openFilePickerFS()">
-							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-									d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
-								</path>
-							</svg>
+							<i class="ph ph-file-plus text-base"></i>
 							Open File(s)
 						</button>
 					</div>
 				</div>
 
-			</div>
-		</div>
-
-		<!-- Bottom Row: Secondary Toolbar (Responsive) -->
-		<div class="app-header-toolbar app-header-toolbar--scrollable-middle">
-			<div class="toolbar-fixed-left flex items-center gap-2 shrink-0">
-				<button id="sidebar-toggle-btn" class="btn-icon sidebar-toggle-btn" title="Toggle sidebar" aria-label="Toggle sidebar">
-					<svg class="w-5 h-5 icon-collapse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-							d="M3 4h18v16H3z M9 4v16"></path>
-					</svg>
-					<svg class="w-5 h-5 icon-expand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-							d="M3 4h18v16H3z M11 9l-3 3 3 3"></path>
-					</svg>
-				</button>
-			</div>
-			<div class="toolbar-scrollable">
-				<div
-					class="flex items-center border border-[var(--border-default)] rounded-md overflow-hidden bg-[var(--bg-surface)] shrink-0">
-					<button onclick="changeZoom(-0.1)"
-						class="px-2 py-1 hover:bg-[var(--bg-surface-hover)] border-r border-[var(--border-default)] transition-colors">−</button>
-					<span id="zoom-level" class="px-2 text-[10px] font-mono min-w-[2.5rem] text-center">100%</span>
-					<button onclick="changeZoom(0.1)"
-						class="px-2 py-1 hover:bg-[var(--bg-surface-hover)] border-l border-[var(--border-default)] transition-colors">+</button>
-					<button onclick="toggleWrap()" id="wrap-toggle-btn" title="Toggle Line Wrap"
-						class="px-2 py-1 hover:bg-[var(--bg-surface-hover)] border-l border-[var(--border-default)] transition-colors text-[10px] font-bold">W</button>
-				</div>
-
-				<div id="edit-controls" class="flex items-center gap-2 shrink-0">
-				<!-- TTS Toggle Button -->
-				<button id="tts-toggle-btn" class="btn btn-sm tts-toggle-btn" title="Toggle Read-Aloud mode"
-					onclick="window.ttsToggleSpeakMode && window.ttsToggleSpeakMode()">
-					<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-							d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z">
-						</path>
-					</svg>
-					<span class="hidden sm:inline">Read</span>
-					<span class="tts-toggle-dot" id="tts-toggle-dot"></span>
-				</button>
-				<button id="reload-btn" onclick="reloadFile()" title="Reload File from disk" class="btn btn-sm hidden">
-					<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-							d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89H18m0 0V4">
-						</path>
-					</svg>
-					<span>Reload</span>
-				</button>
-				<button id="overwrite-btn" onclick="overwriteOriginalFile()" title="Save back to disk"
-					class="btn btn-sm hidden">
-					<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-							d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2v-9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4">
-						</path>
-					</svg>
-					<span>Overwrite</span>
-				</button>
-				<button onclick="resolveNewlines()" title="Resolve Newlines and Unicode Escapes"
-					class="btn btn-sm">Resolve Escapes</button>
-				<button onclick="copyEditorContents()" title="Copy entire editor contents" class="btn btn-sm">
-					<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-							d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
-						</path>
-					</svg>
-					<span>Copy</span>
-				</button>
-				<button id="paste-btn" class="btn btn-sm shrink-0">
-					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-							d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
-						</path>
-					</svg>
-					<span class="hidden sm:inline">Paste</span>
-				</button>
 				<div class="save-dropdown-wrapper shrink-0" id="save-dropdown-wrapper" style="z-index: 90;">
-					<button id="save-main-btn"
-						class="save-main-btn btn btn-gradient-green btn-sm shadow-sm hover:shadow-md transition-all transform active:scale-95">
-						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-								d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-						</svg>
-						<span class="hidden sm:inline">Save</span>
+					<button id="save-main-btn" class="save-main-btn btn btn-primary btn-sm">
+						<i class="ph ph-floppy-disk text-base"></i>
+						<span class="btn-text">Save</span>
 					</button>
-					<button id="save-chevron-btn"
-						class="save-chevron-btn btn btn-gradient-green btn-sm shadow-sm hover:shadow-md transition-all"
-						style="touch-action: manipulation; -webkit-tap-highlight-color: transparent; cursor: pointer; min-width: 32px;">
-						<svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
-							</path>
-						</svg>
+					<button id="save-chevron-btn" class="save-chevron-btn btn btn-primary btn-sm">
+						<i class="ph ph-caret-down text-xs"></i>
 					</button>
 					<div id="save-dropdown-menu" class="save-dropdown-menu">
 						<button class="save-dropdown-item" onclick="saveMarkdownOnly()">
-							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-									d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-								</svg>
+							<i class="ph ph-floppy-disk text-base"></i>
 							Save Markdown
 						</button>
 						<button class="save-dropdown-item" onclick="saveMarkdownWithComments()">
-							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-									d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z">
-								</path>
-							</svg>
+							<i class="ph ph-chat-text text-base"></i>
 							Save MD + Comments
 						</button>
 						<div class="save-dropdown-divider"></div>
 						<button class="save-dropdown-item" onclick="copyMarkdownOnly()">
-							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-									d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
-								</path>
-							</svg>
+							<i class="ph ph-copy text-base"></i>
 							Copy Markdown
 						</button>
 						<button class="save-dropdown-item" onclick="copyMarkdownWithComments()">
-							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-									d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3">
-								</path>
-							</svg>
+							<i class="ph ph-clipboard-text text-base"></i>
 							Copy MD + Comments
 						</button>
 						<div class="save-dropdown-divider"></div>
 						<button class="save-dropdown-item" onclick="exportComments(false)">
-							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-									d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
-								</path>
-							</svg>
+							<i class="ph ph-export text-base"></i>
 							Export Comments
 						</button>
 						<button class="save-dropdown-item" onclick="exportComments(true)">
-							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-									d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z">
-								</path>
-							</svg>
+							<i class="ph ph-quotes text-base"></i>
 							Export with Quotes
 						</button>
 						<div class="save-dropdown-divider"></div>
 						<button class="save-dropdown-item" onclick="copyCommentsToClipboard(false)">
-							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-									d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2">
-								</path>
-							</svg>
+							<i class="ph ph-copy text-base"></i>
 							Copy Comments
 						</button>
 						<button class="save-dropdown-item" onclick="copyCommentsToClipboard(true)">
-							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-									d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z">
-								</path>
-							</svg>
+							<i class="ph ph-clipboard-text text-base"></i>
 							Copy with Quotes
 						</button>
 					</div>
@@ -1470,17 +1337,69 @@
 			</div>
 		</div>
 
-		<div class="toolbar-fixed-right flex items-center gap-2 shrink-0">
-			<button id="toggle-edit-btn" class="btn btn-sm">
-				<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-						d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
-					</path>
-				</svg>
-				<span id="toggle-text">View</span>
-			</button>
+		<!-- Sub-Toolbar (Row 2): Pinned Left & Right, Middle Scroll -->
+		<div class="app-header-toolbar">
+			<!-- Pinned Left Edge: Sidebar Toggle -->
+			<div class="toolbar-pinned-left">
+				<button id="sidebar-toggle-btn" class="btn-icon" title="Toggle sidebar" aria-label="Toggle sidebar">
+					<i class="ph ph-sidebar-simple text-base"></i>
+				</button>
+			</div>
+
+			<!-- Middle Scroll Track: Tool Buttons -->
+			<div class="toolbar-middle-scroll">
+				<div class="flex items-center border border-[var(--border-default)] rounded-md overflow-hidden bg-[var(--bg-surface-raised)] shrink-0 h-[32px]">
+					<button onclick="changeZoom(-0.1)"
+						class="w-7 h-full hover:bg-[var(--bg-surface-hover)] border-r border-[var(--border-default)] transition-colors flex items-center justify-center" title="Zoom Out" aria-label="Zoom Out">
+						<i class="ph ph-magnifying-glass-minus text-xs"></i>
+					</button>
+					<span id="zoom-level" class="px-2 text-[10px] font-mono min-w-[2.5rem] text-center">100%</span>
+					<button onclick="changeZoom(0.1)"
+						class="w-7 h-full hover:bg-[var(--bg-surface-hover)] border-l border-[var(--border-default)] transition-colors flex items-center justify-center" title="Zoom In" aria-label="Zoom In">
+						<i class="ph ph-magnifying-glass-plus text-xs"></i>
+					</button>
+				</div>
+
+				<button onclick="toggleWrap()" id="wrap-toggle-btn" class="btn-icon" title="Toggle Line Wrap" aria-label="Toggle Line Wrap">
+					<i class="ph ph-arrows-in-line-horizontal text-base"></i>
+				</button>
+
+				<button id="tts-toggle-btn" class="btn btn-sm" title="Toggle Read-Aloud mode"
+					onclick="window.ttsToggleSpeakMode && window.ttsToggleSpeakMode()">
+					<i class="ph ph-speaker-high text-base"></i>
+					<span class="btn-text">Read</span>
+					<span class="tts-toggle-dot" id="tts-toggle-dot"></span>
+				</button>
+				<button id="reload-btn" onclick="reloadFile()" title="Reload File from disk" class="btn btn-sm hidden">
+					<i class="ph ph-arrows-clockwise text-base"></i>
+					<span class="btn-text">Reload</span>
+				</button>
+				<button id="overwrite-btn" onclick="overwriteOriginalFile()" title="Save back to disk" class="btn btn-sm hidden">
+					<i class="ph ph-floppy-disk-back text-base"></i>
+					<span class="btn-text">Overwrite</span>
+				</button>
+				<button onclick="resolveNewlines()" title="Resolve Newlines and Unicode Escapes" class="btn btn-sm">
+					<i class="ph ph-magic-wand text-base"></i>
+					<span class="btn-text">Resolve Escapes</span>
+				</button>
+				<button onclick="copyEditorContents()" title="Copy entire editor contents" class="btn btn-sm">
+					<i class="ph ph-copy text-base"></i>
+					<span class="btn-text">Copy</span>
+				</button>
+			</div>
+
+			<!-- Pinned Right Edge: View/Edit & Paste Buttons -->
+			<div class="toolbar-pinned-right">
+				<button id="toggle-edit-btn" class="btn btn-sm">
+					<i class="ph ph-eye text-base"></i>
+					<span id="toggle-text" class="btn-text">View</span>
+				</button>
+				<button id="paste-btn" class="btn btn-sm">
+					<i class="ph ph-clipboard-text text-base"></i>
+					<span class="btn-text">Paste</span>
+				</button>
+			</div>
 		</div>
-	</div>
 	</header>
 
 
@@ -2196,9 +2115,34 @@
 			}
 		}
 
+		function buildEditorThemeExtensions(isDark) {
+			return [
+				isDark ? oneDark : [],
+				EditorView.theme({
+					"&": { height: "100%", fontSize: "var(--editor-font-size)", backgroundColor: "var(--bg-surface)", color: "var(--text-primary)" },
+					".cm-scroller": { overflow: "auto", fontFamily: "var(--font-mono)" },
+					".cm-content": { fontWeight: "400 !important", fontFamily: "var(--font-mono) !important" },
+					".cm-line": { fontWeight: "400 !important" },
+					".cm-gutters": { backgroundColor: "var(--bg-surface)", borderRightColor: "var(--border-subtle)", color: "var(--text-tertiary)" },
+					".cm-cursor, .cm-dropCursor": { borderLeftColor: "var(--accent)", borderLeftWidth: "2px" },
+					"&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-selectionBackground": {
+						backgroundColor: isDark ? "rgb(79, 70, 229) !important" : "rgb(199, 210, 254) !important"
+					},
+					".cm-content ::selection": {
+						backgroundColor: isDark ? "rgb(79, 70, 229) !important" : "rgb(199, 210, 254) !important",
+						color: isDark ? "rgb(255, 255, 255) !important" : "rgb(15, 23, 42) !important"
+					}
+				}, { dark: isDark })
+			];
+		}
+
 		// Initialize CodeMirror
 		function initEditor(initialValue = "") {
+			let currentDoc = initialValue;
+			let currentSel = null;
 			if (editor) {
+				currentDoc = editor.state.doc.toString();
+				currentSel = editor.state.selection;
 				editor.destroy();
 			}
 
@@ -2206,17 +2150,7 @@
 			const extensions = [
 				basicSetup,
 				markdown(),
-				isDark ? oneDark : [],
-				EditorView.theme({
-					"&": { height: "100%", fontSize: "var(--editor-font-size)", backgroundColor: "var(--bg-surface)" },
-					".cm-scroller": { overflow: "auto", fontFamily: "var(--font-mono)" },
-					".cm-content": { fontWeight: "400 !important", fontFamily: "var(--font-mono) !important" },
-					".cm-line": { fontWeight: "400 !important" },
-					".ͼ1 .cm-keyword": { fontWeight: "500 !important" },
-					".ͼ1 .cm-variableName": { fontWeight: "400 !important" },
-					".ͼ1 .cm-typeName": { fontWeight: "500 !important" },
-					".cm-gutters": { backgroundColor: "var(--bg-surface)", borderRightColor: "var(--border-subtle)", color: "var(--text-tertiary)" }
-				}),
+				...buildEditorThemeExtensions(isDark),
 				EditorView.domEventHandlers({
 					keydown(event, view) {
 						if (event.key === 'Tab') {
@@ -2454,9 +2388,12 @@
 				theme: getMermaidTheme(),
 				securityLevel: 'strict'
 			});
-			window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+			window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
 				mermaid.initialize({ theme: getMermaidTheme() });
 				updatePreview();
+				if (editor) {
+					initEditor(editor.state.doc.toString());
+				}
 			});
 		}
 
@@ -2926,12 +2863,12 @@
 		window.toggleWrap = function () {
 			lineWrap = !lineWrap;
 			const btn = document.getElementById("wrap-toggle-btn");
-			if (lineWrap) {
-				btn.style.background = "var(--accent)";
-				btn.style.color = "#fff";
-			} else {
-				btn.style.background = "";
-				btn.style.color = "";
+			if (btn) {
+				if (lineWrap) {
+					btn.classList.add("bg-[var(--accent)]", "text-white");
+				} else {
+					btn.classList.remove("bg-[var(--accent)]", "text-white");
+				}
 			}
 			if (editor) {
 				const currentDoc = editor.state.doc.toString();
@@ -2941,8 +2878,9 @@
 
 		// Initialize wrap button state
 		const wrapBtn = document.getElementById("wrap-toggle-btn");
-		wrapBtn.style.background = "var(--accent)";
-		wrapBtn.style.color = "#fff";
+		if (wrapBtn) {
+			wrapBtn.classList.add("bg-[var(--accent)]", "text-white");
+		}
 
 		const toggleSidebar = () => {
 			document.body.classList.toggle("mobile-sidebar-active");

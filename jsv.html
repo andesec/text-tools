@@ -119,101 +119,112 @@
 <body class="h-screen flex flex-col overflow-hidden transition-colors duration-200">
 	<header class="app-header z-50 shrink-0">
 		<div class="app-header-row">
+			<!-- Left Edge: Home navigation icon -->
 			<div class="flex items-center gap-2">
-				<a href="index.html" class="btn-icon" title="Home">
-					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-							d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
-						</path>
-					</svg>
+				<a href="index.html" class="btn-icon" title="Home" aria-label="Home">
+					<i class="ph ph-house text-base"></i>
 				</a>
-				<div class="p-1.5 rounded-lg shadow-sm"
-					style="background: linear-gradient(to bottom right, #eab308, #ea580c);">
-					<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-							d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
-					</svg>
-				</div>
-				<h1 class="text-sm font-bold uppercase tracking-tight sm:text-lg sm:normal-case">JS Explorer</h1>
 			</div>
 
-			<div class="flex items-center gap-1.5 sm:gap-2">
+			<!-- Center: Tool Logo Badge + Tool Title -->
+			<div class="app-header-row-center">
+				<div class="app-header-logo-badge">
+					<i class="ph ph-code text-lg text-white"></i>
+				</div>
+				<h1 class="text-base sm:text-lg font-bold tracking-tight text-[var(--text-primary)]">JS Explorer</h1>
+			</div>
+
+			<!-- Right Edge: File Actions (New, Open, Save) -->
+			<div class="flex items-center gap-1.5 justify-end">
 				<input type="file" id="file-input" multiple accept=".js,.json,.ts,.txt" class="hidden" />
-				<button id="new-btn" class="btn btn-primary btn-sm sm:px-4 sm:py-2 sm:text-sm">
-					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-					</svg>
-					<span class="hidden sm:inline">New</span>
+				<button id="new-btn" class="btn btn-primary btn-sm">
+					<i class="ph ph-file-plus text-base"></i>
+					<span class="btn-text">New</span>
 				</button>
-				<button id="open-btn" class="btn btn-sm sm:px-4 sm:py-2 sm:text-sm">
-					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-							d="M4 12v.01M7 12v.01M10 12v.01M13 12v.01M16 12v.01M19 12v.01M4 15v.01M7 15v.01M10 15v.01M13 15v.01M16 15v.01M19 15v.01M4 18v.01M7 18v.01M10 18v.01M13 18v.01M16 18v.01M19 18v.01M4 9v.01M7 9v.01M10 9v.01M13 9v.01M16 9v.01M19 9v.01M4 6v.01M7 6v.01M10 6v.01M13 6v.01M16 6v.01M19 6v.01">
-						</path>
-					</svg>
-					<span id="btn-text" class="hidden sm:inline">Open</span>
+				<button id="open-btn" class="btn btn-sm">
+					<i class="ph ph-folder-open text-base"></i>
+					<span id="btn-text" class="btn-text">Open</span>
 				</button>
 
+				<div class="save-dropdown-wrapper shrink-0" id="save-dropdown-wrapper" style="z-index: 90;">
+					<button id="download-btn" class="save-main-btn btn btn-primary btn-sm">
+						<i class="ph ph-floppy-disk text-base"></i>
+						<span class="btn-text">Save</span>
+					</button>
+					<button id="save-chevron-btn" class="save-chevron-btn btn btn-primary btn-sm">
+						<i class="ph ph-caret-down text-xs"></i>
+					</button>
 
+					<div id="save-dropdown-menu" class="save-dropdown-menu">
+						<button class="save-dropdown-item" onclick="saveJson()">
+							<i class="ph ph-floppy-disk text-base"></i>
+							Save RAW
+						</button>
+						<button class="save-dropdown-item" onclick="saveFormattedJson()">
+							<i class="ph ph-brackets-curly text-base"></i>
+							Save Formatted
+						</button>
+						<div class="save-dropdown-divider"></div>
+						<button class="save-dropdown-item" onclick="copyRawJson()">
+							<i class="ph ph-copy text-base"></i>
+							Copy RAW
+						</button>
+						<button class="save-dropdown-item" onclick="copyFormattedJson()">
+							<i class="ph ph-clipboard-text text-base"></i>
+							Copy Formatted
+						</button>
+					</div>
+				</div>
 			</div>
 		</div>
 
-		<!-- Bottom Row: Secondary Toolbar (Responsive) -->
+		<!-- Sub-Toolbar (Row 2): Pinned Left & Right, Middle Scroll -->
 		<div class="app-header-toolbar">
-			<div class="flex items-center gap-2 shrink-0">
-				<button id="sidebar-toggle-btn" class="btn-icon sidebar-toggle-btn" title="Toggle sidebar" aria-label="Toggle sidebar">
-					<svg class="w-5 h-5 icon-collapse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-							d="M3 4h18v16H3z M9 4v16"></path>
-					</svg>
-					<svg class="w-5 h-5 icon-expand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-							d="M3 4h18v16H3z M11 9l-3 3 3 3"></path>
-					</svg>
+			<!-- Pinned Left Edge: Sidebar Toggle -->
+			<div class="toolbar-pinned-left">
+				<button id="sidebar-toggle-btn" class="btn-icon" title="Toggle sidebar" aria-label="Toggle sidebar">
+					<i class="ph ph-sidebar-simple text-base"></i>
 				</button>
-				<button id="source-view-btn" onclick="revertToSource()" class="hidden btn btn-sm"
-					style="color: var(--warning);">Source</button>
+			</div>
+
+			<!-- Middle Scroll Track: Tool Buttons -->
+			<div class="toolbar-middle-scroll">
+				<button id="source-view-btn" onclick="revertToSource()" class="hidden btn btn-sm jsv-btn-source">
+					<i class="ph ph-code-block text-base"></i>
+					<span class="btn-text">Source</span>
+				</button>
 				<div class="relative shrink-0" id="dropdown-tools">
 					<button id="tools-menu-btn" class="btn btn-sm">
-						<span>Tools</span>
-						<svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
-							</path>
-						</svg>
+						<i class="ph ph-wrench text-base"></i>
+						<span class="btn-text">Tools</span>
+						<i class="ph ph-caret-down text-xs"></i>
 					</button>
 					<div id="tools-menu-dropdown"
 						class="absolute left-0 mt-1 w-48 bg-[var(--bg-surface-raised)] border border-[var(--border-default)] rounded-lg shadow-xl hidden z-[100]">
 						<button onclick="transform('cleanJSON')"
-							class="w-full text-left px-4 py-2 hover:bg-[var(--bg-surface-hover)] text-xs"
-							style="color: var(--success);">Fix/Clean JSON</button>
+							class="w-full text-left px-4 py-2 hover:bg-[var(--bg-surface-hover)] text-xs jsv-menu-item-clean">Fix/Clean JSON</button>
 						<button onclick="transform('escapeJSON')"
-							class="w-full text-left px-4 py-2 hover:bg-[var(--bg-surface-hover)] text-xs"
-							style="color: var(--info);">Escape JSON String</button>
+							class="w-full text-left px-4 py-2 hover:bg-[var(--bg-surface-hover)] text-xs jsv-menu-item-info">Escape JSON String</button>
 						<button onclick="transform('unescapeJSON')"
-							class="w-full text-left px-4 py-2 hover:bg-[var(--bg-surface-hover)] text-xs"
-							style="color: var(--info);">Unescape JSON String</button>
+							class="w-full text-left px-4 py-2 hover:bg-[var(--bg-surface-hover)] text-xs jsv-menu-item-info">Unescape JSON String</button>
 						<div class="save-dropdown-divider"></div>
 						<button onclick="copyJsonAsMarkdown()"
-							class="w-full text-left px-4 py-2 hover:bg-[var(--bg-surface-hover)] text-xs"
-							style="color: var(--accent-text);">Copy as MD</button>
+							class="w-full text-left px-4 py-2 hover:bg-[var(--bg-surface-hover)] text-xs jsv-menu-item-accent">Copy as MD</button>
 					</div>
 				</div>
 				<button id="toggle-view-btn" class="btn btn-sm">
-					<span id="toggle-text">Tree</span>
+					<i class="ph ph-tree-structure text-base"></i>
+					<span id="toggle-text" class="btn-text">Tree</span>
 				</button>
-			</div>
 
-			<div class="flex items-center gap-2 shrink-0">
 				<div class="relative shrink-0" id="dropdown-instance">
 					<button id="instance-menu-btn" class="btn btn-sm">
-						<span id="instance-label">JSON 1</span>
-						<svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
-							</path>
-						</svg>
+						<i class="ph ph-files text-base"></i>
+						<span id="instance-label" class="btn-text">JSON 1</span>
+						<i class="ph ph-caret-down text-xs"></i>
 					</button>
 					<div id="instance-menu-dropdown"
-						class="absolute right-0 mt-1 w-32 bg-[var(--bg-surface-raised)] border border-[var(--border-default)] rounded-lg shadow-xl hidden z-[100]">
+						class="absolute left-0 mt-1 w-32 bg-[var(--bg-surface-raised)] border border-[var(--border-default)] rounded-lg shadow-xl hidden z-[100]">
 						<button onclick="switchInstance(0)"
 							class="w-full text-left px-4 py-2 hover:bg-[var(--bg-surface-hover)] text-xs instance-btn"
 							data-instance="0">JSON 1</button>
@@ -226,86 +237,35 @@
 					</div>
 				</div>
 
-				<button onclick="prettify()" class="btn btn-sm">Format</button>
-				<button onclick="transform('resolveNewlines')" class="btn btn-sm"
-					style="color: var(--accent-text);">Resolve</button>
-				<button onclick="copyEditorContents()" class="btn btn-sm" title="Copy entire editor contents">
-					<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-							d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
-						</path>
-					</svg>
-					<span>Copy</span>
+				<button onclick="prettify()" class="btn btn-sm">
+					<i class="ph ph-brackets-curly text-base"></i>
+					<span class="btn-text">Format</span>
 				</button>
-				<button id="paste-btn" class="btn btn-sm shrink-0 sm:px-4 sm:py-2 sm:text-sm">
-					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-							d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
-						</path>
-					</svg>
-					<span class="hidden sm:inline">Paste</span>
+				<button onclick="transform('resolveNewlines')" class="btn btn-sm jsv-btn-resolve">
+					<i class="ph ph-magic-wand text-base"></i>
+					<span class="btn-text">Resolve</span>
 				</button>
-				<div class="save-dropdown-wrapper shrink-0" id="save-dropdown-wrapper">
-					<button id="download-btn"
-						class="save-main-btn btn btn-gradient-green btn-sm sm:px-4 sm:py-2 sm:text-sm shadow-sm hover:shadow-md transition-all transform active:scale-95">
-						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-								d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-						</svg>
-						<span class="hidden sm:inline">Save</span>
-					</button>
-					<button id="save-chevron-btn"
-						class="save-chevron-btn btn btn-gradient-green btn-sm sm:py-2 sm:text-sm shadow-sm hover:shadow-md transition-all transform active:scale-95">
-						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
-							</path>
-						</svg>
-					</button>
+				<button onclick="toggleWrap()" id="wrap-toggle-btn" class="btn-icon" title="Toggle Word Wrap" aria-label="Toggle Word Wrap">
+					<i class="ph ph-arrows-in-line-horizontal text-base"></i>
+				</button>
 
-					<div id="save-dropdown-menu" class="save-dropdown-menu">
-						<button class="save-dropdown-item" onclick="saveJson()">
-							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-									d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-								</svg>
-							Save RAW
-						</button>
-						<button class="save-dropdown-item" onclick="saveFormattedJson()">
-							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-									d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-								</svg>
-							Save Formatted
-						</button>
-						<div class="save-dropdown-divider"></div>
-						<button class="save-dropdown-item" onclick="copyRawJson()">
-							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-									d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m-7 4h7m-7 4h7m-7 4h3">
-								</path>
-							</svg>
-							Copy RAW
-						</button>
-						<button class="save-dropdown-item" onclick="copyFormattedJson()">
-							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-									d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m-7 4h7m-7 4h7m-7 4h3">
-								</path>
-							</svg>
-							Copy Formatted
-						</button>
-					</div>
-				</div>
-				<button onclick="toggleWrap()" id="wrap-toggle-btn" class="btn btn-sm font-bold">W</button>
+				<button onclick="copyEditorContents()" class="btn btn-sm" title="Copy entire editor contents">
+					<i class="ph ph-copy text-base"></i>
+					<span class="btn-text">Copy</span>
+				</button>
 				<button id="send-to-md-btn" onclick="sendJsonToMarkdown()"
-					class="btn btn-sm shadow-sm hover:shadow-md transition-all"
-					style="background: linear-gradient(to bottom right, #2563eb, #4338ca); color: #fff;"
+					class="btn btn-sm btn-primary"
 					title="Transform JSON to Markdown and open in MD Explorer">
-					<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-							d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-					</svg>
-					<span class="hidden sm:inline">MD</span>
+					<i class="ph ph-arrow-square-out text-base"></i>
+					<span class="btn-text">Export MD</span>
+				</button>
+			</div>
+
+			<!-- Pinned Right Edge: Paste Button -->
+			<div class="toolbar-pinned-right">
+				<button id="paste-btn" class="btn btn-sm">
+					<i class="ph ph-clipboard-text text-base"></i>
+					<span class="btn-text">Paste</span>
 				</button>
 			</div>
 		</div>
@@ -737,15 +697,40 @@
 
 		loadJsvState();
 
+		function buildEditorThemeExtensions(isDark) {
+			return [
+				isDark ? oneDark : [],
+				EditorView.theme({
+					"&": { height: "100%", fontSize: "var(--editor-font-size)", backgroundColor: "var(--bg-surface)", color: "var(--text-primary)" },
+					".cm-scroller": { overflow: "auto", fontFamily: "var(--font-mono)" },
+					".cm-content": { fontWeight: "400 !important", fontFamily: "var(--font-mono) !important" },
+					".cm-line": { fontWeight: "400 !important" },
+					".cm-gutters": { backgroundColor: "var(--bg-surface)", borderRightColor: "var(--border-subtle)", color: "var(--text-tertiary)" },
+					".cm-cursor, .cm-dropCursor": { borderLeftColor: "var(--accent)", borderLeftWidth: "2px" },
+					"&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-selectionBackground": {
+						backgroundColor: isDark ? "rgb(79, 70, 229) !important" : "rgb(199, 210, 254) !important"
+					},
+					".cm-content ::selection": {
+						backgroundColor: isDark ? "rgb(79, 70, 229) !important" : "rgb(199, 210, 254) !important",
+						color: isDark ? "rgb(255, 255, 255) !important" : "rgb(15, 23, 42) !important"
+					}
+				}, { dark: isDark })
+			];
+		}
+
 		// Initialize CodeMirror
 		function initEditor(initialValue = "", language = "javascript", readOnly = false) {
-			if (editor) editor.destroy();
+			let currentDoc = initialValue;
+			if (editor) {
+				currentDoc = editor.state.doc.toString();
+				editor.destroy();
+			}
 			const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
 			const extensions = [
 				basicSetup,
 				// Use javascript mode even for JSON to support raw/lenient editing and folding with raw newlines/quotes
 				javascript(),
-				isDark ? oneDark : [],
+				...buildEditorThemeExtensions(isDark),
 				keymap.of(foldKeymap),
 				keymap.of([{
 					key: 'Tab',
@@ -851,13 +836,22 @@
 			}
 		};
 
+		window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+			if (editor) {
+				const currentDoc = editor.state.doc.toString();
+				initEditor(currentDoc, currentFileName?.endsWith(".json") ? "json" : "javascript");
+			}
+		});
+
 		window.toggleWrap = function () {
 			lineWrap = !lineWrap;
 			const btn = document.getElementById("wrap-toggle-btn");
-			if (lineWrap) {
-				btn.classList.add("bg-blue-100", "dark:bg-blue-900/30", "text-blue-700", "dark:text-blue-300");
-			} else {
-				btn.classList.remove("bg-blue-100", "dark:bg-blue-900/30", "text-blue-700", "dark:text-blue-300");
+			if (btn) {
+				if (lineWrap) {
+					btn.classList.add("bg-[var(--accent)]", "text-white");
+				} else {
+					btn.classList.remove("bg-[var(--accent)]", "text-white");
+				}
 			}
 			if (editor) {
 				const currentDoc = editor.state.doc.toString();
