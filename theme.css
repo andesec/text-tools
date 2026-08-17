@@ -4883,6 +4883,7 @@ footer {
   .btn > span:not(.ph):not(.tts-toggle-dot),
   .btn-sm span:not(.ph):not(.tts-toggle-dot),
   .save-main-btn span:not(.ph),
+  .open-main-btn span:not(.ph),
   .segment-btn span:not(.ph) {
     display: none !important;
   }
@@ -5191,15 +5192,25 @@ footer {
   display: flex;
 }
 
-.save-main-btn {
+.save-main-btn,
+.open-main-btn {
   border-radius: var(--radius-md) 0 0 var(--radius-md) !important;
 }
 
-.save-chevron-btn {
+.save-chevron-btn,
+.open-chevron-btn {
   border-radius: 0 var(--radius-md) var(--radius-md) 0 !important;
   border-left: 1px solid rgb(60, 60, 60) !important;
   padding-left: 6px;
   padding-right: 6px;
+}
+
+.save-dropdown-wrapper:has(> .save-chevron-btn.hidden) > .save-main-btn,
+.save-dropdown-wrapper:has(> .open-chevron-btn.hidden) > .save-main-btn,
+.save-dropdown-wrapper:has(> .open-chevron-btn.hidden) > .open-main-btn,
+.save-dropdown-wrapper > .save-main-btn.single-btn,
+.save-dropdown-wrapper > .open-main-btn.single-btn {
+  border-radius: var(--radius-md) !important;
 }
 
 .save-dropdown-menu {
@@ -5241,9 +5252,11 @@ footer {
   background: var(--bg-surface-hover);
 }
 
-.save-dropdown-item svg {
+.save-dropdown-item svg,
+.save-dropdown-item i {
   width: 16px;
   height: 16px;
+  font-size: 16px;
   flex-shrink: 0;
   color: var(--text-secondary);
 }

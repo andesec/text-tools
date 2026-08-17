@@ -897,7 +897,11 @@
 
     // Speed Slider
     speedSlider.oninput = () => {
-      speedVal.textContent = `${parseFloat(speedSlider.value).toFixed(1)}x`;
+      const spd = parseFloat(speedSlider.value) || 1.0;
+      speedVal.textContent = `${spd.toFixed(1)}x`;
+      if (audioPlayer) {
+        audioPlayer.playbackRate = spd;
+      }
     };
 
     // Tabbed Workspace Integration detection
@@ -973,11 +977,10 @@
           logger(`Markdown stripped: ${rawText.length} → ${text.length} chars`, "info");
         }
 
-        const speed = parseFloat(speedSlider.value);
-        logger(`Synthesizing (Voice: ${activeVoice}, Speed: ${speed}x)...`, "system");
+        logger(`Synthesizing (Voice: ${activeVoice})...`, "system");
         const startTime = performance.now();
 
-        const output = await synthesize(pipe, text, activeEmbedding, speed, 10);
+        const output = await synthesize(pipe, text, activeEmbedding, 1.0, 10);
         
         const endTime = performance.now();
         const latency = Math.round(endTime - startTime);
@@ -991,6 +994,7 @@
           const audioUrl = URL.createObjectURL(activeBlob);
 
           audioPlayer.src = audioUrl;
+          audioPlayer.playbackRate = parseFloat(speedSlider.value) || 1.0;
           audioPlayer.load();
 
           playerPlayBtn.disabled = false;

@@ -560,21 +560,6 @@
 			transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 		}
 
-		.open-main-btn {
-			border-radius: var(--radius-md) 0 0 var(--radius-md) !important;
-		}
-
-		.open-chevron-btn {
-			border-radius: 0 var(--radius-md) var(--radius-md) 0 !important;
-			border-left: 1px solid rgb(64, 64, 70) !important;
-			padding-left: 6px;
-			padding-right: 6px;
-		}
-
-		.open-dropdown-menu {
-			right: 0 !important;
-			left: auto !important;
-		}
 
 		/* ─── TTS Reader Styles ─────────────────────────────── */
 
@@ -1257,12 +1242,12 @@
 			<!-- Right Edge: File Actions (Open & Save) -->
 			<div class="flex items-center gap-1.5 justify-end">
 				<input type="file" id="file-input" multiple accept=".md,.markdown,.txt,text/markdown,text/plain" class="hidden" />
-				<div class="save-dropdown-wrapper" id="open-dropdown-wrapper">
-					<button id="open-btn" class="btn btn-primary btn-sm">
+				<div class="save-dropdown-wrapper shrink-0" id="open-dropdown-wrapper">
+					<button id="open-btn" class="save-main-btn btn btn-primary btn-sm" title="Open Directory or File">
 						<i class="ph ph-folder-open text-base"></i>
-						<span id="btn-text" class="btn-text">Open</span>
+						<span class="btn-text">Open</span>
 					</button>
-					<button id="open-chevron-btn" class="open-chevron-btn btn btn-primary btn-sm hidden">
+					<button id="open-chevron-btn" class="save-chevron-btn btn btn-primary btn-sm" title="Open Options" aria-label="Open Options">
 						<i class="ph ph-caret-down text-xs"></i>
 					</button>
 					<div id="open-dropdown-menu" class="save-dropdown-menu open-dropdown-menu">
@@ -2877,9 +2862,6 @@
 
 		closeSidebar.onclick = toggleSidebar;
 
-		if (isFileSystemApiSupported) {
-			document.getElementById("btn-text").textContent = "Directory";
-		}
 
 		const mathExtension = {
 			name: 'math',
@@ -3236,31 +3218,115 @@
 
 		const openChevron = document.getElementById("open-chevron-btn");
 		const openMenu = document.getElementById("open-dropdown-menu");
+		const openWrapper = document.getElementById("open-dropdown-wrapper");
 
-		if (isFileSystemApiSupported) {
-			document.getElementById("btn-text").textContent = "Directory";
-			openBtn.classList.add("open-main-btn");
-			if (openChevron) openChevron.classList.remove("hidden");
+		if (!isFileSystemApiSupported) {
+			if (openChevron) openChevron.classList.add("hidden");
+			openBtn.classList.add("single-btn");
 		}
 
-		if (openChevron) {
-			openChevron.addEventListener("click", (e) => {
-				e.stopPropagation();
-				if (window.MdvComments && typeof window.MdvComments.closeSaveDropdown === "function") {
-					window.MdvComments.closeSaveDropdown();
-				}
-				openMenu.classList.toggle("visible");
-			});
+		function measureOpenMenu() {
+			const prevVisible = openMenu.classList.contains("visible");
+			const prevVisibility = openMenu.style.visibility;
+			if (!prevVisible) {
+				openMenu.style.visibility = "hidden";
+				openMenu.classList.add("visible");
+			}
+			const width = openMenu.offsetWidth || 180;
+			const height = openMenu.offsetHeight || 0;
+			if (!prevVisible) {
+				openMenu.classList.remove("visible");
+				openMenu.style.visibility = prevVisibility;
+			}
+			return { width, height };
+		}
+
+		function positionOpenMenu() {
+			if (!openChevron || !openMenu) return;
+			const r = openChevron.getBoundingClientRect();
+			const vw = window.innerWidth;
+			const vh = window.innerHeight;
+			const { width: measuredWidth, height } = measureOpenMenu();
+
+			const width = Math.min(Math.max(measuredWidth, 180), vw - 16);
+			openMenu.style.width = `${width}px`;
+
+			let left = r.right - width;
+			if (left < 8) left = 8;
+			if (left + width > vw - 8) left = Math.max(8, vw - width - 8);
+
+			let top = r.bottom + 4;
+			if (top + height > vh - 8 && r.top - height - 4 > 8) {
+				top = r.top - height - 4;
+			}
+
+			openMenu.style.position = "fixed";
+			openMenu.style.top = `${top}px`;
+			openMenu.style.left = `${left}px`;
+		}
+
+		function openOpenMenu() {
+			if (window.MdvComments && typeof window.MdvComments.closeSaveDropdown === "function") {
+				window.MdvComments.closeSaveDropdown();
+			}
+			if (openMenu.parentNode !== document.body) {
+				document.body.appendChild(openMenu);
+			}
+			positionOpenMenu();
+			openMenu.classList.add("visible");
+			if (openChevron) openChevron.setAttribute("aria-expanded", "true");
 		}
 
 		function closeOpenDropdown() {
-			if (openMenu) openMenu.classList.remove("visible");
+			if (openMenu) {
+				openMenu.classList.remove("visible");
+				openMenu.style.width = "";
+				if (openWrapper && openMenu.parentNode !== openWrapper) {
+					openWrapper.appendChild(openMenu);
+				}
+			}
+			if (openChevron) openChevron.setAttribute("aria-expanded", "false");
+		}
+		window.closeOpenDropdown = closeOpenDropdown;
+
+		function toggleOpenDropdown(e) {
+			e.stopPropagation();
+			if (openMenu && openMenu.classList.contains("visible")) {
+				closeOpenDropdown();
+			} else {
+				openOpenMenu();
+			}
+		}
+
+		if (openChevron) {
+			openChevron.addEventListener("click", toggleOpenDropdown);
+
+			let openTouchHandled = false;
+			openChevron.addEventListener("touchend", (e) => {
+				e.preventDefault();
+				if (!openTouchHandled) {
+					openTouchHandled = true;
+					toggleOpenDropdown(e);
+					setTimeout(() => { openTouchHandled = false; }, 300);
+				}
+			});
+
+			openChevron.addEventListener("keydown", (e) => {
+				if (e.key === "Enter" || e.key === " ") {
+					e.preventDefault();
+					toggleOpenDropdown(e);
+				}
+			});
 		}
 
 		document.addEventListener("click", (e) => {
 			if (openMenu && !openMenu.contains(e.target) && openChevron && !openChevron.contains(e.target)) {
-				openMenu.classList.remove("visible");
+				closeOpenDropdown();
 			}
+		});
+
+		document.addEventListener("keydown", (e) => {
+			if (e.key === "Escape") closeOpenDropdown();
 		});
 
 		if (pasteBtn) {
@@ -3616,9 +3682,8 @@
 				const block = readBlocks[idx];
 				if (!block) return null;
 				const voice = voiceSelect.value;
-				const speed = parseFloat(speedSelect.value);
 				const embedding = await loadEmbedding(voice);
-				const output = await synthesize(pipe, block.text, embedding, speed, 10);
+				const output = await synthesize(pipe, block.text, embedding, 1.0, 10);
 				const blob = audioToWavBlob(output.audio, output.sampling_rate);
 				prefetchCache.set(idx, blob);
 				return blob;
@@ -3695,6 +3760,7 @@
 			}
 			const url = URL.createObjectURL(blob);
 			audioEl.src = url;
+			audioEl.playbackRate = parseFloat(speedSelect.value) || 1.0;
 			await audioEl.play();
 
 			// Prefetch next blocks in background
@@ -3727,8 +3793,6 @@
 		}
 
 		function startFromBlock(idx) {
-			// Invalidate prefetch cache when voice/speed might change
-			prefetchCache.clear();
 			playerBar.classList.add('visible');
 			playBlock(idx);
 		}
@@ -3745,6 +3809,7 @@
 					isPlaying = true;
 					setPPIcon(true);
 					if (audioEl.src && !audioEl.ended && audioEl.readyState >= 2) {
+						audioEl.playbackRate = parseFloat(speedSelect.value) || 1.0;
 						audioEl.play();
 					} else {
 						playBlock(currentBlockIdx >= 0 ? currentBlockIdx : 0);
@@ -3778,9 +3843,13 @@
 			}
 		};
 
-		// Invalidate cache when settings change
+		// Invalidate cache when voice changes, update playback rate immediately on speed change
 		voiceSelect.onchange = () => { prefetchCache.clear(); };
-		speedSelect.onchange = () => { prefetchCache.clear(); };
+		speedSelect.onchange = () => {
+			if (audioEl) {
+				audioEl.playbackRate = parseFloat(speedSelect.value) || 1.0;
+			}
+		};
 
 		// ── Speak Mode Toggle ─────────────────────────────────────
 		window.ttsToggleSpeakMode = function () {
