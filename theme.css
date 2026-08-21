@@ -5023,6 +5023,11 @@ footer {
   background: var(--accent);
 }
 
+/* ── Global Utility: Hidden ── */
+.hidden {
+  display: none !important;
+}
+
 /* ── Shared Buttons ── */
 .btn {
   display: inline-flex;
@@ -5208,8 +5213,12 @@ footer {
 .save-dropdown-wrapper:has(> .save-chevron-btn.hidden) > .save-main-btn,
 .save-dropdown-wrapper:has(> .open-chevron-btn.hidden) > .save-main-btn,
 .save-dropdown-wrapper:has(> .open-chevron-btn.hidden) > .open-main-btn,
+.save-dropdown-wrapper:has(> #open-chevron-btn.hidden) > #open-btn,
+.save-dropdown-wrapper:has(> #save-chevron-btn.hidden) > #save-main-btn,
 .save-dropdown-wrapper > .save-main-btn.single-btn,
-.save-dropdown-wrapper > .open-main-btn.single-btn {
+.save-dropdown-wrapper > .open-main-btn.single-btn,
+.save-dropdown-wrapper > #open-btn.single-btn,
+.save-dropdown-wrapper > #save-main-btn.single-btn {
   border-radius: var(--radius-md) !important;
 }
 
