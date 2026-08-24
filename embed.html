@@ -584,6 +584,7 @@
 			<h3>API</h3>
 			<a href="#message-spec">Message spec</a>
 			<a href="#loading-text">Loading text</a>
+			<a href="#streaming">Streaming</a>
 			<a href="#loading-pdf">Loading a PDF</a>
 			<a href="#acks">Acknowledgements</a>
 			<a href="#events">Listening to the iframe</a>
@@ -788,6 +789,217 @@
 				<span class="inline-code">.json</span> extension.
 			</p>
 
+			<h2 id="streaming" class="anchor">Streaming</h2>
+			<p class="lede">
+				<code>mdv.html</code> and <code>jsv.html</code> also accept content incrementally, so a host can
+				pipe an LLM response or any chunked source straight into the editor as it arrives instead of
+				waiting to buffer the whole document before calling <span class="inline-code">loadContent</span>.
+			</p>
+			<p>
+				Three message types make up the protocol:
+			</p>
+			<ul>
+				<li><code>appendContent</code> — append one chunk of text to the end of the document. Send as many
+					of these as you like.</li>
+				<li><code>streamEnd</code> — signal that the stream is finished.</li>
+				<li><code>setViewMode</code> — explicitly switch between <span class="inline-code">"code"</span>
+					and <span class="inline-code">"render"</span> at any time, independent of streaming.</li>
+			</ul>
+
+			<table class="docs-table">
+				<thead>
+					<tr>
+						<th>Field</th>
+						<th>Type</th>
+						<th>Required</th>
+						<th>Description</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td><code>type</code></td>
+						<td>string</td>
+						<td>yes</td>
+						<td><span class="inline-code">"appendContent"</span>, <span
+								class="inline-code">"streamEnd"</span>, or <span
+								class="inline-code">"setViewMode"</span>.</td>
+					</tr>
+					<tr>
+						<td><code>text</code></td>
+						<td>string</td>
+						<td><code>appendContent</code> only</td>
+						<td>The chunk to append to the end of the current document. Appended as-is — no
+							re-parsing or re-rendering happens per chunk.</td>
+					</tr>
+					<tr>
+						<td><code>filename</code></td>
+						<td>string</td>
+						<td>no</td>
+						<td>May be sent on the first <code>appendContent</code> (or any later one) to set/update
+							the document name; also accepted on <code>streamEnd</code>.</td>
+					</tr>
+					<tr>
+						<td><code>mode</code></td>
+						<td>string</td>
+						<td><code>setViewMode</code> only</td>
+						<td><span class="inline-code">"code"</span> or <span class="inline-code">"render"</span>.
+						</td>
+					</tr>
+					<tr>
+						<td><code>options</code></td>
+						<td>object</td>
+						<td>no</td>
+						<td>Same as <code>loadContent</code>: <code>targetOrigin</code>, <code>skipAcks</code>.
+						</td>
+					</tr>
+				</tbody>
+			</table>
+
+			<p>
+				A typical stream looks like this:
+			</p>
+			<ol>
+				<li>Optionally send a <span class="inline-code">loadContent</span> with <span
+						class="inline-code">text: ''</span> and a <span class="inline-code">filename</span> to
+					start from a clean, named document — or just send the first <span
+						class="inline-code">appendContent</span> directly, which initializes the editor if none
+					exists yet.</li>
+				<li>Send one <span class="inline-code">appendContent</span> per chunk as it arrives. Each chunk is
+					inserted at the end of the document without re-rendering, re-parsing, or writing to
+					<span class="inline-code">localStorage</span> — this keeps a long stream cheap even at high
+					chunk rates.</li>
+				<li>Send <span class="inline-code">streamEnd</span> when the source is done.</li>
+			</ol>
+
+			<p>
+				While a stream is active, <code>mdv.html</code> stays pinned to the code (editor) view — it does
+				not re-run the Markdown → HTML render pipeline on every chunk. On <code>streamEnd</code> it
+				switches to render view and performs one full render of the final document.
+				<code>jsv.html</code> defers JSON parsing and tree-building the same way: chunks land directly in
+				the CodeMirror buffer, and the JSON tree is (re)built once, on <code>streamEnd</code>.
+			</p>
+
+			<p>
+				<code>streamEnd</code> acknowledges with a <span class="inline-code">streamEndAck</span> message
+				(unless <span class="inline-code">options.skipAcks</span> is set), mirroring <span
+					class="inline-code">loadContentAck</span>:
+			</p>
+
+			<div class="code-block">
+				<div class="code-block-header"><span>Shape</span><button class="copy-btn"
+						data-copy="stream-end-ack-shape">Copy</button></div>
+				<pre><code><span class="tok-key">{</span>
+  <span class="tok-prop">type</span>: <span class="tok-str">"streamEndAck"</span>,
+  <span class="tok-prop">filename</span>: <span class="tok-str">"response.md"</span>,
+  <span class="tok-prop">format</span>: <span class="tok-str">"markdown"</span>,  <span class="tok-com">// or "json" | "javascript"</span>
+  <span class="tok-prop">version</span>: <span class="tok-num">6</span>,
+  <span class="tok-prop">length</span>: <span class="tok-num">4218</span>       <span class="tok-com">// final document length, in characters</span>
+<span class="tok-key">}</span></code></pre>
+			</div>
+
+			<p>
+				<code>appendContent</code> chunks are not individually acknowledged — only <span
+					class="inline-code">streamEnd</span> replies. A subsequent plain <span
+					class="inline-code">loadContent</span> always supersedes an in-progress stream and resets
+				streaming state, so it's safe to abandon a stream early by just calling <span
+					class="inline-code">loadContent</span> instead of <span
+					class="inline-code">streamEnd</span>.
+			</p>
+
+			<div class="code-block">
+				<div class="code-block-header"><span>Feed a chunked response into mdv.html</span><button
+						class="copy-btn" data-copy="stream-chunked">Copy</button></div>
+				<pre><code><span class="tok-key">async</span> <span class="tok-key">function</span> <span class="tok-fn">streamInto</span>(iframe, url, filename) <span class="tok-key">{</span>
+  <span class="tok-key">const</span> res = <span class="tok-key">await</span> <span class="tok-fn">fetch</span>(url);
+  <span class="tok-key">const</span> reader = res.body.getReader();
+  <span class="tok-key">const</span> decoder = <span class="tok-key">new</span> <span class="tok-fn">TextDecoder</span>();
+  <span class="tok-key">const</span> <span class="tok-fn">send</span> = (msg) =&gt; iframe.contentWindow.postMessage(msg, <span class="tok-str">"*"</span>);
+
+  <span class="tok-com">// Start from a clean, named document (optional).</span>
+  <span class="tok-fn">send</span>(<span class="tok-key">{</span> <span class="tok-prop">type</span>: <span class="tok-str">"loadContent"</span>, <span class="tok-prop">text</span>: <span class="tok-str">""</span>, <span class="tok-prop">filename</span>: filename <span class="tok-key">}</span>);
+
+  <span class="tok-key">try</span> <span class="tok-key">{</span>
+    <span class="tok-key">while</span> (<span class="tok-key">true</span>) <span class="tok-key">{</span>
+      <span class="tok-key">const</span> <span class="tok-key">{</span> done, value <span class="tok-key">}</span> = <span class="tok-key">await</span> reader.<span class="tok-fn">read</span>();
+      <span class="tok-key">if</span> (done) <span class="tok-key">break</span>;
+      <span class="tok-com">// stream:true keeps multi-byte characters intact across chunks</span>
+      <span class="tok-fn">send</span>(<span class="tok-key">{</span> <span class="tok-prop">type</span>: <span class="tok-str">"appendContent"</span>, <span class="tok-prop">text</span>: decoder.<span class="tok-fn">decode</span>(value, <span class="tok-key">{</span> stream: <span class="tok-key">true</span> <span class="tok-key">}</span>) <span class="tok-key">}</span>);
+    <span class="tok-key">}</span>
+    <span class="tok-key">const</span> tail = decoder.<span class="tok-fn">decode</span>();  <span class="tok-com">// flush any trailing partial character</span>
+    <span class="tok-key">if</span> (tail) <span class="tok-fn">send</span>(<span class="tok-key">{</span> <span class="tok-prop">type</span>: <span class="tok-str">"appendContent"</span>, <span class="tok-prop">text</span>: tail <span class="tok-key">}</span>);
+  <span class="tok-key">}</span> <span class="tok-key">finally</span> <span class="tok-key">{</span>
+    <span class="tok-com">// Always finalize, even if the fetch failed partway.</span>
+    <span class="tok-fn">send</span>(<span class="tok-key">{</span> <span class="tok-prop">type</span>: <span class="tok-str">"streamEnd"</span>, <span class="tok-prop">filename</span>: filename <span class="tok-key">}</span>);
+  <span class="tok-key">}</span>
+<span class="tok-key">}</span></code></pre>
+			</div>
+
+			<p>
+				If your source is <strong>Server-Sent Events</strong> rather than a plain chunked body, do not
+				forward <span class="inline-code">res.body</span> directly — you would paste raw
+				<span class="inline-code">data:</span> wire frames into the editor. Parse the frames first and
+				send only the text you extract from each one:
+			</p>
+
+			<div class="code-block">
+				<div class="code-block-header"><span>Parsing SSE frames before appending</span><button
+						class="copy-btn" data-copy="stream-sse">Copy</button></div>
+				<pre><code><span class="tok-key">let</span> buf = <span class="tok-str">""</span>;
+buf += decoder.<span class="tok-fn">decode</span>(value, <span class="tok-key">{</span> stream: <span class="tok-key">true</span> <span class="tok-key">}</span>);
+
+<span class="tok-com">// SSE frames are separated by a blank line.</span>
+<span class="tok-key">let</span> sep;
+<span class="tok-key">while</span> ((sep = buf.<span class="tok-fn">indexOf</span>(<span class="tok-str">"\n\n"</span>)) !== -<span class="tok-num">1</span>) <span class="tok-key">{</span>
+  <span class="tok-key">const</span> frame = buf.<span class="tok-fn">slice</span>(<span class="tok-num">0</span>, sep);
+  buf = buf.<span class="tok-fn">slice</span>(sep + <span class="tok-num">2</span>);
+
+  <span class="tok-key">for</span> (<span class="tok-key">const</span> line <span class="tok-key">of</span> frame.<span class="tok-fn">split</span>(<span class="tok-str">"\n"</span>)) <span class="tok-key">{</span>
+    <span class="tok-key">if</span> (!line.<span class="tok-fn">startsWith</span>(<span class="tok-str">"data:"</span>)) <span class="tok-key">continue</span>;   <span class="tok-com">// skip event:/id:/retry:</span>
+    <span class="tok-key">const</span> payload = line.<span class="tok-fn">slice</span>(<span class="tok-num">5</span>).<span class="tok-fn">trimStart</span>();
+    <span class="tok-key">if</span> (payload === <span class="tok-str">"[DONE]"</span>) <span class="tok-key">continue</span>;
+    <span class="tok-key">const</span> text = <span class="tok-fn">JSON</span>.<span class="tok-fn">parse</span>(payload).delta;  <span class="tok-com">// adapt to your schema</span>
+    <span class="tok-key">if</span> (text) <span class="tok-fn">send</span>(<span class="tok-key">{</span> <span class="tok-prop">type</span>: <span class="tok-str">"appendContent"</span>, <span class="tok-prop">text</span> <span class="tok-key">}</span>);
+  <span class="tok-key">}</span>
+<span class="tok-key">}</span></code></pre>
+			</div>
+
+			<h3>Streaming caveats</h3>
+			<ul>
+				<li><strong>Wait for the iframe to be ready.</strong> Do not post before the tool has loaded —
+					see <a href="#ready-signal">the ready signal</a>. Messages sent to a not-yet-initialized
+					iframe are lost silently.</li>
+				<li><strong>Ordering is guaranteed.</strong> <span class="inline-code">postMessage</span> is
+					ordered per sender/receiver window pair, so rapid <code>appendContent</code> calls always
+					arrive in the order you sent them. You do not need sequence numbers or to await anything
+					between chunks.</li>
+				<li><strong>Chunks may split anywhere.</strong> A chunk can end mid-word, mid-Markdown-token, or
+					mid-UTF-8 sequence. Splitting mid-token is harmless because nothing is parsed or rendered
+					until <code>streamEnd</code>. Splitting mid-UTF-8 is <em>your</em> problem to avoid — use
+					<span class="inline-code">TextDecoder</span> with <span class="inline-code">{ stream: true
+					}</span> as shown above, and flush it when the body ends.</li>
+				<li><strong>If <code>streamEnd</code> never arrives</strong> (aborted fetch, host crash), the
+					document is left un-rendered and unsaved, and no ack is sent. Send <code>streamEnd</code>
+					from a <span class="inline-code">finally</span> block. To recover an already-stranded
+					iframe, send <code>setViewMode</code> with <span class="inline-code">"render"</span>, or
+					<code>loadContent</code> to reset entirely.</li>
+				<li><strong>There is no <code>streamError</code> message and no timeout.</strong> Stream failure
+					is the host's to handle. The clean reset is <code>loadContent</code> — it replaces the
+					document and clears streaming state.</li>
+				<li><strong><code>appendContent</code> only ever appends.</strong> There is no way to retract or
+					edit a chunk you already sent. Use <code>loadContent</code> when you need to replace the
+					document.</li>
+				<li><strong>Streamed text is inserted verbatim in <code>jsv.html</code>.</strong> The Markdown
+					code-fence stripping that <code>loadContent</code> applies is deferred: it runs once at
+					<code>streamEnd</code>, so an LLM emitting a fenced <span class="inline-code">```json</span>
+					block still parses correctly.</li>
+				<li><strong>Origin validation differs by tool.</strong> <code>mdv.html</code> enforces
+					<span class="inline-code">options.targetOrigin</span> and replies with
+					<span class="inline-code">origin_mismatch</span> when it does not match the sender.
+					<code>jsv.html</code> currently accepts messages from any origin and uses
+					<span class="inline-code">targetOrigin</span> only to address its outbound replies — do not
+					rely on it as a security boundary.</li>
+			</ul>
+
 			<h2 id="loading-pdf" class="anchor">Loading a PDF into <code>pdf.html</code></h2>
 			<p>
 				Send <span class="inline-code">bytes</span> (an <span class="inline-code">ArrayBuffer</span>) +
@@ -878,6 +1090,11 @@
 						<td><code>loadContentAck</code></td>
 						<td>After a successful <span class="inline-code">loadContent</span> round-trip.</td>
 						<td><span class="inline-code">{ type, filename, format, version }</span></td>
+					</tr>
+					<tr>
+						<td><code>streamEndAck</code></td>
+						<td>After a <a href="#streaming"><code>streamEnd</code></a> round-trip.</td>
+						<td><span class="inline-code">{ type, filename, format, version, length }</span></td>
 					</tr>
 					<tr>
 						<td><code>error</code></td>

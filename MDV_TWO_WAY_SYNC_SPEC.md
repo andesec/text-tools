@@ -150,6 +150,119 @@ as silent no-ops; this message makes them visible.
 toast inside the iframe.** This spec makes them also visible to the host.
 The internal toast can stay as a UX nicety.
 
+### 3.5 parent → iframe: `appendContent`
+
+Appends one chunk of text to the end of the current document, without
+re-parsing or re-rendering. Intended for piping a chunked/streamed source
+(e.g. an LLM response body) into `mdv.html` / `jsv.html` as it arrives,
+instead of buffering the whole document before calling `loadContent`.
+
+```json
+{
+  "type": "appendContent",
+  "text": "...next chunk of the document...",
+  "filename": "response.md",
+  "options": { "targetOrigin": "https://my-host.example.com" }
+}
+```
+
+| Field      | Type   | Notes |
+|------------|--------|-------|
+| `type`     | string | Literal `"appendContent"`. |
+| `text`     | string | Text to append at the end of the document. Required; an empty string is a harmless no-op. |
+| `filename` | string | Optional. May be sent on any chunk to set/update the document name (e.g. once the host learns it mid-stream). |
+| `options`  | object | Optional. Same shape as the `loadContent` envelope (§9): `targetOrigin`. `skipAcks` has no effect here — `appendContent` never acks. |
+
+**Behavior:**
+- Origin is validated the same way as `loadContent` (§7): in `mdv.html`, if
+  `options.targetOrigin` is set and doesn't match the sender's origin, the
+  iframe replies with `error` / `origin_mismatch` and ignores the chunk.
+  **`jsv.html` performs no such rejection** — like its own `loadContent`, it
+  accepts messages from any origin and uses `targetOrigin` only to address
+  outbound replies. Do not treat it as a security boundary.
+- If no document exists yet (first message the iframe has ever received),
+  `appendContent` behaves like a stream-starting `loadContent`: it
+  initializes the editor with this chunk as the starting content.
+- If this is the first `appendContent` since the last `loadContent` /
+  `streamEnd`, the iframe enters **streaming mode**: `mdv.html` is pinned
+  to the code (editor) view for the duration of the stream so it isn't
+  re-running the Markdown render pipeline on every chunk.
+- Every chunk is inserted at the end of the document (`editor.state.doc.length`)
+  and the view is scrolled to follow it. This suppresses the normal
+  `contentChange` echo, per-chunk rendering (mdv) / tree rebuild (jsv), and
+  `localStorage` persistence — the same suppression `loadContent` already
+  uses internally — so a long stream stays cheap regardless of chunk rate.
+- Not acknowledged. Only `streamEnd` (below) sends a reply.
+
+### 3.6 parent → iframe: `streamEnd`
+
+Signals that a stream started by `appendContent` (or a stream-starting
+`loadContent`) is finished. Triggers the one-time render/tree-build that
+was deferred during streaming.
+
+```json
+{
+  "type": "streamEnd",
+  "filename": "response.md",
+  "options": { "skipAcks": false }
+}
+```
+
+| Field      | Type    | Notes |
+|------------|---------|-------|
+| `type`     | string  | Literal `"streamEnd"`. |
+| `filename` | string  | Optional. Final filename update. |
+| `options`  | object  | Optional. Same shape as `loadContent` (§9): `targetOrigin`, `skipAcks`. |
+
+**Behavior:**
+- Origin validated the same way as `loadContent` / `appendContent` (see the
+  `mdv.html` / `jsv.html` difference noted in §3.5).
+- Exits streaming mode.
+- `mdv.html` switches back to render view and performs one full render of
+  the accumulated document, then persists to `localStorage`.
+- `jsv.html` applies the same whole-document normalization `loadContent`
+  performs (Markdown code-fence stripping, literal-newline cleanup) — it is
+  deferred to this point because chunks arrive verbatim, so a streamed
+  ` ```json ` block still parses. It then runs the same JSON-shape detection
+  and (re)builds the JSON tree once, and persists to `localStorage`.
+- Any pending debounced `contentChange` is cancelled, so a keystroke made
+  just before the stream cannot land after `streamEndAck` with a higher
+  `version` and overwrite the streamed document on the host.
+- Safe to send even if no stream is active (e.g. a `streamEnd` that races
+  a `loadContent`) — it still performs the finalize steps and never
+  throws; it just has nothing streaming-specific to undo.
+- Unless `options.skipAcks` is `true`, replies with `streamEndAck`
+  (§4.3) addressed to `event.source`, mirroring `loadContentAck`.
+
+### 3.7 parent → iframe: `setViewMode`
+
+Explicitly switches between code and rendered view, independent of
+streaming. Useful for a host that wants to show the raw source while the
+user is typing feedback, then flip back to rendered output.
+
+```json
+{
+  "type": "setViewMode",
+  "mode": "render"
+}
+```
+
+| Field  | Type   | Notes |
+|--------|--------|-------|
+| `type` | string | Literal `"setViewMode"`. |
+| `mode` | string | `"code"` or `"render"`. Any other value is ignored. |
+
+**Behavior:**
+- Origin validated the same way as `loadContent` (see the `mdv.html` /
+  `jsv.html` difference noted in §3.5).
+- `mdv.html`: `"code"` shows the CodeMirror editor; `"render"` shows the
+  rendered Markdown preview (running a full render pass).
+- `jsv.html`: the editor pane is always visible, so `"code"` is a no-op;
+  `"render"` (re)builds the JSON tree against the current document using
+  the same JSON-shape detection as `loadContent` / `streamEnd`.
+- Does not touch streaming state, sync `version`, acks, or persisted
+  state — this is a pure view toggle.
+
 ---
 
 ## 4. Updated existing messages
@@ -182,7 +295,29 @@ Add a `version` field for consistency.
 }
 ```
 
-### 4.3 `toolSelection` (unchanged)
+### 4.3 `streamEndAck` (new, mirrors `loadContentAck`)
+
+Reply to `streamEnd` (§3.6), unless `options.skipAcks` was set.
+
+```json
+{
+  "type": "streamEndAck",
+  "filename": "response.md",
+  "format": "markdown",
+  "version": 6,
+  "length": 4218
+}
+```
+
+| Field      | Type    | Notes |
+|------------|---------|-------|
+| `type`     | string  | Literal `"streamEndAck"`. |
+| `filename` | string  | Current document filename after the stream. |
+| `format`   | string  | Same vocabulary as `loadContentAck.format`. |
+| `version`  | integer | The `version` after the stream finalized. Same counter `contentChange` / `loadContentAck` use. |
+| `length`   | integer | Length (characters) of the final document. Lets the host sanity-check the whole stream landed. |
+
+### 4.4 `toolSelection` (unchanged)
 
 Stays as is. New code should prefer `ready` when present and fall back to
 `toolSelection` when the iframe predates this spec.
@@ -400,6 +535,10 @@ Hosts that don't care about the new messages keep working unchanged.
 | iframe → parent | `contentChange`   | v1.1 (new) | Debounced 150ms. Includes `version`. |
 | iframe → parent | `formatChange`    | v1.1 (new) | Format toggled. |
 | iframe → parent | `error`           | v1.1 (new) | Visible load / validation / internal errors. |
+| parent → iframe | `appendContent`   | v1.1 (new) | Streaming: append one chunk. Not acked. |
+| parent → iframe | `streamEnd`       | v1.1 (new) | Streaming: finalize (render / tree-build), then ack. |
+| iframe → parent | `streamEndAck`    | v1.1 (new) | Reply to `streamEnd`. Includes `version` and `length`. |
+| parent → iframe | `setViewMode`     | v1.1 (new) | Explicit code/render toggle, independent of streaming. |
 
 ### Versioning rules (post-v1.1)
 

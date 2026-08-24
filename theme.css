@@ -4739,7 +4739,16 @@
     --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
     --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.10);
     --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.12);
-    --accent-text: #6c5ce7;
+    --accent-text: #5641d4;
+
+    /* Muted fills are tinted backgrounds behind --text-primary. The dark-theme
+       values are near-black, so they must be re-tinted for light mode or the
+       text on them is unreadable. */
+    --accent-muted: #eeecfd;
+    --success-muted: #e6f6ec;
+    --warning-muted: #fdf1dc;
+    --danger-muted: #fdeaea;
+    --info-muted: #e4f2fb;
   }
 }
 

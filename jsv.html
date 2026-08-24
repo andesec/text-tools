@@ -477,6 +477,7 @@
 		let syncPendingChange = null;   // Pending contentChange payload
 		let syncDebounceTimer = null;   // Debounce timer for contentChange
 		let _syncLoadingContent = false; // True while loadContent is in flight
+		let _streaming = false; // True while an appendContent stream is in progress
 		const SYNC_DEBOUNCE_MS = 300;   // Debounce interval for contentChange
 
 		// Helper: post message to parent with proper origin handling
@@ -1589,9 +1590,136 @@
 		})();
 
 		// ── postMessage API: receive content from parent frame ─────────────
+		// Shared origin validation for the postMessage sync API, mirroring the
+		// pattern loadContent uses: default syncTargetOrigin to the sender's
+		// origin (or the explicit options.targetOrigin override), normalising
+		// event.origin values ("null"/"") that are not valid postMessage
+		// targets into '*'.
+		function _syncResolveTargetOrigin(event, msg) {
+			if (msg.options?.targetOrigin) return msg.options.targetOrigin;
+			const origin = event.origin;
+			// "null" is what a file:// or sandboxed host reports; postMessage
+			// throws on it, so fall back to the wildcard.
+			if (!origin || origin === 'null' || origin === 'null://null') return '*';
+			return origin;
+		}
+
 		window.addEventListener('message', function (event) {
 			const msg = event.data;
-			if (!msg || msg.type !== 'loadContent') return;
+			if (!msg || !msg.type) return;
+
+			if (msg.type === 'appendContent') {
+				syncTargetOrigin = _syncResolveTargetOrigin(event, msg);
+
+				// Drop any pending contentChange: it holds a pre-stream snapshot
+				// that would otherwise land after streamEndAck with a higher
+				// version, and hosts treat higher versions as newer.
+				clearTimeout(syncDebounceTimer);
+				syncDebounceTimer = null;
+				syncPendingChange = null;
+
+				const text = typeof msg.text === 'string' ? msg.text : '';
+
+				if (!editor) {
+					_syncLoadingContent = true;
+					if (typeof msg.filename === 'string') currentFileName = msg.filename;
+					initEditor(text, currentFileName?.toLowerCase().endsWith('.json') ? 'json' : 'javascript');
+					updateTabTitle();
+					_syncLoadingContent = false;
+					_streaming = true;
+					return;
+				}
+
+				if (!_streaming) {
+					_streaming = true;
+				}
+
+				if (typeof msg.filename === 'string') currentFileName = msg.filename;
+
+				if (text) {
+					_syncLoadingContent = true;
+					const end = editor.state.doc.length;
+					editor.dispatch({
+						changes: { from: end, insert: text },
+						effects: EditorView.scrollIntoView(end + text.length)
+					});
+					_syncLoadingContent = false;
+				}
+				return;
+			}
+
+			if (msg.type === 'streamEnd') {
+				syncTargetOrigin = _syncResolveTargetOrigin(event, msg);
+
+				clearTimeout(syncDebounceTimer);
+				syncDebounceTimer = null;
+				syncPendingChange = null;
+
+				_streaming = false;
+				if (typeof msg.filename === 'string') currentFileName = msg.filename;
+				updateTabTitle();
+
+				// Chunks arrive verbatim, so the whole-document cleanup that
+				// loadContent applies (code-fence stripping, literal newlines)
+				// has to happen once here — an LLM streaming ```json fences
+				// would otherwise fail to parse.
+				const rawFinal = editor ? editor.state.doc.toString() : '';
+				const finalText = cleanLiteralNewlinesIfJson(normalizePastedText(rawFinal), currentFileName || '');
+				if (editor && finalText !== rawFinal) {
+					_syncLoadingContent = true;
+					editor.dispatch({ changes: { from: 0, to: editor.state.doc.length, insert: finalText } });
+					_syncLoadingContent = false;
+				}
+				const isJson = (currentFileName || '').toLowerCase().endsWith('.json');
+				const trimmed = finalText.trim();
+				if (isJson || !trimmed || trimmed.startsWith('{') || trimmed.startsWith('[')) {
+					// Re-arm the pending debounce with the correct text so a
+					// stale mid-stream rebuild can't overwrite this tree.
+					debouncedBuildTree(finalText);
+					buildTree(finalText);
+				} else {
+					treeRoot.innerHTML = '<div class="text-gray-400 p-8 text-center italic">Not currently showing tree for non-JSON content.</div>';
+				}
+				// Streamed appends bypass the updateListener, so instances[]
+				// still holds pre-stream content; sync it before persisting.
+				instances[currentInstance].content = finalText;
+				if (currentFileName) instances[currentInstance].fileName = currentFileName;
+				saveJsvState();
+
+				syncVersion++;
+				const replyVersion = syncVersion;
+				if (!msg.options?.skipAcks && event.source) {
+					const format = currentFileName?.toLowerCase().endsWith('.json') ? 'json' : 'javascript';
+					event.source.postMessage({
+						type: 'streamEndAck',
+						filename: currentFileName || 'scratchpad.json',
+						format: format,
+						version: replyVersion,
+						length: editor ? editor.state.doc.length : 0
+					}, syncTargetOrigin);
+				}
+				return;
+			}
+
+			if (msg.type === 'setViewMode') {
+				if (msg.mode !== 'code' && msg.mode !== 'render') return;
+				syncTargetOrigin = _syncResolveTargetOrigin(event, msg);
+
+				if (msg.mode === 'render') {
+					const currentText = editor ? editor.state.doc.toString() : '';
+					const isJson = (currentFileName || '').toLowerCase().endsWith('.json');
+					const trimmed = currentText.trim();
+					if (isJson || !trimmed || trimmed.startsWith('{') || trimmed.startsWith('[')) {
+						debouncedBuildTree(currentText);
+						buildTree(currentText);
+					} else {
+						treeRoot.innerHTML = '<div class="text-gray-400 p-8 text-center italic">Not currently showing tree for non-JSON content.</div>';
+					}
+				}
+				return;
+			}
+
+			if (msg.type !== 'loadContent') return;
 
 			// Binary payload: jsv.html is a text/JSON editor and does not
 			// render PDFs. Surface a red toast and bail.
@@ -1616,6 +1744,9 @@
 			} else {
 				syncTargetOrigin = event.origin || '*';
 			}
+
+			// A plain loadContent always supersedes any in-progress stream.
+			_streaming = false;
 
 			// Cancel any pending contentChange (content is being replaced)
 			clearTimeout(syncDebounceTimer);

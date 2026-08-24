@@ -1298,6 +1298,11 @@
 							Export with Quotes
 						</button>
 						<div class="save-dropdown-divider"></div>
+						<button class="save-dropdown-item" onclick="exportWithAssets(this)">
+							<i class="ph ph-file-zip text-base"></i>
+							Export with Assets (.zip)
+						</button>
+						<div class="save-dropdown-divider"></div>
 						<button class="save-dropdown-item" onclick="copyCommentsToClipboard(false)">
 							<i class="ph ph-copy text-base"></i>
 							Copy Comments
@@ -1955,6 +1960,7 @@
 		let syncPendingChange = null;   // Pending contentChange payload
 		let syncDebounceTimer = null;   // Debounce timer for contentChange
 		let _syncLoadingContent = false; // True while loadContent is in flight
+		let _streaming = false; // True while an appendContent stream is in progress
 		const SYNC_DEBOUNCE_MS = 300;   // Debounce interval for contentChange
 
 		// Helper: post message to parent with proper origin handling.
@@ -3910,7 +3916,9 @@
 		detectDevice();
 	</script>
 
+	<script src="vendor/jszip.min.js"></script>
 	<script src="mdv-comments.js"></script>
+	<script src="mdv-assets.js"></script>
 	<script>
 		MdvComments.init();
 		loadMdvState();
@@ -3934,10 +3942,125 @@
 			}, 50);
 		}
 
+		// Shared origin validation for the postMessage sync API. Computes the
+		// sender's usable origin, and (when msg.options.targetOrigin is set)
+		// verifies it matches — replying with an origin_mismatch error and
+		// returning null if not. Returns the parentOrigin string to use for
+		// syncTargetOrigin, or null if the caller should bail.
+		function _syncValidateOrigin(event, msg) {
+			let parentOrigin = event.origin;
+			if (!parentOrigin || parentOrigin === 'null' || parentOrigin === 'null://null') {
+				parentOrigin = '*';
+			}
+			if (msg.options?.targetOrigin && msg.options.targetOrigin !== '*' && parentOrigin !== '*' && msg.options.targetOrigin !== parentOrigin) {
+				syncPostMessage({
+					type: 'error',
+					code: 'origin_mismatch',
+					message: 'targetOrigin does not match the sender origin. Refusing to load.'
+				});
+				return null;
+			}
+			return parentOrigin;
+		}
+
 		// ── postMessage API: receive content from parent frame ─────────────
 		window.addEventListener('message', function (event) {
 			const msg = event.data;
-			if (!msg || msg.type !== 'loadContent') return;
+			if (!msg || !msg.type) return;
+
+			if (msg.type === 'appendContent') {
+				const parentOrigin = _syncValidateOrigin(event, msg);
+				if (parentOrigin === null) return;
+				syncTargetOrigin = parentOrigin;
+
+				// Drop any pending contentChange: it holds a pre-stream snapshot
+				// that would otherwise land after streamEndAck with a higher
+				// version, and hosts treat higher versions as newer.
+				clearTimeout(syncDebounceTimer);
+				syncDebounceTimer = null;
+				syncPendingChange = null;
+
+				const text = typeof msg.text === 'string' ? msg.text : '';
+
+				if (!editor) {
+					_syncLoadingContent = true;
+					if (typeof msg.filename === 'string') currentFileName = msg.filename;
+					initEditor(text);
+					updateTabTitle();
+					_syncLoadingContent = false;
+					_streaming = true;
+					isEditing = true;
+					updateViewMode();
+					return;
+				}
+
+				if (!_streaming) {
+					_streaming = true;
+					isEditing = true;
+					updateViewMode();
+				}
+
+				if (typeof msg.filename === 'string') currentFileName = msg.filename;
+
+				if (text) {
+					_syncLoadingContent = true;
+					const end = editor.state.doc.length;
+					editor.dispatch({
+						changes: { from: end, insert: text },
+						effects: EditorView.scrollIntoView(end + text.length)
+					});
+					_syncLoadingContent = false;
+				}
+				return;
+			}
+
+			if (msg.type === 'streamEnd') {
+				const parentOrigin = _syncValidateOrigin(event, msg);
+				if (parentOrigin === null) return;
+				syncTargetOrigin = parentOrigin;
+
+				clearTimeout(syncDebounceTimer);
+				syncDebounceTimer = null;
+				syncPendingChange = null;
+
+				_streaming = false;
+				if (typeof msg.filename === 'string') currentFileName = msg.filename;
+				updateTabTitle();
+
+				isEditing = false;
+				updateViewMode();
+				saveMdvState();
+
+				let ackOrigin = event.origin;
+				if (!ackOrigin || ackOrigin === 'null' || ackOrigin === 'null://null') {
+					ackOrigin = '*';
+				}
+				syncVersion++;
+				const replyVersion = syncVersion;
+				if (!msg.options?.skipAcks && event.source) {
+					event.source.postMessage({
+						type: 'streamEndAck',
+						filename: currentFileName,
+						format: 'markdown',
+						version: replyVersion,
+						length: editor ? editor.state.doc.length : 0
+					}, ackOrigin);
+				}
+				return;
+			}
+
+			if (msg.type === 'setViewMode') {
+				if (msg.mode !== 'code' && msg.mode !== 'render') return;
+				const parentOrigin = _syncValidateOrigin(event, msg);
+				if (parentOrigin === null) return;
+				syncTargetOrigin = parentOrigin;
+
+				isEditing = (msg.mode === 'code');
+				updateViewMode();
+				return;
+			}
+
+			if (msg.type !== 'loadContent') return;
 
 			// Binary payload: mdv.html is a markdown editor and does not
 			// render PDFs. Surface a toast and bail.
@@ -3984,6 +4107,9 @@
 				return;
 			}
 			syncTargetOrigin = parentOrigin;
+
+			// A plain loadContent always supersedes any in-progress stream.
+			_streaming = false;
 
 			// Cancel any pending contentChange (content is being replaced)
 			clearTimeout(syncDebounceTimer);
