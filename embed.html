@@ -4,7 +4,12 @@
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>Embed Text Tools — Andesec</title>
+	<title>Embed Dylen Text Tools</title>
+	<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+	<meta http-equiv="Pragma" content="no-cache" />
+	<meta http-equiv="Expires" content="0" />
+	<link rel="icon" type="image/png" href="favicon.png">
+	<link rel="icon" href="favicon.ico">
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link
@@ -570,7 +575,7 @@
 					d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
 			</svg>
 		</a>
-		<h1>Text&nbsp;Tools — Embedding&nbsp;API</h1>
+		<h1>Dylen&nbsp;Text&nbsp;Tools — Embedding&nbsp;API</h1>
 		<span class="badge">v1.1</span>
 		<a href="index.html" class="home-link">All tools</a>
 	</header>
@@ -1512,8 +1517,8 @@ iframe.contentWindow.postMessage(<span class="tok-key">{</span> <span class="tok
 
 	<footer
 		style="text-align:center; padding: 1.5rem 1rem; color: var(--text-tertiary); font-size: 0.8rem; border-top: 1px solid var(--border-default);">
-		<p>Made with ❤️ by <a href="https://github.com/andesec" target="_blank" rel="noopener"
-				style="color:var(--accent-text); text-decoration:none;">Andesec</a></p>
+		<p>Made with ❤️ by <a href="https://github.com/andesec/text-tools" target="_blank" rel="noopener"
+				style="color:var(--accent-text); text-decoration:none;">Dylen</a></p>
 	</footer>
 
 	<script src="footer.js"></script>
@@ -1561,7 +1566,7 @@ iframe.contentWindow.postMessage(<span class="tok-key">{</span> <span class="tok
 				code: '# Code Sample\n\n```javascript\nfunction greet(name) {\n  console.log(`Hello, ${name}!`);\n}\n\ngreet("world");\n```\n\n```python\ndef fib(n):\n    a, b = 0, 1\n    for _ in range(n):\n        yield a\n        a, b = b, a + b\n```'
 			},
 			jsv: {
-				package: '{\n  "name": "text-tools-embed",\n  "version": "1.0.0",\n  "description": "Embeddable text utilities",\n  "main": "index.js",\n  "scripts": {\n    "start": "node index.js",\n    "test": "echo \"no tests yet\""\n  },\n  "dependencies": {}\n}',
+				package: '{\n  "name": "dylen-text-tools-embed",\n  "version": "1.0.0",\n  "description": "Embeddable text utilities",\n  "main": "index.js",\n  "scripts": {\n    "start": "node index.js",\n    "test": "echo \\"no tests yet\\""\n  },\n  "dependencies": {}\n}',
 				users: '{\n  "users": [\n    { "id": 1, "name": "Alice", "role": "admin" },\n    { "id": 2, "name": "Bob", "role": "editor" },\n    { "id": 3, "name": "Charlie", "role": "viewer" }\n  ],\n  "total": 3\n}',
 				js: '// A small JavaScript sample\nclass Greeter {\n  constructor(name) {\n    this.name = name;\n  }\n  greet() {\n    return `Hello, ${this.name}!`;\n  }\n}\n\nconst g = new Greeter("world");\nconsole.log(g.greet());'
 			}

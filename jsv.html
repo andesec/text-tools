@@ -4,7 +4,12 @@
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-	<title>JSON Viewer</title>
+	<title>JSON Explorer — Dylen Text Tools</title>
+	<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+	<meta http-equiv="Pragma" content="no-cache" />
+	<meta http-equiv="Expires" content="0" />
+	<link rel="icon" type="image/png" href="favicon.png">
+	<link rel="icon" href="favicon.ico">
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link
@@ -1408,18 +1413,148 @@
 			setTimeout(() => copyToast.classList.remove("visible"), 2000);
 		}
 
-		window.saveJson = () => {
-			if (!editor || !currentFileName) return;
+		function getSuggestedJsonFilename(defaultExt = '.json') {
+			const text = (sourceJSON !== null ? sourceJSON : (editor ? editor.state.doc.toString() : '')).trim();
+			let name = null;
+
+			try {
+				if (text && (text.startsWith('{') || text.startsWith('['))) {
+					const data = JSON.parse(text);
+					if (data && typeof data === 'object') {
+						if (typeof data.title === 'string' && data.title.trim()) name = data.title.trim();
+						else if (typeof data.heading === 'string' && data.heading.trim()) name = data.heading.trim();
+						else if (typeof data.name === 'string' && data.name.trim()) name = data.name.trim();
+						else if (typeof data.topic === 'string' && data.topic.trim()) name = data.topic.trim();
+						else if (typeof data.main === 'string' && data.main.trim()) name = data.main.trim();
+						else if (data.metadata && typeof data.metadata.title === 'string') name = data.metadata.title.trim();
+					}
+				}
+			} catch (e) {
+				const m = text.match(/"(?:title|heading|name|topic|main)"\s*:\s*"([^"]+)"/);
+				if (m && m[1]) name = m[1].trim();
+			}
+
+			if (name) {
+				let clean = name.replace(/[/\\:*?"<>|]/g, '').trim();
+				if (clean) {
+					if (!clean.toLowerCase().endsWith(defaultExt.toLowerCase())) {
+						clean += defaultExt;
+					}
+					return clean;
+				}
+			}
+
+			if (currentFileName && currentFileName !== 'scratchpad.json' && currentFileName !== 'data.json') {
+				const base = currentFileName.replace(/\.[^.]+$/, '');
+				return `${base}${defaultExt}`;
+			}
+			return `data${defaultExt}`;
+		}
+
+		function promptSaveFilename(suggestedName, titleText = "Save File") {
+			return new Promise((resolve) => {
+				const modal = document.getElementById("save-filename-modal");
+				const form = document.getElementById("save-modal-form");
+				const input = document.getElementById("save-modal-input");
+				const titleEl = document.getElementById("save-modal-title");
+				const closeBtn = document.getElementById("save-modal-close-btn");
+				const cancelBtn = document.getElementById("save-modal-cancel-btn");
+
+				if (!modal || !input || !form) {
+					const res = window.prompt("Enter file name:", suggestedName);
+					resolve(res ? res.trim() : null);
+					return;
+				}
+
+				if (titleEl) titleEl.textContent = titleText;
+				input.value = suggestedName || "data.json";
+
+				let settled = false;
+				function finish(val) {
+					if (settled) return;
+					settled = true;
+					modal.close();
+					cleanup();
+					resolve(val);
+				}
+
+				function onSubmit(e) {
+					e.preventDefault();
+					const val = input.value.trim();
+					finish(val || suggestedName);
+				}
+
+				function onCancel() {
+					finish(null);
+				}
+
+				function onModalClose() {
+					finish(null);
+				}
+
+				function cleanup() {
+					form.removeEventListener("submit", onSubmit);
+					if (cancelBtn) cancelBtn.removeEventListener("click", onCancel);
+					if (closeBtn) closeBtn.removeEventListener("click", onCancel);
+					modal.removeEventListener("close", onModalClose);
+				}
+
+				form.addEventListener("submit", onSubmit);
+				if (cancelBtn) cancelBtn.addEventListener("click", onCancel);
+				if (closeBtn) closeBtn.addEventListener("click", onCancel);
+				modal.addEventListener("close", onModalClose);
+
+				modal.showModal();
+				input.focus();
+				const dotIdx = input.value.lastIndexOf('.');
+				if (dotIdx > 0) {
+					input.setSelectionRange(0, dotIdx);
+				} else {
+					input.select();
+				}
+			});
+		}
+
+		window.saveJson = async () => {
+			if (!editor) return;
+			saveDropdownMenu.classList.remove('visible');
+			const suggested = getSuggestedJsonFilename('.json');
+			const chosen = await promptSaveFilename(suggested, "Save RAW JSON");
+			if (!chosen) return;
+
+			let filename = chosen.trim();
+			if (!filename.toLowerCase().endsWith('.json') && !filename.includes('.')) {
+				filename += '.json';
+			}
+			currentFileName = filename;
+			if (instances[currentInstance]) {
+				instances[currentInstance].fileName = filename;
+			}
+			updateTabTitle();
+			saveJsvState();
+
 			const text = sourceJSON !== null ? sourceJSON : editor.state.doc.toString();
-			download(text, currentFileName);
+			download(text, filename);
+			toast("Saved as " + filename);
 		};
 
-		window.saveFormattedJson = () => {
-			if (!editor || !currentFileName) return;
+		window.saveFormattedJson = async () => {
+			if (!editor) return;
+			saveDropdownMenu.classList.remove('visible');
+			const suggested = getSuggestedJsonFilename('.formatted.json');
+			const chosen = await promptSaveFilename(suggested, "Save Formatted JSON");
+			if (!chosen) return;
+
+			let filename = chosen.trim();
+			if (!filename.toLowerCase().endsWith('.json') && !filename.includes('.')) {
+				filename += '.json';
+			}
+
 			try {
 				const text = sourceJSON !== null ? sourceJSON : editor.state.doc.toString();
 				const formatted = JSON.stringify(JSON.parse(text), null, 2);
-				download(formatted, currentFileName.replace(/\.[^.]+$/, "") + ".formatted.json");
+				download(formatted, filename);
+				toast("Saved as " + filename);
 			} catch (e) {
 				alert("Invalid JSON - cannot format for save");
 			}
@@ -1488,7 +1623,14 @@
 			URL.revokeObjectURL(url);
 		}
 
-		downloadBtn.onclick = saveJson;
+		downloadBtn.onclick = () => window.saveJson();
+
+		window.addEventListener('keydown', (e) => {
+			if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's' && !e.shiftKey && !e.altKey) {
+				e.preventDefault();
+				window.saveJson();
+			}
+		});
 
 		function readFileAsText(file) {
 			return new Promise((resolve) => {
@@ -1848,6 +1990,29 @@
 			}
 		})();
 	</script>
+
+	<!-- Save Filename Modal -->
+	<dialog id="save-filename-modal" class="save-modal" aria-labelledby="save-modal-title">
+		<div class="save-modal-card">
+			<div class="save-modal-header">
+				<h3 id="save-modal-title" class="save-modal-heading">Save File</h3>
+				<button type="button" id="save-modal-close-btn" class="save-modal-close-btn" aria-label="Close">
+					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+					</svg>
+				</button>
+			</div>
+			<form id="save-modal-form" method="dialog" class="save-modal-form">
+				<label for="save-modal-input" class="save-modal-label">File name</label>
+				<input type="text" id="save-modal-input" class="save-modal-input" autocomplete="off" spellcheck="false" required />
+				<div class="save-modal-actions">
+					<button type="button" id="save-modal-cancel-btn" class="btn btn-secondary btn-sm">Cancel</button>
+					<button type="submit" id="save-modal-submit-btn" class="btn btn-primary btn-sm">Save</button>
+				</div>
+			</form>
+		</div>
+	</dialog>
+
 	<script src="dylen-shorthand.js"></script>
 	<script src="footer.js"></script>
 </body>

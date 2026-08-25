@@ -4,7 +4,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Text Tools - Andesec</title>
+  <title>Dylen Text Tools</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="icon" href="favicon.ico">
   <link rel="stylesheet" href="theme.css">
   <style>
     body {
@@ -158,7 +163,7 @@
     AOW
   </label>
   <div class="container">
-    <h1>Text Tools</h1>
+    <h1>Dylen Text Tools</h1>
     <p class="subtitle">A collection of tools to edit, view, and format your text</p>
 
     <div class="cards">
@@ -234,23 +239,29 @@
     </div>
 
     <footer>
-      <p>Made with ❤️ by <a href="https://github.com/andesec" target="_blank" rel="noopener">Andesec</a></p>
+      <p>Made with ❤️ by <a href="https://github.com/andesec/text-tools" target="_blank" rel="noopener">Dylen</a></p>
     </footer>
   </div>
   <script>
-    const WORKSPACE_REDIRECT_KEY = 'text_tools_always_open_workspace';
+    const WORKSPACE_REDIRECT_KEY = 'dylen_text_tools_always_open_workspace';
+    const LEGACY_WORKSPACE_REDIRECT_KEY = 'text_tools_always_open_workspace';
     const workspaceRedirectToggle = document.getElementById('workspaceRedirectToggle');
 
     const isInsideWorkspaceFrame = window.parent && window.parent !== window;
 
-    if (!isInsideWorkspaceFrame && localStorage.getItem(WORKSPACE_REDIRECT_KEY) === 'true') {
+    const shouldRedirect = localStorage.getItem(WORKSPACE_REDIRECT_KEY) === 'true' ||
+      localStorage.getItem(LEGACY_WORKSPACE_REDIRECT_KEY) === 'true';
+
+    if (!isInsideWorkspaceFrame && shouldRedirect) {
       window.location.href = 'workspace.html';
     }
 
     if (workspaceRedirectToggle) {
-      workspaceRedirectToggle.checked = localStorage.getItem(WORKSPACE_REDIRECT_KEY) === 'true';
+      workspaceRedirectToggle.checked = shouldRedirect;
       workspaceRedirectToggle.addEventListener('change', () => {
-        localStorage.setItem(WORKSPACE_REDIRECT_KEY, workspaceRedirectToggle.checked ? 'true' : 'false');
+        const val = workspaceRedirectToggle.checked ? 'true' : 'false';
+        localStorage.setItem(WORKSPACE_REDIRECT_KEY, val);
+        localStorage.removeItem(LEGACY_WORKSPACE_REDIRECT_KEY);
         if (workspaceRedirectToggle.checked) {
           window.location.href = 'workspace.html';
         }

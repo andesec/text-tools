@@ -1,9 +1,12 @@
-// Extract detectGridTables from pdf2md.js (browser code) and run it on the real PDF
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { createCanvas } from 'canvas';
 
-const pdfPath = '/Users/nd/dev/andesec/text-tools/Werben Sie für sich.pdf';
+const pdfPath = process.argv[2] || './uploads/test.pdf';
+if (!existsSync(pdfPath)) {
+    console.log(`Test PDF not found at ${pdfPath}. Place a PDF in ./uploads/ or pass as an argument.`);
+    process.exit(0);
+}
 const data = new Uint8Array(readFileSync(pdfPath));
 
 // The exact function from pdf2md.js (copy-pasted with no changes)

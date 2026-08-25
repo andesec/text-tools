@@ -316,28 +316,107 @@
 		URL.revokeObjectURL(url);
 	}
 
-	window.saveMarkdownOnly = function () {
-		if (!window.editor || !window.currentFileName) return;
-		downloadFile(window.editor.state.doc.toString(), window.currentFileName, "text/markdown");
+	function getSuggestedMarkdownFilename(defaultExt = ".md") {
+		const text = window.editor ? window.editor.state.doc.toString() : "";
+		let heading = null;
+
+		const lines = text.split(/\r?\n/);
+		for (const line of lines) {
+			const trimmed = line.trim();
+			if (trimmed.startsWith("#")) {
+				const h = trimmed.replace(/^#+\s*/, "").trim();
+				if (h) {
+					heading = h;
+					break;
+				}
+			}
+		}
+
+		if (!heading) {
+			const fmM = text.match(/^---\r?\n[\s\S]*?title:\s*["']?([^"'\r\n]+)["']?[\s\S]*?---/);
+			if (fmM && fmM[1]) {
+				heading = fmM[1].trim();
+			}
+		}
+
+		if (heading) {
+			let clean = heading.replace(/[/\\:*?"<>|]/g, "").trim();
+			if (clean) {
+				if (!clean.toLowerCase().endsWith(defaultExt.toLowerCase())) {
+					clean += defaultExt;
+				}
+				return clean;
+			}
+		}
+
+		if (window.currentFileName && window.currentFileName !== "Untitled.md" && window.currentFileName !== "scratchpad.md") {
+			const base = window.currentFileName.replace(/\.[^.]+$/, "");
+			return `${base}${defaultExt}`;
+		}
+		return `Untitled${defaultExt}`;
+	}
+
+	window.saveMarkdownOnly = async function () {
+		if (!window.editor) return;
 		closeSaveDropdown();
-		toast("Markdown saved");
+		const suggested = getSuggestedMarkdownFilename(".md");
+		const chosen = typeof window.promptSaveFilename === "function"
+			? await window.promptSaveFilename(suggested, "Save Markdown")
+			: window.prompt("Save Markdown as:", suggested);
+		if (!chosen) return;
+
+		let filename = chosen.trim();
+		if (!filename.toLowerCase().endsWith(".md") && !filename.includes(".")) {
+			filename += ".md";
+		}
+		window.currentFileName = filename;
+		if (typeof window.updateTabTitle === "function") window.updateTabTitle();
+
+		downloadFile(window.editor.state.doc.toString(), filename, "text/markdown");
+		toast("Saved as " + filename);
 	};
 
-	window.saveMarkdownWithComments = function () {
-		if (!window.editor || !window.currentFileName) return;
+	window.saveMarkdownWithComments = async function () {
+		if (!window.editor) return;
+		closeSaveDropdown();
+		const suggested = getSuggestedMarkdownFilename(".md");
+		const chosen = typeof window.promptSaveFilename === "function"
+			? await window.promptSaveFilename(suggested, "Save MD + Comments")
+			: window.prompt("Save MD + Comments as:", suggested);
+		if (!chosen) return;
+
+		let filename = chosen.trim();
+		if (!filename.toLowerCase().endsWith(".md") && !filename.includes(".")) {
+			filename += ".md";
+		}
+		window.currentFileName = filename;
+		if (typeof window.updateTabTitle === "function") window.updateTabTitle();
+
 		const md = window.editor.state.doc.toString();
 		const output = serializeComments(md);
-		downloadFile(output, window.currentFileName, "text/markdown");
-		closeSaveDropdown();
-		toast(comments.length ? "Saved with " + comments.length + " comment(s)" : "Markdown saved");
+		downloadFile(output, filename, "text/markdown");
+		toast(comments.length ? "Saved " + filename + " with " + comments.length + " comment(s)" : "Saved as " + filename);
 	};
 
-	window.exportComments = function (withQuotes) {
+	window.exportComments = async function (withQuotes) {
 		if (!comments.length) {
 			toast("No comments to export");
 			closeSaveDropdown();
 			return;
 		}
+		closeSaveDropdown();
+		const baseSuggested = getSuggestedMarkdownFilename("").replace(/\.md$/i, "");
+		const suggested = (baseSuggested || "comments") + "-comments.md";
+		const chosen = typeof window.promptSaveFilename === "function"
+			? await window.promptSaveFilename(suggested, "Export Comments")
+			: window.prompt("Export comments as:", suggested);
+		if (!chosen) return;
+
+		let filename = chosen.trim();
+		if (!filename.toLowerCase().endsWith(".md") && !filename.includes(".")) {
+			filename += ".md";
+		}
+
 		let output = "# Comments — " + (window.currentFileName || "Untitled") + "\n";
 		output += "# Exported " + new Date().toLocaleString() + "\n\n";
 
@@ -350,10 +429,8 @@
 			output += c.text + "\n\n";
 		});
 
-		const baseName = (window.currentFileName || "Untitled").replace(/\.\w+$/, "");
-		downloadFile(output, baseName + "-comments.md", "text/markdown");
-		closeSaveDropdown();
-		toast("Comments exported");
+		downloadFile(output, filename, "text/markdown");
+		toast("Comments exported as " + filename);
 	};
 
 	function fallbackCopy(text) {

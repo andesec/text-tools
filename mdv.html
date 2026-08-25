@@ -4,7 +4,12 @@
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-	<title>Markdown Explorer</title>
+	<title>Markdown Explorer — Dylen Text Tools</title>
+	<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+	<meta http-equiv="Pragma" content="no-cache" />
+	<meta http-equiv="Expires" content="0" />
+	<link rel="icon" type="image/png" href="favicon.png">
+	<link rel="icon" href="favicon.ico">
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link
@@ -2087,6 +2092,7 @@
 				syncPostMessage({ type: 'titleChange', title: title, version: syncVersion });
 			}
 		}
+		window.updateTabTitle = updateTabTitle;
 
 		function buildEditorThemeExtensions(isDark) {
 			return [
@@ -4237,7 +4243,103 @@
 				console.info('[mdv sync] ' + msg);
 			}
 		}
+
+		window.promptSaveFilename = function(suggestedName, titleText = "Save File") {
+			return new Promise((resolve) => {
+				const modal = document.getElementById("save-filename-modal");
+				const form = document.getElementById("save-modal-form");
+				const input = document.getElementById("save-modal-input");
+				const titleEl = document.getElementById("save-modal-title");
+				const closeBtn = document.getElementById("save-modal-close-btn");
+				const cancelBtn = document.getElementById("save-modal-cancel-btn");
+
+				if (!modal || !input || !form) {
+					const res = window.prompt("Enter file name:", suggestedName);
+					resolve(res ? res.trim() : null);
+					return;
+				}
+
+				if (titleEl) titleEl.textContent = titleText;
+				input.value = suggestedName || "Untitled.md";
+
+				let settled = false;
+				function finish(val) {
+					if (settled) return;
+					settled = true;
+					modal.close();
+					cleanup();
+					resolve(val);
+				}
+
+				function onSubmit(e) {
+					e.preventDefault();
+					const val = input.value.trim();
+					finish(val || suggestedName);
+				}
+
+				function onCancel() {
+					finish(null);
+				}
+
+				function onModalClose() {
+					finish(null);
+				}
+
+				function cleanup() {
+					form.removeEventListener("submit", onSubmit);
+					if (cancelBtn) cancelBtn.removeEventListener("click", onCancel);
+					if (closeBtn) closeBtn.removeEventListener("click", onCancel);
+					modal.removeEventListener("close", onModalClose);
+				}
+
+				form.addEventListener("submit", onSubmit);
+				if (cancelBtn) cancelBtn.addEventListener("click", onCancel);
+				if (closeBtn) closeBtn.addEventListener("click", onCancel);
+				modal.addEventListener("close", onModalClose);
+
+				modal.showModal();
+				input.focus();
+				const dotIdx = input.value.lastIndexOf('.');
+				if (dotIdx > 0) {
+					input.setSelectionRange(0, dotIdx);
+				} else {
+					input.select();
+				}
+			});
+		};
+
+		window.addEventListener('keydown', (e) => {
+			if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's' && !e.shiftKey && !e.altKey) {
+				e.preventDefault();
+				if (typeof window.saveMarkdownOnly === 'function') {
+					window.saveMarkdownOnly();
+				}
+			}
+		});
 	</script>
+
+	<!-- Save Filename Modal -->
+	<dialog id="save-filename-modal" class="save-modal" aria-labelledby="save-modal-title">
+		<div class="save-modal-card">
+			<div class="save-modal-header">
+				<h3 id="save-modal-title" class="save-modal-heading">Save File</h3>
+				<button type="button" id="save-modal-close-btn" class="save-modal-close-btn" aria-label="Close">
+					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+					</svg>
+				</button>
+			</div>
+			<form id="save-modal-form" method="dialog" class="save-modal-form">
+				<label for="save-modal-input" class="save-modal-label">File name</label>
+				<input type="text" id="save-modal-input" class="save-modal-input" autocomplete="off" spellcheck="false" required />
+				<div class="save-modal-actions">
+					<button type="button" id="save-modal-cancel-btn" class="btn btn-secondary btn-sm">Cancel</button>
+					<button type="submit" id="save-modal-submit-btn" class="btn btn-primary btn-sm">Save</button>
+				</div>
+			</form>
+		</div>
+	</dialog>
+
 	<!-- Mermaid Zoom Modal -->
 	<dialog id="mermaid-modal" closedby="any" aria-labelledby="mermaid-modal-title">
 		<div class="mermaid-modal-container">

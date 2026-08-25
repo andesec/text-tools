@@ -57,7 +57,7 @@ console.log();
 // Additional general cases
 console.log('═══ TEST 3: Simple flat object ═══');
 console.log(j2mdToMarkdown({
-  name: 'Andesec Text Tools',
+  name: 'Dylen Text Tools',
   version: '1.0.0',
   description: 'A collection of small text utilities',
   active: true,
