@@ -1092,9 +1092,11 @@ buf += decoder.<span class="tok-fn">decode</span>(value, <span class="tok-key">{
 					<span class="inline-code">error</span> /
 					<span class="inline-code">asset_export_failed</span> and no bundle. There are no partial
 					results.</li>
-				<li><strong>A document with no images is also an error</strong>
-					(<span class="inline-code">asset_export_failed</span>, "No embedded assets…"), not an empty
-					success.</li>
+				<li><strong>A document with no images is a success, not an error.</strong> You get a normal
+					<span class="inline-code">assetsResult</span> with
+					<span class="inline-code">assets: []</span> and the markdown unchanged, so you can handle
+					every reply the same way and keep
+					<span class="inline-code">error</span> for real failures.</li>
 				<li><strong>Duplicates are deduped.</strong> The same URL used five times yields one asset entry
 					and five references to the same <span class="inline-code">assets/</span> path.</li>
 				<li><strong>Bytes are never a blob: URL.</strong> An object URL is scoped to the iframe's origin

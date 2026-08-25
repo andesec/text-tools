@@ -340,9 +340,10 @@ Per-asset fields:
 - **All-or-nothing.** If any remote image fails to fetch, or any `data:` URI
   is undecodable, no bundle is produced and the iframe replies with
   `error` / `asset_export_failed`. There are no partial bundles.
-- A document containing no collectable assets is also reported as
-  `asset_export_failed` (with a "No embedded assets" message) rather than an
-  empty success.
+- A document containing **no collectable assets is a success**, not an error:
+  the reply is a normal `assetsResult` with `assets: []` and `markdown` set to
+  the document unchanged (no rewrite was needed). Hosts can therefore treat
+  every `assetsResult` uniformly and reserve `error` for genuine failures.
 - Bytes are always `ArrayBuffer`, never `Blob` and never a blob: URL — an
   object URL is scoped to the iframe's origin and would be unreadable by the
   host.
