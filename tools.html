@@ -30,6 +30,19 @@
       text-align: center;
     }
 
+    .hero-brand {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .hero-brand-logo {
+      width: 52px;
+      height: 52px;
+      object-fit: contain;
+    }
+
     h1 {
       color: var(--text-primary);
       font-size: 3rem;
@@ -135,6 +148,9 @@
 
 <body>
   <div class="container">
+    <div class="hero-brand">
+      <img src="logo.png" alt="Dylen Logo" class="hero-brand-logo" width="52" height="52">
+    </div>
     <h1>Select a Tool</h1>
     <p class="subtitle">Choose a tool to open in this tab</p>
 

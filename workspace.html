@@ -39,6 +39,27 @@
       background: var(--bg-surface-hover);
       color: var(--text-primary);
     }
+    .workspace-brand-link {
+      margin-left: 6px;
+      margin-right: 6px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+    }
+    .workspace-brand-link:hover {
+      background: var(--bg-surface-hover);
+      color: var(--text-primary);
+    }
+    .workspace-brand-icon {
+      width: 20px;
+      height: 20px;
+      object-fit: contain;
+    }
     #tabs-container {
       display: flex;
       overflow-x: auto;
@@ -124,8 +145,8 @@
 </head>
 <body>
   <div class="workspace-tabs-bar">
-    <a href="index.html" class="back-btn" title="Back to Home">
-      <i class="ph ph-house text-base"></i>
+    <a href="index.html" class="workspace-brand-link" title="Dylen Text Tools — Home">
+      <img src="logo.png" alt="Dylen" class="workspace-brand-icon" width="20" height="20">
     </a>
     <div id="tabs-container"></div>
     <label class="workspace-redirect-toggle">

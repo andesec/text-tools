@@ -1,5 +1,9 @@
 # Dylen Text Tools
 
+<p align="center">
+  <img src="logo.png" alt="Dylen Logo" width="72" height="72">
+</p>
+
 A collection of lightweight, **fully client-side** tools to edit, view, and format your text and documents — Markdown, JSON, PDF, diffs, Base64, encryption payloads, and high-quality text-to-speech. Zero build steps, private, fast, runs 100% in your browser.
 
 **Live app:** [https://andesec.github.io/text-tools/index.html](https://andesec.github.io/text-tools/index.html)
