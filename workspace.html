@@ -3,7 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Tabbed Workspace - Andesec</title>
+  <title>Tabbed Workspace — Dylen Text Tools</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="icon" href="favicon.ico">
   <link rel="stylesheet" href="theme.css">
   <style>
     body {
@@ -139,8 +144,10 @@
 
   <script>
     const MAX_TABS = 10;
-    const STORAGE_KEY = 'andesec_workspace_tabs';
-    const WORKSPACE_REDIRECT_KEY = 'text_tools_always_open_workspace';
+    const STORAGE_KEY = 'dylen_workspace_tabs';
+    const LEGACY_STORAGE_KEY = 'andesec_workspace_tabs';
+    const WORKSPACE_REDIRECT_KEY = 'dylen_text_tools_always_open_workspace';
+    const LEGACY_WORKSPACE_REDIRECT_KEY = 'text_tools_always_open_workspace';
     const NEW_TAB_URL = 'tools.html';
     
     let tabs = [];
@@ -396,7 +403,14 @@
 
     function loadState() {
       try {
-        const stored = localStorage.getItem(STORAGE_KEY);
+        let stored = localStorage.getItem(STORAGE_KEY);
+        if (!stored) {
+          stored = localStorage.getItem(LEGACY_STORAGE_KEY);
+          if (stored) {
+            localStorage.setItem(STORAGE_KEY, stored);
+            localStorage.removeItem(LEGACY_STORAGE_KEY);
+          }
+        }
         if (stored) {
           const parsed = JSON.parse(stored);
           tabs = parsed.tabs || [];
@@ -413,9 +427,15 @@
               if (!t.url.includes('show_chrome=1')) {
                 t.url += (t.url.includes('?') ? '&' : '?') + 'show_chrome=1';
               }
-              // Fix corrupted titles from migration (raw class strings or stale emoji icons)
-              if (t.title && (t.title.startsWith('ph ') || t.title.startsWith('ph-'))) {
-                t.title = t.assignedName || info.name;
+              // Fix corrupted or legacy titles from migration
+              if (t.title) {
+                t.title = t.title
+                  .replace(/\s*[-—]\s*Andesec(\s*Text\s*Tools)?/gi, '')
+                  .replace(/\s*[-—]\s*Text\s*Tools/gi, '')
+                  .trim();
+                if (t.title.startsWith('ph ') || t.title.startsWith('ph-') || t.title === 'Tool' || t.title === 'New Tab') {
+                  t.title = t.assignedName || info.name;
+                }
               }
             }
           });
@@ -534,7 +554,7 @@
             const newUrl = newUrlPath + iframe.contentWindow.location.search;
             
             let newTitle = iframe.contentDocument.title || 'Tool';
-            if (newTitle === 'Text Tools - Andesec' || newTitle === 'Select a Tool') {
+            if (newTitle === 'Text Tools - Andesec' || newTitle === 'Dylen Text Tools' || newTitle === 'Select a Tool' || newTitle === 'Select a Tool — Dylen Text Tools') {
               newTitle = 'New Tab';
             }
             
@@ -553,26 +573,38 @@
                 const defaultTitles = [
                   'Markdown Viewer',
                   'Markdown Explorer', 
+                  'Markdown Explorer — Dylen Text Tools', 
                   'JSON Viewer', 
+                  'JSON Explorer — Dylen Text Tools', 
+                  'JS Explorer',
                   'New Tab', 
                   'Tool', 
                   'Text Tools - Andesec', 
+                  'Dylen Text Tools',
                   'Select a Tool',
+                  'Select a Tool — Dylen Text Tools',
                   'Diff Tool',
                   'Diff Tool — Text Tools',
+                  'Diff Explorer — Dylen Text Tools',
                   'Base64 & URI',
                   'Base64 & URI Utility — Andesec',
+                  'Base64 & URI Utility — Dylen Text Tools',
                   'UTV - URI & Base64 Utility',
                   'Encryption Utility',
                   'EDU Explorer — Andesec',
+                  'EDU Explorer — Dylen Text Tools',
                   'Encryption/Decryption Utility - Andesec Text Tools',
                   'PDF Splitter',
                   'PDF Explorer — Andesec',
+                  'PDF Explorer — Dylen Text Tools',
                   'PDF Splitter - Andesec',
+                  'PDF Splitter — Dylen Text Tools',
                   'PDF → Markdown',
                   'PDF → Markdown — Andesec',
+                  'PDF → Markdown — Dylen Text Tools',
                   'Supersonic TTS',
-                  'Supertonic TTS Player - Andesec'
+                  'Supertonic TTS Player - Andesec',
+                  'Supersonic TTS — Dylen Text Tools'
                 ];
                 if (defaultTitles.includes(newTitle)) {
                   newTitle = t.assignedName;
@@ -621,9 +653,9 @@
     function updateBrowserTitle() {
       const activeTab = tabs.find(t => t.id === activeTabId);
       if (activeTab) {
-        document.title = `${activeTab.title} - Tabbed Workspace - Andesec`;
+        document.title = `${activeTab.title} - Tabbed Workspace — Dylen Text Tools`;
       } else {
-        document.title = 'Tabbed Workspace - Andesec';
+        document.title = 'Tabbed Workspace — Dylen Text Tools';
       }
     }
 

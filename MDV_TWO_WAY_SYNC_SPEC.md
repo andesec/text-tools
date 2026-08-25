@@ -1,4 +1,4 @@
-# Text Tools — Two-Way Embedding Sync
+# Dylen Text Tools — Two-Way Embedding Sync
 
 **Status:** Implemented in `mdv.html` (shipped in commit `2901f46`).
 Not yet implemented in `jsv.html` / `pdf.html`.
@@ -6,7 +6,7 @@ Not yet implemented in `jsv.html` / `pdf.html`.
 **Author goal:** Allow a host page (parent) to keep its local copy of the
 document in sync with the editor's state, in real time, without polling.
 
-This is a generic, tool-agnostic feature. Any host that embeds a Text Tools
+This is a generic, tool-agnostic feature. Any host that embeds a Dylen Text Tools
 iframe should be able to use it, not just the Dylen Source Capture extension.
 
 ---

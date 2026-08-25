@@ -1,3 +1,9 @@
 node_modules/
 package-lock.json
 .DS_Store
+
+# Local test uploads & temporary artifacts
+uploads/*
+!uploads/.gitkeep
+images/
+scratch/

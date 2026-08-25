@@ -4624,7 +4624,7 @@
 
 
 /* ============================================
-   Text Tools — Shared Design Tokens & Theme
+   Dylen Text Tools — Shared Design Tokens & Theme
    Modern developer-tool aesthetic (Linear/Vercel/Raycast inspired)
    ============================================ */
 
@@ -5633,3 +5633,93 @@ body.sidebar-collapsed .sidebar-toggle-btn .icon-expand {
 .tool-bg-pdf2md    { background: linear-gradient(to bottom right, rgb(14, 165, 233), rgb(2, 132, 199)); }
 .tool-bg-tts       { background: linear-gradient(to bottom right, rgb(108, 92, 231), rgb(124, 111, 240)); }
 .tool-bg-workspace { background: var(--accent); }
+
+/* ── Save Modal Component ── */
+.save-modal {
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  padding: 0;
+  max-width: 440px;
+  width: 90vw;
+  box-shadow: var(--shadow-xl);
+}
+
+.save-modal::backdrop {
+  background: var(--modal-backdrop);
+}
+
+.save-modal-card {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.save-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.save-modal-heading {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.save-modal-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.save-modal-close-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-surface-hover);
+}
+
+.save-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.save-modal-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.save-modal-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface-raised);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.save-modal-input:focus {
+  border-color: var(--accent);
+}
+
+.save-modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
