@@ -28,6 +28,10 @@
     const progressSection = $('#progress-section');
     const progressBar = $('#progress-bar');
     const progressText = $('#progress-text');
+    const previewSection = $('#preview-section');
+    const previewToggleHeader = $('#preview-toggle-header');
+    const previewContainer = $('#preview-container');
+    const previewStatus = $('#preview-status');
     const outputSection = $('#output-section');
     const downloadBtn = $('#download-btn');
     const mdPreviewFrame = $('#md-preview-iframe');
@@ -35,11 +39,23 @@
     const hfPatterns = $('#hf-patterns');
     const hfCountBadge = $('#hf-count-badge');
     const hfAutoStatus = $('#hf-auto-status');
-    const pagesPanel = $('#pages-panel');
-    const sidebarThumbList = $('#sidebar-thumb-list');
     const sidebarToggleBtn = $('#sidebar-toggle-btn');
     const sidebar = $('#settings-sidebar');
     const backdrop = $('#mobile-sidebar-backdrop');
+
+    const modal = $('#large-preview-modal');
+    const modalCanvas = $('#modal-canvas');
+    const modalCanvasContainer = $('#modal-canvas-container');
+    const modalViewport = $('#modal-viewport');
+    const modalPageInfo = $('#modal-page-info');
+    const modalPageTotal = $('#modal-page-total');
+    const modalZoomLevel = $('#modal-zoom-level');
+    const modalZoomIn = $('#modal-zoom-in');
+    const modalZoomOut = $('#modal-zoom-out');
+    const modalZoomReset = $('#modal-zoom-reset');
+    const modalPrevPage = $('#modal-prev-page');
+    const modalNextPage = $('#modal-next-page');
+    const modalClose = $('#modal-close');
 
     const toastEl = $('#toast');
 
@@ -57,9 +73,27 @@
     let globalFontMap = null; // size->level map from cross-page analysis
     let bodyFontSize = 12;
 
+    // ── Modal State ──
+    let modalActivePage = 1;
+    let modalZoomScale = 1.0;
+    let modalRendering = false;
+    let modalPendingPage = null;
+
     // ═══════════════════════════════════════════════════
     // FILE HANDLING
     // ═══════════════════════════════════════════════════
+
+    if (previewToggleHeader) {
+        previewToggleHeader.addEventListener('click', () => {
+            previewSection.classList.toggle('collapsed');
+        });
+        previewToggleHeader.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                previewToggleHeader.click();
+            }
+        });
+    }
 
     dropZone.onclick = () => fileInput.click();
     dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); };
@@ -75,34 +109,35 @@
         detectedHeaders = []; detectedFooters = []; excludedPatterns = new Set();
         generatedMarkdown = ''; generatedImages = {}; globalFontMap = null;
         isConverting = false;
-        fileInfo.style.display = 'none';
-        // page preview already removed from main content
-        progressSection.style.display = 'none';
-        outputSection.style.display = 'none';
+        fileInfo.classList.add('hidden');
+        previewSection.classList.add('hidden');
+        previewSection.classList.remove('collapsed');
+        previewContainer.innerHTML = '';
+        previewStatus.textContent = '';
+        progressSection.classList.add('hidden');
+        outputSection.classList.add('hidden');
         outputSection.classList.remove('flex-grow');
         mdPreviewFrame.classList.remove('visible');
         mdPreviewFrame.src = 'mdv.html';
-        // sidebarThumbList cleared above
         hfPatterns.innerHTML = '';
         hfPanel.classList.add('collapsed');
-        hfCountBadge.style.display = 'none';
+        hfCountBadge.classList.add('hidden');
         hfAutoStatus.textContent = 'Auto-detecting…';
-        pagesPanel.classList.add('collapsed');
-        sidebarThumbList.innerHTML = '';
         pageCountEl.textContent = '0 Pages';
-        pageCountBadge.style.display = 'none';
+        pageCountBadge.classList.add('hidden');
         pageCountBadge.textContent = '0 Pages';
         $('#stat-pages').textContent = '0 pp';
         $('#stat-images').textContent = '0 img';
         $('#stat-tables').textContent = '0 tbl';
         $('#stat-size').textContent = '0 KB';
-        convertBtn.style.display = 'none';
+        convertBtn.classList.add('hidden');
         newPdfBtn.classList.add('hidden');
-        progressInline.style.display = 'none';
+        progressInline.classList.add('hidden');
         $('#opt-include-hf').checked = false;
-        dropZone.style.display = '';
+        dropZone.classList.remove('hidden');
         dropZone.classList.remove('drag-over');
         progressBar.style.width = '0%';
+        closeLargePreview();
     };
 
     async function handleFile(file) {
@@ -120,13 +155,12 @@
             totalPages = pdfJsDoc.numPages;
             pageCountEl.textContent = totalPages + (totalPages === 1 ? ' Page' : ' Pages');
             pageCountBadge.textContent = totalPages + (totalPages === 1 ? ' Page' : ' Pages');
-            pageCountBadge.style.display = 'inline';
+            pageCountBadge.classList.remove('hidden');
 
-            fileInfo.style.display = 'flex';
-            // page preview removed — thumbnails in sidebar only
-            convertBtn.style.display = '';
+            fileInfo.classList.remove('hidden');
+            convertBtn.classList.remove('hidden');
             newPdfBtn.classList.remove('hidden');
-            dropZone.style.display = 'none';
+            dropZone.classList.add('hidden');
 
             // Global font analysis (pass 1)
             await globalFontAnalysis();
@@ -134,8 +168,8 @@
             // Pre-analyze for headers/footers
             await preAnalyze();
 
-            // Render thumbnails
-            await renderThumbnails();
+            // Render page cards in main area
+            await renderPageCards();
         } catch (err) {
             console.error(err);
             showToast('Error loading PDF. It may be encrypted or corrupted.', true);
@@ -238,12 +272,12 @@
             hfAutoStatus.textContent = totalPatterns + ' pattern' + (totalPatterns > 1 ? 's' : '') + ' found';
             hfPanel.classList.remove('collapsed');
             hfCountBadge.textContent = totalPatterns;
-            hfCountBadge.style.display = '';
+            hfCountBadge.classList.remove('hidden');
             renderHFPreview();
         } else {
             hfAutoStatus.textContent = 'None detected';
             hfPanel.classList.add('collapsed');
-            hfCountBadge.style.display = 'none';
+            hfCountBadge.classList.add('hidden');
         }
     }
 
@@ -302,33 +336,180 @@
     }
 
     // ═══════════════════════════════════════════════════
-    // THUMBNAILS (sidebar only)
+    // MAIN PANEL PAGE CARDS
     // ═══════════════════════════════════════════════════
 
-    async function renderThumbnails() {
-        sidebarThumbList.innerHTML = '';
-        const maxThumbs = Math.min(totalPages, 50);
+    async function renderPageCards() {
+        previewContainer.innerHTML = '';
+        if (!pdfJsDoc || totalPages === 0) {
+            previewSection.classList.add('hidden');
+            return;
+        }
+        previewSection.classList.remove('hidden');
+        previewStatus.textContent = 'Rendering 1 of ' + totalPages + '…';
 
-        for (let i = 1; i <= maxThumbs; i++) {
+        for (let i = 1; i <= totalPages; i++) {
             const page = await pdfJsDoc.getPage(i);
-            const viewport = page.getViewport({ scale: 0.2 });
-            const canvas = document.createElement('canvas');
-            canvas.width = viewport.width; canvas.height = viewport.height;
+            const viewport = page.getViewport({ scale: 0.4 });
+
+            const card = document.createElement('button');
+            card.className = 'page-card';
+            card.type = 'button';
+            card.setAttribute('aria-label', 'View page ' + i);
+            card.innerHTML = '<div class="page-thumbnail-wrapper"><canvas></canvas></div><div class="page-number-badge">Page ' + i + '</div>';
+
+            const canvas = card.querySelector('canvas');
             const ctx = canvas.getContext('2d');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+
             await page.render({ canvasContext: ctx, viewport }).promise;
-            const sCanvas = document.createElement('canvas');
-            sCanvas.width = 40; sCanvas.height = 56;
-            const sCtx = sCanvas.getContext('2d');
-            sCtx.drawImage(canvas, 0, 0, 40, 56);
-            const sItem = document.createElement('div'); sItem.className = 'sidebar-thumb-item';
-            sItem.innerHTML = '<span>' + i + '</span>';
-            sItem.insertBefore(sCanvas, sItem.firstChild);
-            sItem.title = 'Page ' + i;
-            sidebarThumbList.appendChild(sItem);
+
+            card.addEventListener('click', (e) => {
+                e.stopPropagation();
+                showLargePreview(i);
+            });
+
+            previewContainer.appendChild(card);
+            previewStatus.textContent = 'Rendering ' + i + ' of ' + totalPages + '…';
         }
 
-        if (totalPages > 0) pagesPanel.classList.remove('collapsed');
+        previewStatus.textContent = totalPages + (totalPages === 1 ? ' Page' : ' Pages');
     }
+
+    // ═══════════════════════════════════════════════════
+    // LARGE PREVIEW MODAL WITH ZOOM & NAVIGATION
+    // ═══════════════════════════════════════════════════
+
+    const ZOOM_STEP = 0.25;
+    const MIN_ZOOM = 0.25;
+    const MAX_ZOOM = 3.0;
+
+    function updateModalZoom(newScale) {
+        modalZoomScale = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, Math.round(newScale * 100) / 100));
+        modalZoomLevel.textContent = Math.round(modalZoomScale * 100) + '%';
+        modalCanvasContainer.style.transform = 'scale(' + modalZoomScale + ')';
+    }
+
+    async function renderModalPage(pageIndex) {
+        if (!pdfJsDoc || pageIndex < 1 || pageIndex > totalPages) return;
+        modalActivePage = pageIndex;
+        modalPageInfo.textContent = 'Page ' + pageIndex;
+        modalPageTotal.textContent = 'of ' + totalPages;
+        modalPrevPage.disabled = pageIndex <= 1;
+        modalNextPage.disabled = pageIndex >= totalPages;
+
+        if (modalRendering) {
+            modalPendingPage = pageIndex;
+            return;
+        }
+        modalRendering = true;
+
+        try {
+            const page = await pdfJsDoc.getPage(pageIndex);
+            const viewport = page.getViewport({ scale: 1.5 });
+            const ctx = modalCanvas.getContext('2d');
+            modalCanvas.width = viewport.width;
+            modalCanvas.height = viewport.height;
+            modalCanvasContainer.style.width = viewport.width + 'px';
+            modalCanvasContainer.style.height = viewport.height + 'px';
+
+            await page.render({ canvasContext: ctx, viewport }).promise;
+        } catch (err) {
+            console.error('[pdf2md] Error in large preview:', err);
+        } finally {
+            modalRendering = false;
+            if (modalPendingPage !== null) {
+                const next = modalPendingPage;
+                modalPendingPage = null;
+                renderModalPage(next);
+            }
+        }
+    }
+
+    function showLargePreview(pageIndex) {
+        modalActivePage = pageIndex;
+        updateModalZoom(1.0);
+        modal.classList.remove('hidden');
+        renderModalPage(pageIndex);
+    }
+
+    function closeLargePreview() {
+        modal.classList.add('hidden');
+    }
+
+    modalClose.onclick = closeLargePreview;
+    modal.onclick = (e) => {
+        if (e.target === modal) closeLargePreview();
+    };
+
+    modalPrevPage.onclick = () => {
+        if (modalActivePage > 1) renderModalPage(modalActivePage - 1);
+    };
+    modalNextPage.onclick = () => {
+        if (modalActivePage < totalPages) renderModalPage(modalActivePage + 1);
+    };
+
+    modalZoomIn.onclick = () => updateModalZoom(modalZoomScale + ZOOM_STEP);
+    modalZoomOut.onclick = () => updateModalZoom(modalZoomScale - ZOOM_STEP);
+    modalZoomReset.onclick = () => updateModalZoom(1.0);
+
+    modalViewport.addEventListener('wheel', (e) => {
+        if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            const delta = e.deltaY < 0 ? ZOOM_STEP : -ZOOM_STEP;
+            updateModalZoom(modalZoomScale + delta);
+        }
+    }, { passive: false });
+
+    // Drag to pan in modal viewport
+    let isDraggingModal = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let scrollStartX = 0;
+    let scrollStartY = 0;
+
+    modalViewport.addEventListener('mousedown', (e) => {
+        if (e.target === modalClose || e.target.closest('button')) return;
+        isDraggingModal = true;
+        modalViewport.classList.add('dragging');
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+        scrollStartX = modalViewport.scrollLeft;
+        scrollStartY = modalViewport.scrollTop;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (!isDraggingModal) return;
+        const dx = e.clientX - dragStartX;
+        const dy = e.clientY - dragStartY;
+        modalViewport.scrollLeft = scrollStartX - dx;
+        modalViewport.scrollTop = scrollStartY - dy;
+    });
+
+    window.addEventListener('mouseup', () => {
+        if (isDraggingModal) {
+            isDraggingModal = false;
+            modalViewport.classList.remove('dragging');
+        }
+    });
+
+    window.addEventListener('keydown', (e) => {
+        if (modal.classList.contains('hidden')) return;
+        if (e.key === 'Escape') {
+            closeLargePreview();
+        } else if (e.key === 'ArrowLeft' || e.key === 'p') {
+            if (modalActivePage > 1) renderModalPage(modalActivePage - 1);
+        } else if (e.key === 'ArrowRight' || e.key === 'n') {
+            if (modalActivePage < totalPages) renderModalPage(modalActivePage + 1);
+        } else if (e.key === '+' || e.key === '=') {
+            updateModalZoom(modalZoomScale + ZOOM_STEP);
+        } else if (e.key === '-' || e.key === '_') {
+            updateModalZoom(modalZoomScale - ZOOM_STEP);
+        } else if (e.key === '0') {
+            updateModalZoom(1.0);
+        }
+    });
 
 
     // ═══════════════════════════════════════════════════
@@ -1206,12 +1387,12 @@
     convertBtn.onclick = async () => {
         if (isConverting || !pdfJsDoc) return;
         isConverting = true; convertBtn.disabled = true;
-        outputSection.style.display = 'none';
+        outputSection.classList.add('hidden');
         outputSection.classList.remove('flex-grow');
         mdPreviewFrame.classList.remove('visible');
         mdPreviewFrame.src = 'mdv.html';
-        progressSection.style.display = 'block';
-        progressInline.style.display = '';
+        progressSection.classList.remove('hidden');
+        progressInline.classList.remove('hidden');
 
         const opts = {
             extractImages: $('#opt-extract-images').checked,
@@ -1349,9 +1530,10 @@
         console.log('[pdf2md] FINAL markdown (first 2000):', JSON.stringify(md.slice(0, 2000)));
         console.log('[pdf2md] FINAL markdown (last 2000):', JSON.stringify(md.slice(-2000)));
 
-        progressSection.style.display = 'none';
-        progressInline.style.display = 'none';
-        outputSection.style.display = 'flex';
+        progressSection.classList.add('hidden');
+        progressInline.classList.add('hidden');
+        previewSection.classList.add('collapsed');
+        outputSection.classList.remove('hidden');
         outputSection.classList.add('flex-grow');
         // Show the iframe and push markdown into it (issue #2)
         mdPreviewFrame.classList.add('visible');
@@ -1694,8 +1876,12 @@
         toastEl.textContent = msg;
         toastEl.style.background = isError ? 'var(--danger)' : 'var(--bg-surface-raised)';
         toastEl.style.color = isError ? '#fff' : 'var(--text-primary)';
-        toastEl.style.display = 'block'; toastEl.style.opacity = '1';
-        setTimeout(() => { toastEl.style.opacity = '0'; setTimeout(() => { toastEl.style.display = 'none'; }, 200); }, 3000);
+        toastEl.classList.remove('hidden');
+        toastEl.classList.add('toast-show');
+        setTimeout(() => {
+            toastEl.classList.remove('toast-show');
+            setTimeout(() => { toastEl.classList.add('hidden'); }, 200);
+        }, 3000);
     }
 
     function formatBytes(bytes) {
