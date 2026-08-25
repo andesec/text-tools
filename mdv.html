@@ -4060,6 +4060,65 @@
 				return;
 			}
 
+			// ── requestAssets: hand the markdown + its images to the host ──────
+			// Same pipeline the "Export with Assets (.zip)" menu item uses, but
+			// the bundle is posted back instead of downloaded. Bytes travel as
+			// ArrayBuffer (structured-cloneable); a Blob URL would be scoped to
+			// this origin and unreadable by the host.
+			if (msg.type === 'requestAssets') {
+				const parentOrigin = _syncValidateOrigin(event, msg);
+				if (parentOrigin === null) return;
+				syncTargetOrigin = parentOrigin;
+
+				if (!editor || !window.MdvAssets || typeof window.MdvAssets.buildAssetBundle !== 'function') {
+					syncPostMessage({
+						type: 'error',
+						code: 'asset_export_failed',
+						message: 'Asset export is unavailable in this session.'
+					});
+					return;
+				}
+
+				const mdText = editor.state.doc.toString();
+				const baseName = (currentFileName || 'Untitled').replace(/\.\w+$/, '');
+
+				window.MdvAssets.buildAssetBundle(mdText, baseName).then(function (bundle) {
+					// syncPostMessage routes to syncTargetOrigin (the sender's real
+					// origin), never msg.options.targetOrigin — see the note at the
+					// top of the sync block.
+					syncPostMessage({
+						type: 'assetsResult',
+						markdown: bundle.markdown,
+						filename: baseName + '.md',
+						format: 'markdown',
+						assets: bundle.assets,
+						version: syncVersion
+					});
+				}).catch(function (e) {
+					// A document with no collectable images is a normal outcome for a host
+					// asking for the bundle, not a failure — reply with an empty asset list
+					// and the untouched text (no rewrite happened, so mdText is canonical).
+					// The builder still throws so exportWithAssets' toast keeps working.
+					if (e && e.code === 'no_assets') {
+						syncPostMessage({
+							type: 'assetsResult',
+							markdown: mdText,
+							filename: baseName + '.md',
+							format: 'markdown',
+							assets: [],
+							version: syncVersion
+						});
+						return;
+					}
+					syncPostMessage({
+						type: 'error',
+						code: 'asset_export_failed',
+						message: (e && e.message) ? e.message : 'Asset export failed.'
+					});
+				});
+				return;
+			}
+
 			if (msg.type !== 'loadContent') return;
 
 			// Binary payload: mdv.html is a markdown editor and does not

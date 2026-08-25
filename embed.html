@@ -585,6 +585,7 @@
 			<a href="#message-spec">Message spec</a>
 			<a href="#loading-text">Loading text</a>
 			<a href="#streaming">Streaming</a>
+			<a href="#request-assets">Exporting assets</a>
 			<a href="#loading-pdf">Loading a PDF</a>
 			<a href="#acks">Acknowledgements</a>
 			<a href="#events">Listening to the iframe</a>
@@ -998,6 +999,116 @@ buf += decoder.<span class="tok-fn">decode</span>(value, <span class="tok-key">{
 					<code>jsv.html</code> currently accepts messages from any origin and uses
 					<span class="inline-code">targetOrigin</span> only to address its outbound replies — do not
 					rely on it as a security boundary.</li>
+			</ul>
+
+			<h2 id="request-assets" class="anchor">Exporting a document with its assets</h2>
+			<p>
+				Send <span class="inline-code">requestAssets</span> to get the current document back
+				<em>together with its images</em>. The iframe replies with
+				<span class="inline-code">assetsResult</span>: Markdown in which every collected image has been
+				rewritten to a relative <span class="inline-code">assets/&lt;name&gt;</span> path, plus the raw
+				bytes of each file.
+			</p>
+			<p>
+				This is the same pipeline behind the Save &rarr; <em>Export with Assets (.zip)</em> menu item,
+				except the bundle is handed to you instead of downloaded. Use it when you need to persist or
+				re-upload a document whose images are remote URLs or inline <span class="inline-code">data:</span>
+				URIs. <strong>Markdown only</strong> — <code>mdv.html</code>.
+			</p>
+
+			<pre class="code-block"><code>iframe.contentWindow.<span class="tok-fn">postMessage</span>(<span class="tok-key">{</span> <span class="tok-prop">type</span>: <span class="tok-str">"requestAssets"</span> <span class="tok-key">}</span>, <span class="tok-str">"*"</span>);
+
+<span class="tok-key">window</span>.<span class="tok-fn">addEventListener</span>(<span class="tok-str">"message"</span>, (e) =&gt; <span class="tok-key">{</span>
+  <span class="tok-key">if</span> (e.data?.type === <span class="tok-str">"assetsResult"</span>) <span class="tok-key">{</span>
+    <span class="tok-com">// e.data.markdown  -> rewritten source</span>
+    <span class="tok-com">// e.data.assets    -> [{ name, mime, bytes: ArrayBuffer, alt, charOffset, headingPath }]</span>
+    <span class="tok-key">for</span> (<span class="tok-key">const</span> a <span class="tok-key">of</span> e.data.assets) <span class="tok-key">{</span>
+      <span class="tok-key">const</span> file = <span class="tok-key">new</span> <span class="tok-fn">File</span>([a.bytes], a.name, <span class="tok-key">{</span> type: a.mime <span class="tok-key">}</span>);
+      <span class="tok-com">// ... upload `file`, then save e.data.markdown</span>
+    <span class="tok-key">}</span>
+  <span class="tok-key">}</span>
+  <span class="tok-key">if</span> (e.data?.type === <span class="tok-str">"error"</span> &amp;&amp; e.data.code === <span class="tok-str">"asset_export_failed"</span>) <span class="tok-key">{</span>
+    <span class="tok-com">// nothing was exported — see e.data.message</span>
+  <span class="tok-key">}</span>
+<span class="tok-key">}</span>);</code></pre>
+
+			<p>Each entry in <span class="inline-code">assets</span> carries:</p>
+
+			<table class="docs-table">
+				<thead>
+					<tr>
+						<th>Field</th>
+						<th>Type</th>
+						<th>Description</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td><code>name</code></td>
+						<td>string</td>
+						<td>Filename inside the <span class="inline-code">assets/</span> folder, matching the
+							path written into the returned Markdown. Unique — collisions get a
+							<span class="inline-code">-2</span>, <span class="inline-code">-3</span>, … suffix.
+						</td>
+					</tr>
+					<tr>
+						<td><code>mime</code></td>
+						<td>string</td>
+						<td>The response <span class="inline-code">content-type</span> for remote images, or the
+							data URI's own media type. May be an empty string if the server sent none.</td>
+					</tr>
+					<tr>
+						<td><code>bytes</code></td>
+						<td>ArrayBuffer</td>
+						<td>The raw file. Structured-cloneable, so it survives the origin hop intact — wrap it in
+							a <span class="inline-code">Blob</span> or <span class="inline-code">File</span> on
+							your side.</td>
+					</tr>
+					<tr>
+						<td><code>alt</code></td>
+						<td>string</td>
+						<td>Alt text from the image's first occurrence.</td>
+					</tr>
+					<tr>
+						<td><code>charOffset</code></td>
+						<td>number</td>
+						<td>Character offset of the first occurrence in the <em>original</em> document (before
+							the rewrite).</td>
+					</tr>
+					<tr>
+						<td><code>headingPath</code></td>
+						<td>string[]</td>
+						<td>The active heading stack at that offset, outermost first — e.g.
+							<span class="inline-code">["Guide", "Setup"]</span>. Empty if the image appears
+							before any heading.</td>
+					</tr>
+				</tbody>
+			</table>
+
+			<h3>Things to know</h3>
+			<ul>
+				<li><strong>All-or-nothing.</strong> If any remote image fails to fetch, or any
+					<span class="inline-code">data:</span> URI is undecodable, you get
+					<span class="inline-code">error</span> /
+					<span class="inline-code">asset_export_failed</span> and no bundle. There are no partial
+					results.</li>
+				<li><strong>A document with no images is also an error</strong>
+					(<span class="inline-code">asset_export_failed</span>, "No embedded assets…"), not an empty
+					success.</li>
+				<li><strong>Duplicates are deduped.</strong> The same URL used five times yields one asset entry
+					and five references to the same <span class="inline-code">assets/</span> path.</li>
+				<li><strong>Bytes are never a blob: URL.</strong> An object URL is scoped to the iframe's origin
+					and would be unreadable by your page.</li>
+				<li><strong>Read-only.</strong> The editor's own buffer is untouched — the rewrite exists only in
+					the returned <span class="inline-code">markdown</span> string. Sync
+					<span class="inline-code">version</span> is not bumped.</li>
+				<li><strong>Scope.</strong> Markdown images (<span class="inline-code">![alt](url)</span>) with
+					<span class="inline-code">http(s):</span> or base64 <span class="inline-code">data:</span>
+					URLs. Plain hyperlinks are deliberately left alone; angle-bracket URLs, reference-style
+					images, and relative paths are not collected.</li>
+				<li><strong>Origin is validated</strong> exactly as for <code>loadContent</code> — a mismatched
+					<span class="inline-code">options.targetOrigin</span> replies
+					<span class="inline-code">origin_mismatch</span> and the bundle is not sent.</li>
 			</ul>
 
 			<h2 id="loading-pdf" class="anchor">Loading a PDF into <code>pdf.html</code></h2>

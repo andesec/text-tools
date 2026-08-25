@@ -1,6 +1,7 @@
 # Text Tools — Two-Way Embedding Sync
 
-**Status:** Proposed (not yet implemented in mdv.html / jsv.html / pdf.html)
+**Status:** Implemented in `mdv.html` (shipped in commit `2901f46`).
+Not yet implemented in `jsv.html` / `pdf.html`.
 **Target tools:** `mdv.html`, `jsv.html`, `pdf.html` (all embeddable tools)
 **Author goal:** Allow a host page (parent) to keep its local copy of the
 document in sync with the editor's state, in real time, without polling.
@@ -265,6 +266,97 @@ user is typing feedback, then flip back to rendered output.
 
 ---
 
+### 3.8 parent → iframe: `requestAssets`
+
+Asks the iframe to hand back the current document **together with its
+images**, as a self-contained bundle. This is the same pipeline behind the
+Save → "Export with Assets (.zip)" menu item, but the result is posted to
+the host instead of downloaded.
+
+Use this when the host needs to persist or re-upload a document whose
+images are remote URLs or inline `data:` URIs — after the round-trip, every
+image reference is a relative `assets/<name>` path and the host holds the
+bytes.
+
+```json
+{
+  "type": "requestAssets"
+}
+```
+
+| Field     | Type   | Notes |
+|-----------|--------|-------|
+| `type`    | string | Literal `"requestAssets"`. |
+| `options` | object | Optional. Same envelope as `loadContent`; only `targetOrigin` is read. |
+
+**Reply — `assetsResult` (iframe → parent):**
+
+```json
+{
+  "type": "assetsResult",
+  "markdown": "# Title\n\n![pic](assets/a.png)\n",
+  "filename": "Title.md",
+  "format": "markdown",
+  "assets": [
+    {
+      "name": "a.png",
+      "mime": "image/png",
+      "bytes": "<ArrayBuffer>",
+      "alt": "pic",
+      "charOffset": 20,
+      "headingPath": ["Title", "Section"]
+    }
+  ],
+  "version": 7
+}
+```
+
+| Field         | Type        | Notes |
+|---------------|-------------|-------|
+| `markdown`    | string      | The document rewritten so every collected image points at `assets/<name>`. The editor's own buffer is **not** modified. |
+| `filename`    | string      | Current document name with a `.md` extension. |
+| `format`      | string      | Always `"markdown"`. |
+| `assets`      | array       | One entry per **unique** asset (duplicate URLs are deduped). |
+| `version`     | number      | Current sync `version` at the time of the reply. |
+
+Per-asset fields:
+
+| Field         | Type          | Notes |
+|---------------|---------------|-------|
+| `name`        | string        | Filename within the `assets/` folder. Unique; collisions get a `-2`, `-3`, … suffix. Sanitized to `[A-Za-z0-9._-]`. |
+| `mime`        | string        | HTTP `content-type` for remote assets, or the data URI's own media type. May be `""` if the server sent none. |
+| `bytes`       | ArrayBuffer   | The raw file. Structured-cloneable, so it crosses the origin boundary intact. |
+| `alt`         | string        | Alt text from the first occurrence. |
+| `charOffset`  | number        | Character offset of the first occurrence in the **original** document. |
+| `headingPath` | string[]      | Active ATX heading stack at that offset, outermost first (e.g. `["Guide", "Setup"]`). Empty if the asset precedes any heading. |
+
+**Behavior:**
+
+- Origin is validated exactly as for `loadContent` — a mismatched
+  `options.targetOrigin` replies `error` / `origin_mismatch` and the bundle
+  is **not** sent.
+- The reply is posted to the sender's real origin (`event.origin`), never to
+  `options.targetOrigin`. See §7.
+- **All-or-nothing.** If any remote image fails to fetch, or any `data:` URI
+  is undecodable, no bundle is produced and the iframe replies with
+  `error` / `asset_export_failed`. There are no partial bundles.
+- A document containing no collectable assets is also reported as
+  `asset_export_failed` (with a "No embedded assets" message) rather than an
+  empty success.
+- Bytes are always `ArrayBuffer`, never `Blob` and never a blob: URL — an
+  object URL is scoped to the iframe's origin and would be unreadable by the
+  host.
+- Read-only: does not modify the editor buffer, bump `version`, or touch
+  streaming state.
+
+**Scope (inherited from the export pipeline):** collects Markdown images
+(`![alt](url)`) whose URL is `http(s):` or a base64 `data:` URI. Plain
+hyperlinks to `http(s):` are deliberately left alone. Angle-bracket URLs,
+reference-style images, relative paths, and non-base64 data URIs are not
+collected.
+
+---
+
 ## 4. Updated existing messages
 
 ### 4.1 `loadContentAck` (updated, backward-compatible)
@@ -329,9 +421,10 @@ Stays as is. New code should prefer `ready` when present and fall back to
 The `change` event in CodeMirror fires on every keystroke. A naive
 `contentChange` poster would flood the parent.
 
-**Recommended default:** 150ms debounce on outgoing `contentChange`. Hosts
-that need every character (e.g. real-time collab) can adjust this on the
-parent side, but the iframe should never post faster than 150ms.
+**Implemented default:** 300ms debounce on outgoing `contentChange`
+(`SYNC_DEBOUNCE_MS` in `mdv.html`). Hosts that need every character (e.g.
+real-time collab) can adjust this on the parent side, but the iframe should
+never post faster than 300ms.
 
 Implementation sketch:
 
@@ -532,13 +625,15 @@ Hosts that don't care about the new messages keep working unchanged.
 | iframe → parent | `toolSelection`   | v1.0       | Unchanged. |
 | iframe → parent | `titleChange`     | v1.0       | Updated: `version` field added. |
 | iframe → parent | `ready`           | v1.1 (new) | One-shot on iframe load. |
-| iframe → parent | `contentChange`   | v1.1 (new) | Debounced 150ms. Includes `version`. |
+| iframe → parent | `contentChange`   | v1.1 (new) | Debounced 300ms. Includes `version`. |
 | iframe → parent | `formatChange`    | v1.1 (new) | Format toggled. |
 | iframe → parent | `error`           | v1.1 (new) | Visible load / validation / internal errors. |
 | parent → iframe | `appendContent`   | v1.1 (new) | Streaming: append one chunk. Not acked. |
 | parent → iframe | `streamEnd`       | v1.1 (new) | Streaming: finalize (render / tree-build), then ack. |
 | iframe → parent | `streamEndAck`    | v1.1 (new) | Reply to `streamEnd`. Includes `version` and `length`. |
 | parent → iframe | `setViewMode`     | v1.1 (new) | Explicit code/render toggle, independent of streaming. |
+| parent → iframe | `requestAssets`   | v1.2 (new) | Ask for the document plus its image bytes. |
+| iframe → parent | `assetsResult`    | v1.2 (new) | Reply to `requestAssets`. Markdown rewritten to `assets/…` + ArrayBuffer bytes. |
 
 ### Versioning rules (post-v1.1)
 
@@ -563,7 +658,7 @@ they affect implementation ergonomics.
    payload small. Hosts can diff if they need origin info.**
 
 2. **Should the iframe batch `contentChange` events** if the parent
-   doesn't respond to `loadContentAck` quickly? **Lean: no, the 150ms
+   doesn't respond to `loadContentAck` quickly? **Lean: no, the 300ms
    debounce is the batching mechanism. Don't over-engineer.**
 
 3. **What happens on iframe unload?** Should the iframe send a final
