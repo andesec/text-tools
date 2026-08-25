@@ -607,9 +607,8 @@
 
 		// Close sidebar on mobile devices to reveal the comment/preview
 		if (window.innerWidth < 768) {
-			const closeBtn = document.getElementById("close-sidebar");
-			if (closeBtn && document.body.classList.contains("mobile-sidebar-active")) {
-				closeBtn.click();
+			if (document.body.classList.contains("mobile-sidebar-active")) {
+				document.body.classList.remove("mobile-sidebar-active");
 			}
 		}
 	}

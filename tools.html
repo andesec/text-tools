@@ -205,6 +205,13 @@
   <script src="footer.js"></script>
   <script>
     if (window.parent && window.parent !== window) {
+      document.querySelectorAll('.cards a.card').forEach(a => {
+        try {
+          const url = new URL(a.getAttribute('href'), window.location.href);
+          url.searchParams.set('show_chrome', '1');
+          a.setAttribute('href', url.pathname.split('/').pop() + url.search + url.hash);
+        } catch(e) {}
+      });
       window.parent.postMessage({
         type: 'toolSelection',
         url: window.location.pathname.split('/').pop() + window.location.search

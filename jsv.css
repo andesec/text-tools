@@ -206,7 +206,9 @@
 }
 
 .sidebar-panel.collapsed {
-	flex: 0 0 32px;
+	flex: 0 0 32px !important;
+	min-height: 32px !important;
+	max-height: 32px !important;
 }
 
 .sidebar-panel-header {
@@ -256,7 +258,7 @@
 }
 
 .sidebar-panel.collapsed .sidebar-panel-body {
-	display: none;
+	display: none !important;
 }
 
 .sidebar-resizer {

@@ -171,7 +171,7 @@
 		<div class="app-header-toolbar">
 			<!-- Pinned Left Edge: Sidebar Toggle -->
 			<div class="toolbar-pinned-left">
-				<button id="sidebar-toggle-btn" class="btn-icon" title="Toggle sidebar" aria-label="Toggle sidebar">
+				<button id="sidebar-toggle-btn" class="btn-icon sidebar-toggle-btn" title="Toggle sidebar" aria-label="Toggle sidebar">
 					<i class="ph ph-sidebar-simple text-base"></i>
 				</button>
 			</div>
@@ -262,19 +262,13 @@
 
 
 	<div class="flex-1 flex overflow-hidden relative">
-		<aside id="sidebar" class="w-72 app-sidebar flex flex-col shrink-0 hidden md:flex">
+		<aside id="sidebar" class="w-72 app-sidebar flex flex-col shrink-0">
 			<div id="files-panel" class="sidebar-panel collapsed">
 				<div class="sidebar-panel-header" data-panel="files">
 					<svg class="sidebar-panel-caret" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
 					</svg>
 					<span class="sidebar-panel-title">Files</span>
-					<button id="close-sidebar" class="md:hidden btn-icon ml-auto">
-						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-								d="M6 18L18 6M6 6l12 12"></path>
-						</svg>
-					</button>
 				</div>
 				<div class="sidebar-panel-body">
 					<div id="file-list" class="flex-1 overflow-y-auto p-2 space-y-0.5">
@@ -411,7 +405,6 @@
 		const pasteBtn = document.getElementById("paste-btn");
 		const newBtn = document.getElementById("new-btn");
 		const fileInput = document.getElementById("file-input");
-		const closeSidebar = document.getElementById("close-sidebar");
 
 		if (pasteBtn) {
 			pasteBtn.onclick = async () => {
@@ -452,8 +445,6 @@
 		const toggleSidebar = () => {
 			document.body.classList.toggle("mobile-sidebar-active");
 		};
-
-		closeSidebar.onclick = toggleSidebar;
 
 		let loadedFiles = new Map();
 		let currentFileName = null;
@@ -899,9 +890,15 @@
 			});
 			if (loadedFiles.size === 0) {
 				fileListContainer.innerHTML = '<div class="text-gray-400 text-xs italic p-8 text-center">Open files to begin.</div>';
-			} else if (loadedFiles.size === 1) {
-				const firstBtn = fileListContainer.querySelector('.file-item');
-				if (firstBtn) firstBtn.click();
+			} else {
+				document.body.classList.remove('sidebar-collapsed');
+				localStorage.setItem('sidebar_collapsed', 'false');
+				const filesPanel = document.getElementById("files-panel");
+				if (filesPanel) filesPanel.classList.remove("collapsed");
+				if (loadedFiles.size === 1) {
+					const firstBtn = fileListContainer.querySelector('.file-item');
+					if (firstBtn) firstBtn.click();
+				}
 			}
 		}
 
@@ -1272,8 +1269,11 @@
 			panels.forEach(panel => {
 				const header = panel.querySelector('.sidebar-panel-header');
 				header.addEventListener('click', (e) => {
-					if (e.target.closest('#close-sidebar, .tree-action')) return;
-					panel.classList.toggle('collapsed');
+					if (e.target.closest('.tree-action')) return;
+					const isCollapsed = panel.classList.toggle('collapsed');
+					if (isCollapsed) {
+						panel.style.flex = '';
+					}
 				});
 			});
 

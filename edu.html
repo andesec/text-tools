@@ -78,9 +78,6 @@
                 <div class="sidebar-panel-header" data-panel="tools">
                     <i class="ph ph-caret-down sidebar-panel-caret text-xs"></i>
                     <span class="sidebar-panel-title">Tools</span>
-                    <button id="close-sidebar" class="md:hidden btn-icon ml-auto">
-                        <i class="ph ph-x text-base"></i>
-                    </button>
                 </div>
                 <div class="sidebar-panel-body">
                     <div id="tool-list" class="flex-1 overflow-y-auto p-2 space-y-0.5">
@@ -624,11 +621,9 @@
         });
 
         // ── Mobile sidebar toggle ───────────────────────────────────────────
-        const closeSidebar = document.getElementById('close-sidebar');
         const toggleSidebar = () => {
             document.body.classList.toggle("mobile-sidebar-active");
         };
-        closeSidebar.onclick = toggleSidebar;
 
         // ── Iframe Embed Mode + Shared Sidebar Toggle ─────────────────────
         (function setupIframeMode() {

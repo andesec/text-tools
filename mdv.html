@@ -1320,7 +1320,7 @@
 		<div class="app-header-toolbar">
 			<!-- Pinned Left Edge: Sidebar Toggle -->
 			<div class="toolbar-pinned-left">
-				<button id="sidebar-toggle-btn" class="btn-icon" title="Toggle sidebar" aria-label="Toggle sidebar">
+				<button id="sidebar-toggle-btn" class="btn-icon sidebar-toggle-btn" title="Toggle sidebar" aria-label="Toggle sidebar">
 					<i class="ph ph-sidebar-simple text-base"></i>
 				</button>
 			</div>
@@ -1383,7 +1383,7 @@
 
 
 	<div class="flex-1 flex overflow-hidden">
-		<aside id="sidebar" class="w-72 app-sidebar flex flex-col shrink-0 hidden md:flex">
+		<aside id="sidebar" class="w-72 app-sidebar flex flex-col shrink-0">
 			<!-- Documents Panel (collapsed by default) -->
 			<div id="documents-panel" class="sidebar-panel collapsed">
 				<div class="sidebar-panel-header" data-panel="documents">
@@ -1391,12 +1391,6 @@
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
 					</svg>
 					<span class="sidebar-panel-title">Documents</span>
-					<button id="close-sidebar" class="md:hidden btn-icon ml-auto">
-						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-								d="M6 18L18 6M6 6l12 12"></path>
-						</svg>
-					</button>
 				</div>
 				<div class="sidebar-panel-body">
 					<div id="file-list" class="flex-1 overflow-y-auto p-2 space-y-0.5">
@@ -1556,7 +1550,6 @@
 		const editorEl = document.getElementById("editor");
 		const emptyState = document.getElementById("empty-state");
 		const sidebar = document.getElementById("sidebar");
-		const closeSidebar = document.getElementById("close-sidebar");
 		const zoomLabel = document.getElementById("zoom-level");
 		const editControls = document.getElementById("edit-controls");
 		const toggleEditBtn = document.getElementById("toggle-edit-btn");
@@ -2833,9 +2826,8 @@
 			}
 			// Close sidebar on mobile devices to reveal the heading
 			if (window.innerWidth < 768) {
-				const closeBtn = document.getElementById("close-sidebar");
-				if (closeBtn && document.body.classList.contains("mobile-sidebar-active")) {
-					closeBtn.click();
+				if (document.body.classList.contains("mobile-sidebar-active")) {
+					toggleSidebar();
 				}
 			}
 		};
@@ -2865,8 +2857,6 @@
 		const toggleSidebar = () => {
 			document.body.classList.toggle("mobile-sidebar-active");
 		};
-
-		closeSidebar.onclick = toggleSidebar;
 
 
 		const mathExtension = {
@@ -2955,9 +2945,15 @@
 			});
 			if (loadedFiles.size === 0) {
 				fileListContainer.innerHTML = '<div class="p-4 text-center text-xs text-red-500">No Markdown or text files found.</div>';
-			} else if (loadedFiles.size === 1) {
-				const firstBtn = fileListContainer.querySelector('.file-item');
-				if (firstBtn) firstBtn.click();
+			} else {
+				document.body.classList.remove('sidebar-collapsed');
+				localStorage.setItem('sidebar_collapsed', 'false');
+				const docsPanel = document.getElementById("documents-panel");
+				if (docsPanel) docsPanel.classList.remove("collapsed");
+				if (loadedFiles.size === 1) {
+					const firstBtn = fileListContainer.querySelector('.file-item');
+					if (firstBtn) firstBtn.click();
+				}
 			}
 		}
 
@@ -3097,9 +3093,15 @@
 				}
 				if (loadedFiles.size === 0) {
 					fileListContainer.innerHTML = '<div class="p-4 text-center text-xs text-red-500">No Markdown or text files found.</div>';
-				} else if (loadedFiles.size === 1) {
-					const firstBtn = fileListContainer.querySelector('.file-item');
-					if (firstBtn) firstBtn.click();
+				} else {
+					document.body.classList.remove('sidebar-collapsed');
+					localStorage.setItem('sidebar_collapsed', 'false');
+					const docsPanel = document.getElementById("documents-panel");
+					if (docsPanel) docsPanel.classList.remove("collapsed");
+					if (loadedFiles.size === 1) {
+						const firstBtn = fileListContainer.querySelector('.file-item');
+						if (firstBtn) firstBtn.click();
+					}
 				}
 			} catch (e) {
 				if (e.name !== "AbortError") console.error(e);
@@ -3130,9 +3132,15 @@
 				}
 				if (loadedFiles.size === 0) {
 					fileListContainer.innerHTML = '<div class="p-4 text-center text-xs text-red-500">No Markdown or text files found.</div>';
-				} else if (loadedFiles.size === 1) {
-					const firstBtn = fileListContainer.querySelector('.file-item');
-					if (firstBtn) firstBtn.click();
+				} else {
+					document.body.classList.remove('sidebar-collapsed');
+					localStorage.setItem('sidebar_collapsed', 'false');
+					const docsPanel = document.getElementById("documents-panel");
+					if (docsPanel) docsPanel.classList.remove("collapsed");
+					if (loadedFiles.size === 1) {
+						const firstBtn = fileListContainer.querySelector('.file-item');
+						if (firstBtn) firstBtn.click();
+					}
 				}
 			} catch (e) {
 				if (e.name !== "AbortError") console.error(e);
@@ -3387,9 +3395,10 @@
 			panels.forEach(panel => {
 				const header = panel.querySelector(".sidebar-panel-header");
 				header.addEventListener("click", (e) => {
-					// Don't toggle when clicking the close-sidebar button
-					if (e.target.closest('#close-sidebar')) return;
-					panel.classList.toggle("collapsed");
+					const isCollapsed = panel.classList.toggle("collapsed");
+					if (isCollapsed) {
+						panel.style.flex = "";
+					}
 				});
 			});
 

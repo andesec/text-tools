@@ -410,6 +410,9 @@
             if (info) {
               t.icon = info.icon;
               t.bg = info.bg;
+              if (!t.url.includes('show_chrome=1')) {
+                t.url += (t.url.includes('?') ? '&' : '?') + 'show_chrome=1';
+              }
               // Fix corrupted titles from migration (raw class strings or stale emoji icons)
               if (t.title && (t.title.startsWith('ph ') || t.title.startsWith('ph-'))) {
                 t.title = t.assignedName || info.name;
@@ -433,7 +436,11 @@
     function createTab(url, title) {
       const id = tabIdCounter++;
       const info = getToolInfo(url);
-      const tab = { id, url, title, icon: info ? info.icon : null, bg: info ? info.bg : null };
+      let targetUrl = url;
+      if (url && url !== NEW_TAB_URL && !targetUrl.includes('show_chrome=1')) {
+        targetUrl += (targetUrl.includes('?') ? '&' : '?') + 'show_chrome=1';
+      }
+      const tab = { id, url: targetUrl, title, icon: info ? info.icon : null, bg: info ? info.bg : null };
       tabs.push(tab);
       activeTabId = id;
       saveState();
@@ -671,7 +678,7 @@
           return;
         }
         const id = tabIdCounter++;
-        const tab = { id, url: 'mdv.html', title: 'New Tab', pendingPreview: { filename: data.filename, text: data.text } };
+        const tab = { id, url: 'mdv.html?show_chrome=1', title: 'New Tab', pendingPreview: { filename: data.filename, text: data.text } };
         tabs.push(tab);
         activeTabId = id;
         saveState();
@@ -690,7 +697,7 @@
           return;
         }
         const id = tabIdCounter++;
-        const tab = { id, url: 'jsv.html', title: 'New Tab', pendingPreview: { filename: data.filename, text: data.text } };
+        const tab = { id, url: 'jsv.html?show_chrome=1', title: 'New Tab', pendingPreview: { filename: data.filename, text: data.text } };
         tabs.push(tab);
         activeTabId = id;
         saveState();

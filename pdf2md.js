@@ -1634,12 +1634,17 @@
     // SIDEBAR TOGGLE & RESIZER
     // ═══════════════════════════════════════════════════
 
+    if (localStorage.getItem('sidebar_collapsed') === 'true') {
+        document.body.classList.add('sidebar-collapsed');
+    }
+
     sidebarToggleBtn.onclick = () => {
         if (window.innerWidth <= 768) {
             sidebar.classList.toggle('visible');
             backdrop.classList.toggle('visible');
         } else {
-            sidebar.style.display = sidebar.style.display === 'none' ? 'flex' : 'none';
+            const collapsed = document.body.classList.toggle('sidebar-collapsed');
+            localStorage.setItem('sidebar_collapsed', collapsed ? 'true' : 'false');
         }
     };
     backdrop.onclick = () => {
@@ -1651,7 +1656,10 @@
     sidebar.querySelectorAll('.sidebar-panel-header').forEach(header => {
         header.addEventListener('click', () => {
             const panel = header.closest('.sidebar-panel');
-            if (panel) panel.classList.toggle('collapsed');
+            if (panel) {
+                const isCollapsed = panel.classList.toggle('collapsed');
+                if (isCollapsed) panel.style.flex = '';
+            }
         });
     });
 

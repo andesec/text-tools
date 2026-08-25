@@ -64,15 +64,12 @@
 
 
     <div class="flex-1 flex overflow-hidden relative">
-        <aside id="sidebar" class="w-72 app-sidebar flex flex-col shrink-0 hidden md:flex">
+        <aside id="sidebar" class="w-72 app-sidebar flex flex-col shrink-0">
             <!-- File Info Panel -->
             <div id="file-info-panel" class="sidebar-panel">
                 <div class="sidebar-panel-header" data-panel="file-info">
                     <i class="ph ph-caret-down sidebar-panel-caret text-xs"></i>
                     <span class="sidebar-panel-title">File Info</span>
-                    <button id="close-sidebar" class="md:hidden btn-icon ml-auto">
-                        <i class="ph ph-x text-base"></i>
-                    </button>
                 </div>
                 <div class="sidebar-panel-body">
                     <p id="file-info-placeholder" class="file-info empty-placeholder">No file loaded.<br>Drop a PDF to begin.</p>
@@ -305,6 +302,8 @@
                 newPdfBtn.style.display = 'inline-flex';
 
                 // Show UI
+                document.body.classList.remove('sidebar-collapsed');
+                localStorage.setItem('sidebar_collapsed', 'false');
                 fileInfo.style.display = 'flex';
                 fileInfoPlaceholder.style.display = 'none';
                 previewSection.style.display = 'flex';
@@ -675,11 +674,9 @@
         });
 
         // ── Mobile sidebar toggle ───────────────────────────────────────────
-        const closeSidebar = document.getElementById('close-sidebar');
         const toggleSidebar = () => {
             document.body.classList.toggle("mobile-sidebar-active");
         };
-        closeSidebar.onclick = toggleSidebar;
 
         // ── Iframe Embed Mode + Shared Sidebar Toggle ─────────────────────
         (function setupIframeMode() {

@@ -64,7 +64,7 @@
     .cm-editor .cm-content { color: inherit; }
 
     /* ── Outline sidebar force-hide override ─────────────── */
-    #outline-sidebar.outline-closed { display: none !important; }
+    body:not(.mobile-sidebar-active) #outline-sidebar.outline-closed { display: none !important; }
 
     /* ── Mobile sidebar overlay ───────────────────────────── */
     @media (max-width: 767px) {
@@ -221,7 +221,7 @@
   <div class="app-header-toolbar">
     <!-- Pinned Left Edge: Sidebar / Outline Toggle -->
     <div class="toolbar-pinned-left">
-      <button id="btn-outline" onclick="toggleOutline()" class="btn-icon" title="Toggle Outline" aria-label="Toggle Outline">
+      <button id="btn-outline" onclick="toggleOutline()" class="btn-icon sidebar-toggle-btn" title="Toggle Outline" aria-label="Toggle Outline">
         <i class="ph ph-sidebar-simple text-base"></i>
       </button>
     </div>
@@ -301,13 +301,10 @@
 <div class="flex-1 flex overflow-hidden">
 
   <!-- Outline sidebar -->
-  <aside id="outline-sidebar" class="w-64 app-sidebar flex-col shrink-0 hidden md:flex z-10">
+  <aside id="outline-sidebar" class="w-64 app-sidebar flex-col shrink-0 z-10">
     <div class="sidebar-panel">
       <div class="sidebar-panel-header">
         <span class="sidebar-panel-title">Outline</span>
-        <button id="btn-close-outline" class="md:hidden btn-icon ml-auto">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-        </button>
       </div>
       <div id="outline-list" class="sidebar-panel-body overflow-y-auto p-2 space-y-0.5 no-scrollbar text-xs bg-[var(--bg-surface-raised)]">
         <div class="text-[var(--text-tertiary)] italic p-4 text-center">No content yet.</div>
@@ -1277,12 +1274,6 @@ document.addEventListener('click', () => {
   document.getElementById('dd-export-menu')?.classList.remove('visible');
   document.getElementById('dd-options-menu')?.classList.remove('visible');
 });
-
-// ── mobile ───────────────────────────────────────────────────
-document.getElementById('btn-close-outline').onclick = () => {
-  document.body.classList.remove('mobile-sidebar-active');
-  document.getElementById('btn-outline').classList.remove('bg-violet-600', 'text-white', 'border-violet-600');
-};
 
 // ── toast ────────────────────────────────────────────────────
 let toastTimer;
