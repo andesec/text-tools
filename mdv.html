@@ -1223,6 +1223,114 @@
 		.mdv-logo-badge {
 			background: linear-gradient(to bottom right, rgb(37, 99, 235), rgb(67, 56, 202));
 		}
+
+		/* ── Image Container with Delete Overlay & URL Bar ── */
+		.mdv-image-container {
+			position: relative;
+			display: inline-block;
+			max-width: 100%;
+			margin: 0.75rem 0;
+			border: 1px solid var(--border-default);
+			border-radius: var(--radius-md);
+			background-color: var(--bg-surface);
+			overflow: hidden;
+			vertical-align: middle;
+			transition: border-color 0.2s;
+		}
+
+		.mdv-image-container img {
+			display: block;
+			max-width: 100%;
+			height: auto;
+			margin: 0 auto;
+		}
+
+		.mdv-image-highlight {
+			border-color: var(--link-color) !important;
+			box-shadow: 0 0 0 3px var(--link-color);
+			animation: mdv-image-pulse 2s ease-out;
+		}
+
+		@keyframes mdv-image-pulse {
+			0% {
+				box-shadow: 0 0 0 4px var(--link-color);
+			}
+			70% {
+				box-shadow: 0 0 0 3px var(--link-color);
+			}
+			100% {
+				box-shadow: none;
+			}
+		}
+
+		.mdv-image-delete-btn {
+			position: absolute;
+			top: 8px;
+			right: 8px;
+			z-index: 10;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			width: 28px;
+			height: 28px;
+			padding: 0;
+			border-radius: var(--radius-md);
+			border: 1px solid var(--border-default);
+			background-color: var(--bg-surface-raised);
+			color: var(--text-secondary);
+			cursor: pointer;
+			transition: background-color 0.15s, color 0.15s, border-color 0.15s, transform 0.1s;
+		}
+
+		.mdv-image-delete-btn:hover {
+			background-color: var(--danger);
+			color: #ffffff;
+			border-color: var(--danger);
+			transform: scale(1.05);
+		}
+
+		.mdv-image-delete-btn:active {
+			transform: scale(0.95);
+		}
+
+		.mdv-image-url-bar {
+			display: flex;
+			align-items: center;
+			gap: 6px;
+			padding: 4px 10px;
+			background-color: var(--bg-surface-hover);
+			border-top: 1px solid var(--border-default);
+			font-size: 11px;
+			font-family: var(--font-mono);
+			color: var(--text-secondary);
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			max-width: 100%;
+		}
+
+		.mdv-image-url-icon {
+			flex-shrink: 0;
+			color: var(--text-tertiary);
+		}
+
+		.mdv-image-url-link {
+			color: var(--link-color);
+			text-decoration: none;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			flex: 1;
+		}
+
+		.mdv-image-url-link:hover {
+			text-decoration: underline;
+			color: var(--link-color-hover);
+		}
+
+		.sidebar-image-item {
+			user-select: none;
+		}
 	</style>
 </head>
 
@@ -1423,6 +1531,24 @@
 			</div>
 
 			<div class="sidebar-resizer" data-resizer="1"></div>
+
+			<!-- Pictures Panel (collapsed by default) -->
+			<div id="images-panel" class="sidebar-panel collapsed">
+				<div class="sidebar-panel-header" data-panel="images">
+					<svg class="sidebar-panel-caret" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+					</svg>
+					<span class="sidebar-panel-title">Pictures</span>
+					<span id="sidebar-image-count" class="sidebar-panel-badge"></span>
+				</div>
+				<div class="sidebar-panel-body">
+					<div id="image-list" class="flex-1 overflow-y-auto p-2 space-y-1 no-scrollbar">
+						<div class="text-[var(--text-tertiary)] text-xs italic p-8 text-center">No pictures found.</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="sidebar-resizer" data-resizer="2"></div>
 
 			<!-- Comments Panel -->
 			<div id="sidebar-comments-panel" class="sidebar-panel">
@@ -2351,6 +2477,47 @@
 				// Always-visible Preview/Editor/Copy toolbar
 				buildMdFenceToolbar(container, preEl, codeEl, blockIndex);
 			});
+
+			// ── In-Preview Image Enhancement: Delete overlay & URL captions ──
+			const imgs = contentArea.querySelectorAll('img');
+			imgs.forEach((img, imgIndex) => {
+				if (img.closest('.mdv-image-container')) return;
+
+				const src = img.getAttribute('src') || '';
+				const alt = img.getAttribute('alt') || '';
+				const isRemoteUrl = /^https?:\/\//i.test(src);
+
+				const container = document.createElement('div');
+				container.className = 'mdv-image-container';
+
+				img.parentNode.insertBefore(container, img);
+				container.appendChild(img);
+
+				// Delete button overlay in top-right corner
+				const delBtn = document.createElement('button');
+				delBtn.type = 'button';
+				delBtn.className = 'mdv-image-delete-btn';
+				delBtn.title = 'Delete image from document';
+				delBtn.setAttribute('aria-label', 'Delete image');
+				delBtn.innerHTML = '<svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor"><path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L9.06 8l3.22 3.22a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L8 9.06l-3.22 3.22a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z"/></svg>';
+				delBtn.onclick = (e) => {
+					e.preventDefault();
+					e.stopPropagation();
+					deleteImageFromDoc(src, alt, imgIndex);
+				};
+				container.appendChild(delBtn);
+
+				// If remote URL, render URL caption below the image
+				if (isRemoteUrl) {
+					const urlBar = document.createElement('div');
+					urlBar.className = 'mdv-image-url-bar';
+					urlBar.innerHTML = `
+						<svg class="mdv-image-url-icon" viewBox="0 0 16 16" width="11" height="11" fill="currentColor"><path d="M7.775 3.275a.75.75 0 0 0 1.06 1.06l1.25-1.25a2 2 0 1 1 2.83 2.83l-2.5 2.5a2 2 0 0 1-2.83 0 .75.75 0 0 0-1.06 1.06 3.5 3.5 0 0 0 4.95 0l2.5-2.5a3.5 3.5 0 0 0-4.95-4.95l-1.25 1.25zm-.55 9.45a.75.75 0 0 0-1.06-1.06l-1.25 1.25a2 2 0 1 1-2.83-2.83l2.5-2.5a2 2 0 0 1 2.83 0 .75.75 0 0 0 1.06-1.06 3.5 3.5 0 0 0-4.95 0l-2.5 2.5a3.5 3.5 0 0 0 4.95 4.95l1.25-1.25z"/></svg>
+						<a href="${escapeHtml(src)}" target="_blank" rel="noopener noreferrer" class="mdv-image-url-link" title="${escapeHtml(src)}">${escapeHtml(src)}</a>
+					`;
+					container.appendChild(urlBar);
+				}
+			});
 		}
 
 		function getMermaidTheme() {
@@ -2667,12 +2834,202 @@
 			}
 		}
 
+		function escapeHtml(str) {
+			if (typeof str !== "string") return "";
+			return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+		}
+
+		function deleteImageFromDoc(targetSrc, targetAlt, globalImageIndex) {
+			if (!editor) return;
+			const doc = editor.state.doc;
+			const text = doc.toString();
+
+			const IMAGE_RE = /!\[((?:[^\[\]\\]|\\.)*)\]\(\s*(?:<([^>]+)>|((?:[^\s()\\]|\\.|\([^\s()]*\))+))(?:\s+(?:"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\((?:[^)\\]|\\.)*\)))?\s*\)|<img\s+[^>]*src=["']([^"']+)["'][^>]*\/?>/gi;
+
+			const matches = [];
+			let m;
+			while ((m = IMAGE_RE.exec(text)) !== null) {
+				const matchedSrc = m[2] || m[3] || m[4] || '';
+				const matchedAlt = m[1] || '';
+				matches.push({
+					from: m.index,
+					to: m.index + m[0].length,
+					fullMatch: m[0],
+					src: matchedSrc,
+					alt: matchedAlt
+				});
+			}
+
+			let chosenMatch = null;
+			if (globalImageIndex !== undefined && matches[globalImageIndex] && (matches[globalImageIndex].src === targetSrc || decodeURIComponent(matches[globalImageIndex].src) === decodeURIComponent(targetSrc))) {
+				chosenMatch = matches[globalImageIndex];
+			} else {
+				chosenMatch = matches.find(item => item.src === targetSrc || decodeURIComponent(item.src) === decodeURIComponent(targetSrc));
+			}
+
+			if (!chosenMatch) {
+				if (window.MdvComments && typeof window.MdvComments.toast === "function") {
+					window.MdvComments.toast("Could not locate image in markdown source");
+				}
+				return;
+			}
+
+			let from = chosenMatch.from;
+			let to = chosenMatch.to;
+
+			const line = doc.lineAt(from);
+			const lineText = line.text;
+			const matchStartInLine = from - line.from;
+			const matchEndInLine = to - line.from;
+
+			const before = lineText.slice(0, matchStartInLine).trim();
+			const after = lineText.slice(matchEndInLine).trim();
+
+			if (!before && !after) {
+				if (line.number < doc.lines) {
+					from = line.from;
+					to = line.to + 1;
+				} else if (line.number > 1) {
+					from = doc.line(line.number - 1).to;
+					to = line.to;
+				} else {
+					from = line.from;
+					to = line.to;
+				}
+			}
+
+			editor.dispatch({
+				changes: { from, to, insert: '' }
+			});
+
+			updatePreview();
+
+			if (window.MdvComments && typeof window.MdvComments.toast === "function") {
+				window.MdvComments.toast("Image removed from document");
+			}
+		}
+
+		function updateImageList() {
+			if (!editor) return;
+			const text = editor.state.doc.toString();
+			const imageList = document.getElementById("image-list");
+			const countBadge = document.getElementById("sidebar-image-count");
+			if (!imageList) return;
+
+			const IMAGE_SCAN_RE = /!\[((?:[^\[\]\\]|\\.)*)\]\(\s*(?:<([^>]+)>|((?:[^\s()\\]|\\.|\([^\s()]*\))+))(?:\s+(?:"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\((?:[^)\\]|\\.)*\)))?\s*\)|<img\s+[^>]*src=["']([^"']+)["'][^>]*\/?>/gi;
+
+			const doc = editor.state.doc;
+			const images = [];
+			let m;
+			while ((m = IMAGE_SCAN_RE.exec(text)) !== null) {
+				const src = m[2] || m[3] || m[4] || '';
+				const alt = m[1] || '';
+				const line = doc.lineAt(m.index).number;
+				images.push({
+					index: images.length,
+					src,
+					alt,
+					line,
+					charOffset: m.index
+				});
+			}
+
+			if (countBadge) {
+				countBadge.textContent = images.length > 0 ? images.length : "";
+			}
+
+			if (images.length === 0) {
+				imageList.innerHTML = '<div class="text-[var(--text-tertiary)] text-xs italic p-8 text-center">No pictures found.</div>';
+				return;
+			}
+
+			imageList.innerHTML = images.map((img, i) => {
+				const displayTitle = img.alt ? escapeHtml(img.alt) : (img.src.startsWith('data:') ? 'Inline Image ' + (i + 1) : escapeHtml(img.src.split('/').pop()?.split('?')[0] || ('Picture ' + (i + 1))));
+				const displaySub = img.src.startsWith('data:') ? 'Embedded base64' : escapeHtml(img.src);
+				return `
+					<div class="sidebar-image-item w-full flex items-center gap-2 p-1.5 rounded-md hover:bg-[var(--bg-surface-hover)] cursor-pointer group" data-image-index="${i}" data-line="${img.line}" data-src="${escapeHtml(img.src)}" data-alt="${escapeHtml(img.alt)}">
+						<div class="sidebar-image-thumb w-9 h-9 rounded border border-[var(--border-default)] overflow-hidden flex-shrink-0 bg-[var(--bg-surface-raised)] flex items-center justify-center">
+							<img src="${escapeHtml(img.src)}" alt="${escapeHtml(img.alt)}" class="w-full h-full object-cover" onerror="this.style.display='none';this.nextElementSibling.style.display='block';" />
+							<svg class="hidden w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+						</div>
+						<div class="sidebar-image-info flex-1 min-w-0">
+							<div class="sidebar-image-alt text-xs font-medium text-[var(--text-primary)] truncate" title="${displayTitle}">${displayTitle}</div>
+							<div class="sidebar-image-url text-[10px] font-mono text-[var(--text-tertiary)] truncate" title="${displaySub}">${displaySub}</div>
+						</div>
+						<button type="button" class="sidebar-image-delete-btn p-1 text-[var(--text-tertiary)] hover:text-[var(--danger)] hover:bg-[var(--bg-surface)] rounded opacity-0 group-hover:opacity-100 transition-opacity" title="Delete image from document" aria-label="Delete image">
+							<svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor"><path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L9.06 8l3.22 3.22a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L8 9.06l-3.22 3.22a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z"/></svg>
+						</button>
+					</div>
+				`;
+			}).join('');
+
+			imageList.querySelectorAll(".sidebar-image-item").forEach(item => {
+				const idx = parseInt(item.getAttribute("data-image-index"), 10);
+				const lineNum = parseInt(item.getAttribute("data-line"), 10);
+				const src = item.getAttribute("data-src") || "";
+				const alt = item.getAttribute("data-alt") || "";
+
+				item.addEventListener("click", (e) => {
+					if (e.target.closest(".sidebar-image-delete-btn")) return;
+					scrollToImage(idx, lineNum, src);
+				});
+
+				const delBtn = item.querySelector(".sidebar-image-delete-btn");
+				if (delBtn) {
+					delBtn.addEventListener("click", (e) => {
+						e.preventDefault();
+						e.stopPropagation();
+						deleteImageFromDoc(src, alt, idx);
+					});
+				}
+			});
+		}
+
+		function scrollToImage(imageIndex, lineNum, src) {
+			if (isEditing && editor) {
+				const pos = editor.state.doc.line(lineNum).from;
+				editor.dispatch({
+					selection: { anchor: pos, head: pos },
+					scrollIntoView: true
+				});
+				editor.focus();
+			} else {
+				const containers = contentArea.querySelectorAll(".mdv-image-container");
+				let targetEl = containers[imageIndex];
+				if (!targetEl) {
+					const allImgs = contentArea.querySelectorAll("img");
+					for (const img of allImgs) {
+						if (img.getAttribute("src") === src) {
+							targetEl = img.closest(".mdv-image-container") || img;
+							break;
+						}
+					}
+				}
+				if (targetEl) {
+					targetEl.scrollIntoView({ behavior: "smooth", block: "center" });
+					targetEl.classList.remove("mdv-image-highlight");
+					void targetEl.offsetWidth;
+					targetEl.classList.add("mdv-image-highlight");
+					setTimeout(() => {
+						targetEl?.classList?.remove("mdv-image-highlight");
+					}, 2000);
+				}
+			}
+			if (window.innerWidth < 768) {
+				const sidebar = document.getElementById("sidebar");
+				if (sidebar && !sidebar.classList.contains("hidden")) {
+					document.getElementById("toggle-sidebar")?.click();
+				}
+			}
+		}
+
 		function updatePreview() {
 			if (editor) {
 				const text = editor.state.doc.toString();
 				contentArea.innerHTML = DOMPurify.sanitize(marked.parse(text));
 				if (!isEditing) enhanceContent();
 				updateOutline();
+				updateImageList();
 				Prism.highlightAllUnder(contentArea);
 				renderMermaidDiagrams();
 				if (window.MdvComments) MdvComments.applyHighlights();
@@ -4201,6 +4558,13 @@
 			updatePreview();
 			updateTabTitle();
 			saveMdvState();
+
+			if (msg.options?.openImagesPanel) {
+				const imgPanel = document.getElementById('images-panel');
+				if (imgPanel) {
+					imgPanel.classList.remove('collapsed');
+				}
+			}
 
 			// Switch to view mode if currently editing
 			if (window.isEditing) {
