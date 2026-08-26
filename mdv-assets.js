@@ -172,6 +172,36 @@
 	// it as a first-class input, so the zip written by exportWithAssets is
 	// unchanged. `mime` carries the HTTP content-type (or the data-URI's own
 	// media type) so the extension fallback below no longer needs blob.type.
+	function isAllowedRemoteAssetUrl(urlStr) {
+		try {
+			const parsed = new URL(urlStr, window.location.href);
+			if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+				return false;
+			}
+			const hostname = parsed.hostname.toLowerCase();
+			if (
+				hostname === 'localhost' ||
+				hostname === '127.0.0.1' ||
+				hostname === '0.0.0.0' ||
+				hostname === '::1' ||
+				hostname.endsWith('.localhost') ||
+				hostname.endsWith('.local') ||
+				/^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
+				/^192\.168\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
+				/^172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
+				/^169\.254\.\d{1,3}\.\d{1,3}$/.test(hostname)
+			) {
+				if (parsed.origin === window.location.origin) {
+					return true;
+				}
+				return false;
+			}
+			return true;
+		} catch (e) {
+			return false;
+		}
+	}
+
 	async function _buildAssetBundle(mdText, fileName) {
 		const { assets, matches } = _scanMarkdownAssets(mdText);
 
@@ -185,16 +215,27 @@
 		const remoteKeys = keys.filter((k) => assets.get(k).kind === "remote");
 		const dataKeys = keys.filter((k) => assets.get(k).kind === "data");
 
+		const failedUrls = [];
+		const allowedRemoteKeys = [];
+		for (const key of remoteKeys) {
+			const asset = assets.get(key);
+			if (isAllowedRemoteAssetUrl(asset.url)) {
+				allowedRemoteKeys.push(key);
+			} else {
+				console.warn('[mdv-assets] Blocked fetching from restricted or local address:', asset.url);
+				failedUrls.push(key);
+			}
+		}
+
 		// Materialize remote assets
 		const fetchResults = await Promise.allSettled(
-			remoteKeys.map((key) => fetch(assets.get(key).url))
+			allowedRemoteKeys.map((key) => fetch(assets.get(key).url))
 		);
 
-		const failedUrls = [];
 		const remoteBytes = new Map(); // key -> { bytes: ArrayBuffer, mime }
 
-		for (let i = 0; i < remoteKeys.length; i++) {
-			const key = remoteKeys[i];
+		for (let i = 0; i < allowedRemoteKeys.length; i++) {
+			const key = allowedRemoteKeys[i];
 			const result = fetchResults[i];
 			if (result.status !== "fulfilled" || !result.value.ok) {
 				failedUrls.push(key);

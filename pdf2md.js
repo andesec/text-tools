@@ -321,7 +321,7 @@
             excludedPatterns.add(idx);
             const div = document.createElement('div');
             div.className = 'sidebar-hf-item';
-            div.innerHTML = '<span class="hf-zone-badge ' + p.zone + '">' + p.zone + '</span>'
+            div.innerHTML = '<span class="hf-zone-badge ' + escHtml(p.zone) + '">' + escHtml(p.zone) + '</span>'
                 + '<span class="sidebar-hf-text" title="' + escHtml(p.text) + '">' + escHtml(p.text) + '</span>'
                 + '<span class="toggle"><input type="checkbox" data-hf-idx="' + idx + '" ' + (isExcluded ? '' : 'checked') + '><span class="toggle-slider"></span></span>';
             hfPatterns.appendChild(div);
@@ -1901,6 +1901,7 @@
     // ═══════════════════════════════════════════════════
 
     window.addEventListener('message', function (event) {
+        if (window.parent && window.parent !== window && event.source !== window.parent) return;
         const msg = event.data;
         if (!msg || msg.type !== 'loadContent') return;
         if (!msg.bytes) {
@@ -1910,12 +1911,14 @@
         const f = new File([msg.bytes], msg.filename || 'document.pdf', { type: 'application/pdf' });
         handleFile(f);
         if (event.source) {
-            event.source.postMessage({ type: 'loadContentAck', filename: msg.filename || 'document.pdf', format: 'pdf' }, event.origin || '*');
+            const targetOrigin = (event.origin && event.origin !== 'null' && event.origin !== 'null://null') ? event.origin : window.origin || '*';
+            event.source.postMessage({ type: 'loadContentAck', filename: msg.filename || 'document.pdf', format: 'pdf' }, targetOrigin);
         }
     });
 
     if (window.parent && window.parent !== window) {
-        window.parent.postMessage({ type: 'toolSelection', url: window.location.pathname.split('/').pop() + window.location.search }, '*');
+        const targetOrigin = window.origin && window.origin !== 'null' ? window.origin : '*';
+        window.parent.postMessage({ type: 'toolSelection', url: window.location.pathname.split('/').pop() + window.location.search }, targetOrigin);
     }
 
 })();

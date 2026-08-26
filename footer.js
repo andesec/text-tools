@@ -4,11 +4,9 @@ function buildFooterLinks() {
 	const embedLink = document.createElement('a');
 	embedLink.href = 'embed.html';
 	embedLink.textContent = 'Embed';
-	embedLink.style.cssText = 'color: var(--text-secondary, #999); text-decoration: none;';
-	embedLink.addEventListener('mouseenter', () => embedLink.style.textDecoration = 'underline');
-	embedLink.addEventListener('mouseleave', () => embedLink.style.textDecoration = 'none');
+	embedLink.className = 'footer-link text-[var(--text-secondary)] hover:underline no-underline';
 
-	const sep = document.createTextNode(' \u00b7 ');
+	const sep = document.createTextNode(' · ');
 
 	const version = document.createElement('span');
 	version.className = 'version';

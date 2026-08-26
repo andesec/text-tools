@@ -8,6 +8,7 @@
 	<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
 	<meta http-equiv="Pragma" content="no-cache" />
 	<meta http-equiv="Expires" content="0" />
+	<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https: http:; media-src 'self' blob:; connect-src 'self' data: blob: https: http:; worker-src 'self' blob:; frame-src 'self' data: blob:; object-src 'none'; base-uri 'self';" />
 	<link rel="icon" type="image/png" href="favicon.png">
 	<link rel="icon" href="favicon.ico">
 	<link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2669,7 +2670,7 @@
 				securityLevel: 'strict'
 			});
 			window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
-				mermaid.initialize({ theme: getMermaidTheme() });
+				mermaid.initialize({ theme: getMermaidTheme(), securityLevel: 'strict' });
 				updatePreview();
 				if (editor) {
 					initEditor(editor.state.doc.toString());
@@ -3266,7 +3267,7 @@
 					class="outline-item w-full text-left px-3 py-1.5 rounded-md text-[11px] transition-all truncate hover:bg-[var(--bg-surface-hover)]"
 					data-level="${h.level}"
 				>
-					${h.text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")}
+					${escapeHtml(h.text)}
 				</button>
 			`).join("");
 
@@ -3460,7 +3461,7 @@
 		function renderFileListItem(name) {
 			const btn = document.createElement("button");
 			btn.className = "file-item";
-			btn.innerHTML = `<svg class="w-4 h-4 shrink-0" style="color:var(--text-tertiary)" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 012-2h4.586A1 1 0 0111.293 2.707l2 2A1 1 0 0113.586 6H16a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"></path></svg><span class="truncate">${name}</span>`;
+			btn.innerHTML = `<svg class="w-4 h-4 shrink-0" style="color:var(--text-tertiary)" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 012-2h4.586A1 1 0 0111.293 2.707l2 2A1 1 0 0113.586 6H16a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"></path></svg><span class="truncate">${escapeHtml(name)}</span>`;
 			btn.onclick = () => displayFile(name, btn);
 			fileListContainer.appendChild(btn);
 		}
@@ -4457,6 +4458,9 @@
 		// returning null if not. Returns the parentOrigin string to use for
 		// syncTargetOrigin, or null if the caller should bail.
 		function _syncValidateOrigin(event, msg) {
+			if (window.parent && window.parent !== window && event.source !== window.parent) {
+				return null;
+			}
 			let parentOrigin = event.origin;
 			if (!parentOrigin || parentOrigin === 'null' || parentOrigin === 'null://null') {
 				parentOrigin = '*';
@@ -4474,6 +4478,7 @@
 
 		// ── postMessage API: receive content from parent frame ─────────────
 		window.addEventListener('message', function (event) {
+			if (window.parent && window.parent !== window && event.source !== window.parent) return;
 			const msg = event.data;
 			if (!msg || !msg.type) return;
 

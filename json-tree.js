@@ -48,12 +48,38 @@
 			} catch (e) {
 				currentOffsetMap = null;
 				currentTreeText = null;
-				const errHtml = `<div class="json-error-container">
-					<div class="json-error-title">Invalid JSON</div>
-					<div class="json-error-message">${e.message}</div>
-					<button onclick="repairJsonAction()" class="json-error-btn">Try to Auto-Fix JSON</button>
-				</div>`;
-				roots.forEach(r => r.innerHTML = errHtml);
+				const container = document.createElement('div');
+				container.className = 'json-error-container';
+
+				const title = document.createElement('div');
+				title.className = 'json-error-title';
+				title.textContent = 'Invalid JSON';
+
+				const msg = document.createElement('div');
+				msg.className = 'json-error-message';
+				msg.textContent = e?.message || 'Unknown parsing error';
+
+				const btn = document.createElement('button');
+				btn.className = 'json-error-btn';
+				btn.textContent = 'Try to Auto-Fix JSON';
+
+				container.appendChild(title);
+				container.appendChild(msg);
+				container.appendChild(btn);
+
+				roots.forEach(r => {
+					r.innerHTML = '';
+					const clone = container.cloneNode(true);
+					const clonedBtn = clone.querySelector('.json-error-btn');
+					if (clonedBtn) {
+						clonedBtn.onclick = () => {
+							if (typeof window.repairJsonAction === 'function') {
+								window.repairJsonAction();
+							}
+						};
+					}
+					r.appendChild(clone);
+				});
 			}
 		}
 

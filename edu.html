@@ -8,6 +8,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https: http:; media-src 'self' blob:; connect-src 'self' data: blob: https: http:; worker-src 'self' blob:; frame-src 'self' data: blob:; object-src 'none'; base-uri 'self';" />
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="icon" href="favicon.ico">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -146,7 +147,8 @@
                         <div class="form-group flex-1">
                             <label for="key-format">Key Format</label>
                             <select id="key-format">
-                                <option value="main-app">Main App Context (UID/Name)</option>
+                                <option value="main-app">Main App Context (SHA-256 Digest)</option>
+                                <option value="pbkdf2">PBKDF2 (HMAC-SHA256, 600k iter)</option>
                                 <option value="utf8">UTF-8 String (Raw)</option>
                                 <option value="hex">HEX</option>
                                 <option value="base64">Base64</option>
@@ -333,46 +335,68 @@
 
         function loadEduState() {
             try {
-                const stored = localStorage.getItem(EDU_STORAGE_KEY);
-                if (stored) {
-                    const data = JSON.parse(stored);
+                // Clear any legacy plaintext keys from older versions in localStorage
+                if (localStorage.getItem(EDU_STORAGE_KEY)) {
+                    try {
+                        const legacyData = JSON.parse(localStorage.getItem(EDU_STORAGE_KEY));
+                        if (legacyData && (legacyData.key || legacyData.result)) {
+                            localStorage.removeItem(EDU_STORAGE_KEY);
+                        }
+                    } catch (e) {}
+                }
+
+                // 1. Load preferences from localStorage
+                const storedPrefs = localStorage.getItem(EDU_STORAGE_KEY + '_prefs');
+                if (storedPrefs) {
+                    const prefs = JSON.parse(storedPrefs);
+                    if (prefs.keyFormat) keyFormat.value = prefs.keyFormat;
+                    if (prefs.ivFormat) ivFormat.value = prefs.ivFormat;
+                    if (prefs.ivPrepended !== undefined) ivPrependedCb.checked = prefs.ivPrepended;
+                    if (prefs.hashAlgo) hashAlgo.value = prefs.hashAlgo;
+                    if (prefs.hashOutputFormat) hashOutputFormat.value = prefs.hashOutputFormat;
+                }
+
+                // 2. Load ephemeral session values from sessionStorage (scoped to active tab only)
+                const storedSession = sessionStorage.getItem(EDU_STORAGE_KEY + '_session');
+                if (storedSession) {
+                    const data = JSON.parse(storedSession);
                     if (data.payload !== undefined) payloadInput.value = data.payload;
                     if (data.key !== undefined) keyInput.value = data.key;
-                    if (data.keyFormat) keyFormat.value = data.keyFormat;
                     if (data.iv !== undefined) ivInput.value = data.iv;
-                    if (data.ivFormat) ivFormat.value = data.ivFormat;
-                    if (data.ivPrepended !== undefined) ivPrependedCb.checked = data.ivPrepended;
                     if (data.result !== undefined) {
                         resultInput.value = data.result;
                         if (data.result) resultSection.classList.add('show');
                     }
                     if (data.hashInput !== undefined) hashInput.value = data.hashInput;
-                    if (data.hashAlgo) hashAlgo.value = data.hashAlgo;
-                    if (data.hashOutputFormat) hashOutputFormat.value = data.hashOutputFormat;
                     if (data.hashResult !== undefined) {
                         hashResult.value = data.hashResult;
                         if (data.hashResult) hashResultSection.classList.add('show');
                     }
-
-                    if (ivPrependedCb.checked) ivGroup.classList.add('hidden');
-                    else ivGroup.classList.remove('hidden');
                 }
+
+                if (ivPrependedCb.checked) ivGroup.classList.add('hidden');
+                else ivGroup.classList.remove('hidden');
             } catch (e) { }
         }
 
         function saveEduState() {
             try {
-                localStorage.setItem(EDU_STORAGE_KEY, JSON.stringify({
-                    payload: payloadInput.value,
-                    key: keyInput.value,
+                // Save preferences only to persistent localStorage (no keys or plaintexts)
+                localStorage.setItem(EDU_STORAGE_KEY + '_prefs', JSON.stringify({
                     keyFormat: keyFormat.value,
-                    iv: ivInput.value,
                     ivFormat: ivFormat.value,
                     ivPrepended: ivPrependedCb.checked,
+                    hashAlgo: hashAlgo.value,
+                    hashOutputFormat: hashOutputFormat.value
+                }));
+
+                // Save active working values only to tab-scoped sessionStorage
+                sessionStorage.setItem(EDU_STORAGE_KEY + '_session', JSON.stringify({
+                    payload: payloadInput.value,
+                    key: keyInput.value,
+                    iv: ivInput.value,
                     result: resultInput.value,
                     hashInput: hashInput.value,
-                    hashAlgo: hashAlgo.value,
-                    hashOutputFormat: hashOutputFormat.value,
                     hashResult: hashResult.value
                 }));
             } catch (e) { }
@@ -425,8 +449,38 @@
                     return showStatus("Invalid Base64 payload", "error");
                 }
 
+                let ivBytes;
+                let ciphertext;
+
+                if (ivPrependedCb.checked) {
+                    if (payloadBytes.length < 12) return showStatus("Payload too short to contain a 12-byte IV", "error");
+                    ivBytes = payloadBytes.slice(0, 12);
+                    ciphertext = payloadBytes.slice(12);
+                } else {
+                    const ivStr = ivInput.value.trim();
+                    if (!ivStr) return showStatus("Please enter initialization vector (IV)", "error");
+
+                    if (ivFormat.value === 'utf8') ivBytes = fromUtf8(ivStr);
+                    else if (ivFormat.value === 'hex') ivBytes = fromHex(ivStr);
+                    else if (ivFormat.value === 'base64') ivBytes = fromBase64(ivStr);
+
+                    ciphertext = payloadBytes;
+                }
+
                 let keyBytes;
-                if (keyFormat.value === 'main-app') {
+                if (keyFormat.value === 'pbkdf2') {
+                    const keyMaterial = await window.crypto.subtle.importKey('raw', fromUtf8(keyStr), 'PBKDF2', false, ['deriveKey']);
+                    const salt = ivBytes && ivBytes.length > 0 ? ivBytes : fromUtf8('andesec-edu-salt');
+                    const derivedKey = await window.crypto.subtle.deriveKey(
+                        { name: 'PBKDF2', salt, iterations: 600000, hash: 'SHA-256' },
+                        keyMaterial,
+                        { name: 'AES-GCM', length: 256 },
+                        true,
+                        ['decrypt']
+                    );
+                    const rawKey = await window.crypto.subtle.exportKey('raw', derivedKey);
+                    keyBytes = new Uint8Array(rawKey);
+                } else if (keyFormat.value === 'main-app') {
                     const hash = await window.crypto.subtle.digest('SHA-256', fromUtf8(keyStr));
                     keyBytes = new Uint8Array(hash);
                 } else if (keyFormat.value === 'utf8') {
@@ -448,24 +502,6 @@
                     false,
                     ['decrypt']
                 );
-
-                let ivBytes;
-                let ciphertext;
-
-                if (ivPrependedCb.checked) {
-                    if (payloadBytes.length < 12) return showStatus("Payload too short to contain a 12-byte IV", "error");
-                    ivBytes = payloadBytes.slice(0, 12);
-                    ciphertext = payloadBytes.slice(12);
-                } else {
-                    const ivStr = ivInput.value.trim();
-                    if (!ivStr) return showStatus("Please enter initialization vector (IV)", "error");
-
-                    if (ivFormat.value === 'utf8') ivBytes = fromUtf8(ivStr);
-                    else if (ivFormat.value === 'hex') ivBytes = fromHex(ivStr);
-                    else if (ivFormat.value === 'base64') ivBytes = fromBase64(ivStr);
-
-                    ciphertext = payloadBytes;
-                }
 
                 const decryptedBuffer = await window.crypto.subtle.decrypt(
                     { name: 'AES-GCM', iv: ivBytes },
