@@ -4,7 +4,7 @@ Development HTTP Server for Dylen Text Tools.
 Serves files with no-cache headers to ensure immediate reflection of changes in the browser.
 """
 import sys
-from http.server import SimpleHTTPRequestHandler, HTTPServer
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
 class NoCacheHTTPRequestHandler(SimpleHTTPRequestHandler):
     def end_headers(self):
@@ -15,7 +15,7 @@ class NoCacheHTTPRequestHandler(SimpleHTTPRequestHandler):
 
 def run(port=8000):
     server_address = ('', port)
-    httpd = HTTPServer(server_address, NoCacheHTTPRequestHandler)
+    httpd = ThreadingHTTPServer(server_address, NoCacheHTTPRequestHandler)
     print(f"Starting Dylen Text Tools development server at http://localhost:{port}/ (no-cache enabled)...")
     try:
         httpd.serve_forever()

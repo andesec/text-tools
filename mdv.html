@@ -1549,6 +1549,10 @@
 							<i class="ph ph-file-zip text-base"></i>
 							Export with Assets (.zip)
 						</button>
+						<button class="save-dropdown-item" onclick="window.mdvPrint && window.mdvPrint()">
+							<i class="ph ph-printer text-base"></i>
+							Print / Save PDF
+						</button>
 						<div class="save-dropdown-divider"></div>
 						<button class="save-dropdown-item" onclick="copyCommentsToClipboard(false)">
 							<i class="ph ph-copy text-base"></i>
@@ -1804,7 +1808,7 @@
 
 	<script src="vendor/cm-md-bundle.js"></script>
 	<script>
-		const { EditorView, basicSetup, markdown, oneDark } = window.CM_MD;
+		const { EditorView, basicSetup, markdown, oneDark } = window.CM_MD || {};
 
 		const openBtn = document.getElementById("open-btn");
 		const pasteBtn = document.getElementById("paste-btn");
@@ -2495,8 +2499,10 @@
 				el = el.nextElementSibling;
 			}
 		}
+		window.setHeadingFolded = setHeadingFolded;
 
 		function enhanceContent() {
+		window.enhanceContent = enhanceContent;
 			// ── GFM Alerts: transform > [!NOTE] blockquotes ──
 			contentArea.querySelectorAll('blockquote').forEach(bq => {
 				const firstP = bq.querySelector('p');
@@ -2640,6 +2646,11 @@
 					deleteImageFromDoc(src, alt, imgIndex);
 				};
 				container.appendChild(delBtn);
+
+				// Enhance with resize controls, visible caption, and portrait detection
+				if (window.MdvPrint && typeof window.MdvPrint.enhanceImage === 'function') {
+					window.MdvPrint.enhanceImage(container, img, imgIndex, src, alt);
+				}
 
 				// If remote URL, render URL caption below the image
 				if (isRemoteUrl) {
@@ -3173,6 +3184,7 @@
 				updateFooterInfo();
 			}
 		}
+		window.updatePreview = updatePreview;
 
 		function formatSize(bytes) {
 			if (bytes < 1024) return bytes + ' B';
@@ -4428,6 +4440,7 @@
 	<script src="vendor/jszip.min.js"></script>
 	<script src="mdv-comments.js"></script>
 	<script src="mdv-assets.js"></script>
+	<script src="mdv-print.js"></script>
 	<script>
 		MdvComments.init();
 		loadMdvState();
