@@ -1680,6 +1680,15 @@
 					<span id="sidebar-image-count" class="sidebar-panel-badge"></span>
 				</div>
 				<div class="sidebar-panel-body">
+					<div class="sidebar-images-toolbar">
+						<span class="sidebar-images-toolbar-label">Resize All</span>
+						<div class="sidebar-images-size-group" role="group" aria-label="Resize all images">
+							<button type="button" class="sidebar-images-size-btn" data-size="small" onclick="window.MdvPrint && window.MdvPrint.resizeAllImages('small')" title="Set all images to Small (20%)">20%</button>
+							<button type="button" class="sidebar-images-size-btn active" data-size="medium" onclick="window.MdvPrint && window.MdvPrint.resizeAllImages('medium')" title="Set all images to Medium (45%)">45%</button>
+							<button type="button" class="sidebar-images-size-btn" data-size="large" onclick="window.MdvPrint && window.MdvPrint.resizeAllImages('large')" title="Set all images to Large (75%)">75%</button>
+							<button type="button" class="sidebar-images-size-btn" data-size="full" onclick="window.MdvPrint && window.MdvPrint.resizeAllImages('full')" title="Set all images to Full width (100%)">100%</button>
+						</div>
+					</div>
 					<div id="image-list" class="sidebar-image-grid">
 						<div class="sidebar-empty-state">No pictures found.</div>
 					</div>
@@ -3081,6 +3090,11 @@
 
 			if (countBadge) {
 				countBadge.textContent = images.length > 0 ? images.length : "";
+			}
+
+			const imagesToolbar = document.querySelector('.sidebar-images-toolbar');
+			if (imagesToolbar) {
+				imagesToolbar.classList.toggle('hidden', images.length === 0);
 			}
 
 			if (images.length === 0) {

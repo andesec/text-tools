@@ -1,14 +1,17 @@
 /* ==========================================================================
-   MDV Print, Captions & Image Resize Module
+   MDV Print, Captions, Image Resize & Optimizer Module
    Modular extension for mdv.html
 
    Features:
    1. Print / Save to PDF using browser native print system (keeps text native)
    2. Visible image captions (from alt-text or title) rendered below images
    3. 4-step image resizing (small 20%, medium 45% [default], large 75%, full 100%)
-   4. Portrait aspect ratio detection with viewport-based height limits
-   5. In-memory size persistence across preview re-renders
-   6. Clean @media print formatting hiding UI chrome & preserving figures/graphics
+   4. Option to resize ALL images at once from the Pictures sidebar panel
+   5. Dylen image optimizer: downsamples images to displayed dimensions & converts
+      format (JPEG 0.80 for opaque, PNG for alpha) to drastically reduce PDF file size
+   6. Portrait aspect ratio detection with viewport-based height limits
+   7. In-memory size persistence across preview re-renders
+   8. Clean @media print formatting hiding UI chrome & removing all borders
    ========================================================================== */
 
 (function () {
@@ -30,6 +33,9 @@
 
 	// Store folded headings during print so they can be restored afterwards
 	let foldedHeadingsBeforePrint = [];
+
+	// Store active blob URLs generated during print optimization so they can be revoked
+	const activeBlobUrls = [];
 
 	/* ── Inject Stylesheet ─────────────────────────────────────────────── */
 	function injectStyles() {
@@ -145,6 +151,59 @@
 				text-align: center;
 				font-style: italic;
 				word-break: break-word;
+			}
+
+			/* ── Sidebar Pictures Panel Resize Toolbar ── */
+			.sidebar-images-toolbar {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				padding: 8px 12px;
+				border-bottom: 1px solid var(--border-default);
+				background-color: var(--bg-surface);
+				gap: 6px;
+				flex-shrink: 0;
+			}
+
+			.sidebar-images-toolbar-label {
+				font-size: 11px;
+				font-weight: 600;
+				color: var(--text-secondary);
+				text-transform: uppercase;
+				letter-spacing: 0.04em;
+				white-space: nowrap;
+			}
+
+			.sidebar-images-size-group {
+				display: flex;
+				align-items: center;
+				gap: 4px;
+			}
+
+			.sidebar-images-size-btn {
+				padding: 2px 7px;
+				font-size: 11px;
+				font-weight: 500;
+				font-family: var(--font-mono, monospace);
+				border-radius: var(--radius-sm, 4px);
+				border: 1px solid var(--border-default);
+				background-color: var(--bg-surface-raised);
+				color: var(--text-secondary);
+				cursor: pointer;
+				transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+			}
+
+			.sidebar-images-size-btn:hover {
+				background-color: var(--bg-surface-hover);
+				color: var(--text-primary);
+				border-color: var(--border-strong);
+			}
+
+			.sidebar-images-size-btn.active {
+				background-color: var(--accent);
+				color: rgb(255, 255, 255);
+				border-color: var(--accent);
+				font-weight: 600;
 			}
 
 			/* ── Native Print / PDF Styles ───────────────────────────── */
@@ -459,8 +518,10 @@
 		container.setAttribute("data-mdv-size", size);
 		const label = SIZE_LABELS[size] || size;
 		const tooltip = "Image size: " + label + " — Click to cycle";
-		resizeBtn.title = tooltip;
-		resizeBtn.setAttribute("aria-label", tooltip);
+		if (resizeBtn) {
+			resizeBtn.title = tooltip;
+			resizeBtn.setAttribute("aria-label", tooltip);
+		}
 	}
 
 	/* ── Detect Aspect Ratio for Portrait Height Limiting ─────────────── */
@@ -487,7 +548,6 @@
 			resizeBtn = document.createElement("button");
 			resizeBtn.type = "button";
 			resizeBtn.className = "mdv-image-resize-btn";
-			// Crisp corner-resize icon SVG
 			resizeBtn.innerHTML = '<svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor"><path d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 0 1 0V2.707l3.146 3.147a.5.5 0 0 0 .708-.708L2.707 2H5.5a.5.5 0 0 0 0-1h-4zm13 0a.5.5 0 0 0-.5.5v2.793l-3.146 3.147a.5.5 0 0 0 .708.708L14.707 5H12a.5.5 0 0 0 0 1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 0-.5-.5zM5.354 10.146a.5.5 0 0 0-.708 0L1.5 13.293V10.5a.5.5 0 0 0-1 0v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 0-1H2.207l3.147-3.146a.5.5 0 0 0 0-.708zm5.292 0a.5.5 0 0 0 0 .708L13.793 14H11a.5.5 0 0 0 0 1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 0-1 0v2.793l-3.146-3.147a.5.5 0 0 0-.708 0z"/></svg>';
 
 			resizeBtn.onclick = function (e) {
@@ -517,7 +577,6 @@
 			if (!captionEl) {
 				captionEl = document.createElement("div");
 				captionEl.className = "mdv-image-caption";
-				// Insert before url bar if one already exists, else append
 				const urlBar = container.querySelector(".mdv-image-url-bar");
 				if (urlBar) {
 					container.insertBefore(captionEl, urlBar);
@@ -538,6 +597,224 @@
 			img.addEventListener("load", function () {
 				detectAspectRatio(img, container);
 			}, { once: true });
+		}
+	}
+
+	/* ── Resize All Images in Document ─────────────────────────────────── */
+	function resizeAllImages(size) {
+		const validSizes = ["small", "medium", "large", "full"];
+		if (!validSizes.includes(size)) size = "medium";
+
+		const contentArea = document.getElementById("content");
+		if (!contentArea) return;
+
+		const imgs = contentArea.querySelectorAll(".mdv-image-container img");
+		imgs.forEach(function (img, idx) {
+			const src = img.getAttribute("src") || "";
+			const origSrc = img.getAttribute("data-mdv-orig-src") || src;
+			const key = origSrc || ("img-" + idx);
+			imageSizeMap.set(key, size);
+			if (src) imageSizeMap.set(src, size);
+		});
+
+		const containers = contentArea.querySelectorAll(".mdv-image-container");
+		containers.forEach(function (container) {
+			const resizeBtn = container.querySelector(".mdv-image-resize-btn");
+			if (resizeBtn) {
+				applySize(container, resizeBtn, size);
+			} else {
+				container.setAttribute("data-mdv-size", size);
+			}
+		});
+
+		// Update active button state in sidebar pictures panel
+		document.querySelectorAll(".sidebar-images-size-btn").forEach(function (btn) {
+			if (btn.getAttribute("data-size") === size) {
+				btn.classList.add("active");
+			} else {
+				btn.classList.remove("active");
+			}
+		});
+
+		if (window.MdvComments && typeof window.MdvComments.toast === "function") {
+			window.MdvComments.toast("All images resized to " + SIZE_LABELS[size]);
+		}
+	}
+
+	/* ── Dylen Image Optimizer Algorithm ─────────────────────────────── */
+	// Reused from dylen/src/lib/utils/imageOptimizer.js:
+	// 1. Detect meaningful alpha (transparency)
+	// 2. Compute dimension scaling based on display width
+	// 3. Convert format: JPEG 0.82 for opaque images (massive reduction), PNG for alpha
+	// 4. Decode via Canvas surface and wait for img.decode()
+
+	async function detectMeaningfulAlpha(source, width, height) {
+		const sampleSize = Math.min(64, Math.max(width, height));
+		const canvas = document.createElement("canvas");
+		canvas.width = sampleSize;
+		canvas.height = sampleSize;
+		const ctx = canvas.getContext("2d");
+		if (!ctx) return false;
+		try {
+			ctx.clearRect(0, 0, sampleSize, sampleSize);
+			ctx.drawImage(source, 0, 0, sampleSize, sampleSize);
+			const data = ctx.getImageData(0, 0, sampleSize, sampleSize).data;
+			for (let i = 3; i < data.length; i += 4) {
+				if (data[i] < 250) return true; // Real transparency detected
+			}
+			return false;
+		} catch (e) {
+			return false;
+		} finally {
+			canvas.width = 0;
+			canvas.height = 0;
+		}
+	}
+
+	function createCanvasSurface(width, height) {
+		if (typeof OffscreenCanvas !== "undefined") {
+			try {
+				const canvas = new OffscreenCanvas(width, height);
+				const ctx = canvas.getContext("2d", { alpha: true });
+				if (ctx) {
+					return {
+						ctx: ctx,
+						exportBlob: function (type, quality) {
+							return canvas.convertToBlob({ type: type, quality: quality });
+						},
+						destroy: function () {}
+					};
+				}
+			} catch (e) {}
+		}
+
+		const canvas = document.createElement("canvas");
+		canvas.width = width;
+		canvas.height = height;
+		const ctx = canvas.getContext("2d", { alpha: true });
+		return {
+			ctx: ctx,
+			exportBlob: function (type, quality) {
+				return new Promise(function (resolve, reject) {
+					canvas.toBlob(function (blob) {
+						if (blob) resolve(blob);
+						else reject(new Error("Canvas export failed"));
+					}, type, quality);
+				});
+			},
+			destroy: function () {
+				canvas.width = 0;
+				canvas.height = 0;
+			}
+		};
+	}
+
+	async function decodeSourceImage(src) {
+		if (typeof createImageBitmap === "function") {
+			try {
+				const response = await fetch(src, { mode: "cors" });
+				if (response.ok) {
+					const blob = await response.blob();
+					const bitmap = await createImageBitmap(blob);
+					return {
+						width: bitmap.width,
+						height: bitmap.height,
+						draw: function (ctx, w, h) { ctx.drawImage(bitmap, 0, 0, w, h); },
+						close: function () { bitmap.close && bitmap.close(); }
+					};
+				}
+			} catch (e) {}
+		}
+
+		const image = new Image();
+		if (!src.startsWith("data:")) {
+			image.crossOrigin = "anonymous";
+		}
+		await new Promise(function (resolve, reject) {
+			image.onload = resolve;
+			image.onerror = reject;
+			image.src = src;
+		});
+		if (typeof image.decode === "function") {
+			await image.decode().catch(function () {});
+		}
+		return {
+			width: image.naturalWidth || image.width,
+			height: image.naturalHeight || image.height,
+			draw: function (ctx, w, h) { ctx.drawImage(image, 0, 0, w, h); },
+			close: function () {}
+		};
+	}
+
+	async function optimizeImageElement(img) {
+		const src = img.getAttribute("data-mdv-orig-src") || img.getAttribute("src") || "";
+		if (!src) return;
+
+		// Calculate target dimensions from displayed size
+		const rect = img.getBoundingClientRect();
+		const container = img.closest(".mdv-image-container");
+		const containerRect = container ? container.getBoundingClientRect() : null;
+
+		const displayW = Math.round(rect.width) || (containerRect ? Math.round(containerRect.width) : 0) || 400;
+		const displayH = Math.round(rect.height) || (containerRect ? Math.round(containerRect.height) : 0) || 300;
+
+		try {
+			const decoded = await decodeSourceImage(src);
+			try {
+				const naturalW = decoded.width;
+				const naturalH = decoded.height;
+				if (!naturalW || !naturalH) return;
+
+				// Scale to displayed dimensions (1.5x - 2x for print DPI, capped at 1200px max)
+				const maxDesiredW = Math.min(naturalW, Math.max(Math.round(displayW * 1.75), 500));
+				const scale = maxDesiredW / naturalW;
+				const targetW = Math.round(naturalW * scale);
+				const targetH = Math.round(naturalH * scale);
+
+				// Detect transparency using the Dylen approach
+				const hasAlpha = await detectMeaningfulAlpha(decoded, targetW, targetH);
+
+				const outputType = hasAlpha ? "image/png" : "image/jpeg";
+				const quality = hasAlpha ? undefined : 0.82;
+
+				const surface = createCanvasSurface(targetW, targetH);
+				try {
+					surface.ctx.imageSmoothingEnabled = true;
+					surface.ctx.imageSmoothingQuality = "high";
+
+					if (!hasAlpha) {
+						surface.ctx.fillStyle = "#ffffff";
+						surface.ctx.fillRect(0, 0, targetW, targetH);
+					}
+
+					decoded.draw(surface.ctx, targetW, targetH);
+					const blob = await surface.exportBlob(outputType, quality);
+
+					if (blob && blob.size > 0) {
+						const blobUrl = URL.createObjectURL(blob);
+						activeBlobUrls.push(blobUrl);
+
+						if (!img.getAttribute("data-mdv-orig-src")) {
+							img.setAttribute("data-mdv-orig-src", src);
+						}
+
+						await new Promise(function (resolve) {
+							img.onload = resolve;
+							img.onerror = resolve;
+							img.src = blobUrl;
+						});
+						if (typeof img.decode === "function") {
+							await img.decode().catch(function () {});
+						}
+					}
+				} finally {
+					surface.destroy && surface.destroy();
+				}
+			} finally {
+				decoded.close && decoded.close();
+			}
+		} catch (err) {
+			// Cross-origin restriction: leave as original
 		}
 	}
 
@@ -593,7 +870,7 @@
 			}
 		});
 
-		// 4. Wait for any pending image loads (up to 1.5s timeout)
+		// 4. Wait for any pending initial image loads (up to 1.5s timeout)
 		const pendingImgs = Array.from(contentArea.querySelectorAll("img")).filter(function (img) {
 			return !img.complete;
 		});
@@ -610,10 +887,10 @@
 			]);
 		}
 
-		// 5. Downscale images to match displayed dimensions so output PDF file size stays native & compact
+		// 5. Optimize image sizes using the Dylen optimizer approach to shrink PDF size
 		const imgsToOptimize = Array.from(contentArea.querySelectorAll("img"));
 		if (imgsToOptimize.length > 0) {
-			await Promise.all(imgsToOptimize.map(downscaleImageForPrint));
+			await Promise.all(imgsToOptimize.map(optimizeImageElement));
 		}
 
 		// 6. Trigger browser native print dialog
@@ -621,68 +898,11 @@
 		window.print();
 	}
 
-	/* ── Downscale image to displayed size for print ───────────────────── */
-	async function downscaleImageForPrint(img) {
-		if (!img.naturalWidth || !img.naturalHeight) return;
-
-		// Calculate target dimensions based on displayed size on page
-		const rect = img.getBoundingClientRect();
-		const displayW = Math.round(rect.width) || img.clientWidth || 400;
-		const displayH = Math.round(rect.height) || img.clientHeight || 300;
-
-		// Use 2x displayed size for crisp 300 DPI print quality, capped by natural size
-		const targetW = Math.min(img.naturalWidth, Math.max(displayW * 2, 600));
-		const scale = targetW / img.naturalWidth;
-		const targetH = Math.round(img.naturalHeight * scale);
-
-		// Only downscale if the original image is noticeably larger than needed (> 1.25x)
-		if (img.naturalWidth <= targetW * 1.25 && img.naturalHeight <= targetH * 1.25) {
-			return;
-		}
-
-		function renderToCanvas(sourceImg) {
-			const canvas = document.createElement("canvas");
-			canvas.width = targetW;
-			canvas.height = targetH;
-			const ctx = canvas.getContext("2d");
-			ctx.imageSmoothingEnabled = true;
-			ctx.imageSmoothingQuality = "high";
-			// Solid white background for paper
-			ctx.fillStyle = "#ffffff";
-			ctx.fillRect(0, 0, targetW, targetH);
-			ctx.drawImage(sourceImg, 0, 0, targetW, targetH);
-			return canvas.toDataURL("image/jpeg", 0.85);
-		}
-
-		try {
-			// Attempt direct canvas draw
-			const dataUrl = renderToCanvas(img);
-			img.setAttribute("data-mdv-orig-src", img.src);
-			img.src = dataUrl;
-		} catch (err) {
-			// If tainted canvas error (cross-origin without CORS attribute), try loading with crossOrigin
-			try {
-				const corsImg = new Image();
-				corsImg.crossOrigin = "anonymous";
-				await new Promise(function (resolve, reject) {
-					corsImg.onload = resolve;
-					corsImg.onerror = reject;
-					corsImg.src = img.src;
-				});
-				const dataUrl = renderToCanvas(corsImg);
-				img.setAttribute("data-mdv-orig-src", img.src);
-				img.src = dataUrl;
-			} catch (corsErr) {
-				// Remote server does not allow CORS access — keep original image
-			}
-		}
-	}
-
 	/* ── Cleanup after print dialog dismisses ─────────────────────────── */
 	function cleanupAfterPrint() {
 		document.body.classList.remove("mdv-printing");
 
-		// Restore any downscaled images back to original src
+		// Restore any optimized images back to original src
 		const modifiedImgs = document.querySelectorAll("img[data-mdv-orig-src]");
 		modifiedImgs.forEach(function (img) {
 			const orig = img.getAttribute("data-mdv-orig-src");
@@ -691,6 +911,12 @@
 				img.removeAttribute("data-mdv-orig-src");
 			}
 		});
+
+		// Revoke created blob URLs to free memory
+		while (activeBlobUrls.length > 0) {
+			const url = activeBlobUrls.pop();
+			URL.revokeObjectURL(url);
+		}
 
 		// Restore folded headings
 		if (foldedHeadingsBeforePrint.length > 0) {
@@ -729,6 +955,7 @@
 	window.MdvPrint = {
 		enhanceImage: enhanceImage,
 		printDocument: printDocument,
+		resizeAllImages: resizeAllImages,
 		imageSizeMap: imageSizeMap
 	};
 
