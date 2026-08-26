@@ -1328,8 +1328,142 @@
 			color: var(--link-color-hover);
 		}
 
-		.sidebar-image-item {
+		/* ── Sidebar Pictures Panel Thumbnail Grid ── */
+		.sidebar-image-grid {
+			display: grid;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: 8px;
+			padding: 8px;
+			overflow-y: auto;
+			max-height: 100%;
+			box-sizing: border-box;
+			width: 100%;
+		}
+
+		.sidebar-empty-state {
+			grid-column: 1 / -1;
+			color: var(--text-tertiary);
+			font-size: 12px;
+			font-style: italic;
+			padding: 2rem 1rem;
+			text-align: center;
+		}
+
+		.sidebar-image-card {
+			position: relative;
+			display: flex;
+			flex-direction: column;
+			background-color: var(--bg-surface-raised);
+			border: 1px solid var(--border-default);
+			border-radius: var(--radius-md);
+			overflow: hidden;
+			cursor: pointer;
+			transition: border-color 0.15s, transform 0.1s;
 			user-select: none;
+			min-width: 0;
+		}
+
+		.sidebar-image-card:hover {
+			border-color: var(--link-color);
+			transform: translateY(-1px);
+		}
+
+		.sidebar-image-card:active {
+			transform: translateY(0);
+		}
+
+		.sidebar-image-card.active {
+			border-color: var(--link-color);
+			box-shadow: 0 0 0 2px var(--link-color);
+		}
+
+		.sidebar-image-card-thumb {
+			position: relative;
+			width: 100%;
+			height: 80px;
+			background-color: var(--bg-surface);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			overflow: hidden;
+		}
+
+		.sidebar-image-card-thumb img {
+			width: 100% !important;
+			height: 100% !important;
+			max-width: 100% !important;
+			max-height: 80px !important;
+			object-fit: cover !important;
+			display: block;
+		}
+
+		.sidebar-image-card-badge {
+			position: absolute;
+			bottom: 4px;
+			left: 4px;
+			background-color: var(--bg-surface);
+			color: var(--text-secondary);
+			border: 1px solid var(--border-default);
+			font-size: 10px;
+			font-family: var(--font-mono);
+			padding: 1px 4px;
+			border-radius: var(--radius-sm);
+			line-height: 1.2;
+		}
+
+		.sidebar-image-card-delete {
+			position: absolute;
+			top: 4px;
+			right: 4px;
+			z-index: 5;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			width: 22px;
+			height: 22px;
+			padding: 0;
+			border-radius: var(--radius-sm);
+			border: 1px solid var(--border-default);
+			background-color: var(--bg-surface);
+			color: var(--text-secondary);
+			cursor: pointer;
+			transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+		}
+
+		.sidebar-image-card-delete:hover {
+			background-color: var(--danger);
+			color: #ffffff;
+			border-color: var(--danger);
+		}
+
+		.sidebar-image-card-meta {
+			padding: 4px 6px;
+			background-color: var(--bg-surface-raised);
+			border-top: 1px solid var(--border-default);
+			display: flex;
+			flex-direction: column;
+			gap: 2px;
+			min-width: 0;
+		}
+
+		.sidebar-image-card-title {
+			font-size: 11px;
+			font-weight: 500;
+			color: var(--text-primary);
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			line-height: 1.3;
+		}
+
+		.sidebar-image-card-sub {
+			font-size: 9px;
+			font-family: var(--font-mono);
+			color: var(--text-tertiary);
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			line-height: 1.2;
 		}
 	</style>
 </head>
@@ -1542,8 +1676,8 @@
 					<span id="sidebar-image-count" class="sidebar-panel-badge"></span>
 				</div>
 				<div class="sidebar-panel-body">
-					<div id="image-list" class="flex-1 overflow-y-auto p-2 space-y-1 no-scrollbar">
-						<div class="text-[var(--text-tertiary)] text-xs italic p-8 text-center">No pictures found.</div>
+					<div id="image-list" class="sidebar-image-grid">
+						<div class="sidebar-empty-state">No pictures found.</div>
 					</div>
 				</div>
 			</div>
@@ -2944,37 +3078,40 @@
 			}
 
 			imageList.innerHTML = images.map((img, i) => {
-				const displayTitle = img.alt ? escapeHtml(img.alt) : (img.src.startsWith('data:') ? 'Inline Image ' + (i + 1) : escapeHtml(img.src.split('/').pop()?.split('?')[0] || ('Picture ' + (i + 1))));
-				const displaySub = img.src.startsWith('data:') ? 'Embedded base64' : escapeHtml(img.src);
+				const displayTitle = img.alt ? escapeHtml(img.alt) : (img.src.startsWith('data:') ? 'Image ' + (i + 1) : escapeHtml(img.src.split('/').pop()?.split('?')[0] || ('Picture ' + (i + 1))));
+				const displaySub = img.src.startsWith('data:') ? 'Inline data' : escapeHtml(img.src.replace(/^https?:\/\//i, ''));
 				return `
-					<div class="sidebar-image-item w-full flex items-center gap-2 p-1.5 rounded-md hover:bg-[var(--bg-surface-hover)] cursor-pointer group" data-image-index="${i}" data-line="${img.line}" data-src="${escapeHtml(img.src)}" data-alt="${escapeHtml(img.alt)}">
-						<div class="sidebar-image-thumb w-9 h-9 rounded border border-[var(--border-default)] overflow-hidden flex-shrink-0 bg-[var(--bg-surface-raised)] flex items-center justify-center">
-							<img src="${escapeHtml(img.src)}" alt="${escapeHtml(img.alt)}" class="w-full h-full object-cover" onerror="this.style.display='none';this.nextElementSibling.style.display='block';" />
-							<svg class="hidden w-4 h-4 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+					<div class="sidebar-image-card" data-image-index="${i}" data-line="${img.line}" data-src="${escapeHtml(img.src)}" data-alt="${escapeHtml(img.alt)}" title="${displayTitle}">
+						<div class="sidebar-image-card-thumb">
+							<img src="${escapeHtml(img.src)}" alt="${escapeHtml(img.alt)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+							<div class="hidden w-full h-full items-center justify-center text-[var(--text-tertiary)] bg-[var(--bg-surface)]">
+								<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+							</div>
+							<span class="sidebar-image-card-badge">#${i + 1}</span>
+							<button type="button" class="sidebar-image-card-delete" title="Delete image from document" aria-label="Delete image">
+								<svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor"><path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L9.06 8l3.22 3.22a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L8 9.06l-3.22 3.22a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z"/></svg>
+							</button>
 						</div>
-						<div class="sidebar-image-info flex-1 min-w-0">
-							<div class="sidebar-image-alt text-xs font-medium text-[var(--text-primary)] truncate" title="${displayTitle}">${displayTitle}</div>
-							<div class="sidebar-image-url text-[10px] font-mono text-[var(--text-tertiary)] truncate" title="${displaySub}">${displaySub}</div>
+						<div class="sidebar-image-card-meta">
+							<div class="sidebar-image-card-title">${displayTitle}</div>
+							<div class="sidebar-image-card-sub">${displaySub}</div>
 						</div>
-						<button type="button" class="sidebar-image-delete-btn p-1 text-[var(--text-tertiary)] hover:text-[var(--danger)] hover:bg-[var(--bg-surface)] rounded opacity-0 group-hover:opacity-100 transition-opacity" title="Delete image from document" aria-label="Delete image">
-							<svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor"><path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L9.06 8l3.22 3.22a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L8 9.06l-3.22 3.22a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z"/></svg>
-						</button>
 					</div>
 				`;
 			}).join('');
 
-			imageList.querySelectorAll(".sidebar-image-item").forEach(item => {
+			imageList.querySelectorAll(".sidebar-image-card").forEach(item => {
 				const idx = parseInt(item.getAttribute("data-image-index"), 10);
 				const lineNum = parseInt(item.getAttribute("data-line"), 10);
 				const src = item.getAttribute("data-src") || "";
 				const alt = item.getAttribute("data-alt") || "";
 
 				item.addEventListener("click", (e) => {
-					if (e.target.closest(".sidebar-image-delete-btn")) return;
+					if (e.target.closest(".sidebar-image-card-delete")) return;
 					scrollToImage(idx, lineNum, src);
 				});
 
-				const delBtn = item.querySelector(".sidebar-image-delete-btn");
+				const delBtn = item.querySelector(".sidebar-image-card-delete");
 				if (delBtn) {
 					delBtn.addEventListener("click", (e) => {
 						e.preventDefault();
