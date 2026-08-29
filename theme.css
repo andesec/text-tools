@@ -5558,7 +5558,20 @@ body.sidebar-collapsed .sidebar-toggle-btn .icon-expand {
   display: block;
 }
 
-/* ── CodeMirror High-Contrast Selection Highlighting Fixes ── */
+/* ── CodeMirror Base & Selection Highlighting Fixes ── */
+.cm-editor {
+  font-family: var(--font-mono) !important;
+}
+
+.cm-editor .cm-scroller {
+  font-family: var(--font-mono) !important;
+}
+
+.cm-editor .cm-content,
+.cm-editor .cm-line {
+  font-family: var(--font-mono) !important;
+}
+
 .cm-editor .cm-selectionBackground,
 .cm-editor.cm-focused .cm-selectionBackground,
 .cm-editor.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground {
@@ -5587,14 +5600,6 @@ body.sidebar-collapsed .sidebar-toggle-btn .icon-expand {
   .cm-editor .cm-line ::selection {
     background-color: rgb(199, 210, 254) !important;
     color: rgb(15, 23, 42) !important;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  .cm-editor .cm-line ::selection,
-  .cm-editor .cm-line::selection {
-    background-color: #3e4451 !important;
-    color: inherit !important;
   }
 }
 

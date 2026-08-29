@@ -493,6 +493,38 @@ function createEditors(leftDoc = '', rightDoc = '') {
   const leftName  = document.getElementById('lbl-left').textContent;
   const rightName = document.getElementById('lbl-right').textContent;
 
+  let _diffResizeObserver = null;
+  function setupDiffEditorResizeObserver() {
+    if (_diffResizeObserver) return;
+    if (typeof ResizeObserver === "function") {
+      _diffResizeObserver = new ResizeObserver(() => {
+        if (editorL) editorL.requestMeasure();
+        if (editorR) editorR.requestMeasure();
+      });
+      const elL = document.getElementById('editor-left');
+      const elR = document.getElementById('editor-right');
+      if (elL) _diffResizeObserver.observe(elL);
+      if (elR) _diffResizeObserver.observe(elR);
+    }
+  }
+
+  if (document.fonts && typeof document.fonts.ready?.then === "function") {
+    document.fonts.ready.then(() => {
+      if (editorL) editorL.requestMeasure();
+      if (editorR) editorR.requestMeasure();
+    });
+  }
+
+  window.addEventListener("focus", () => {
+    if (editorL) editorL.requestMeasure();
+    if (editorR) editorR.requestMeasure();
+  });
+
+  window.addEventListener("resize", () => {
+    if (editorL) editorL.requestMeasure();
+    if (editorR) editorR.requestMeasure();
+  });
+
   editorL = new EditorView({
     state: EditorState.create({
       doc: leftDoc,
@@ -502,7 +534,7 @@ function createEditors(leftDoc = '', rightDoc = '') {
         langL.of(langExt(leftName || rightName)),
         wrapL.of(opts.wordWrap ? EditorView.lineWrapping : []),
         decoField,
-        EditorView.theme({ '&':{ height:'100%', width:'100%' }, '.cm-scroller':{ overflow:'auto' } }),
+        EditorView.theme({ '&':{ height:'100%', width:'100%', fontFamily:'var(--font-mono)' }, '.cm-scroller':{ overflow:'auto', fontFamily:'var(--font-mono)' }, '.cm-content':{ fontFamily:'var(--font-mono)' }, '.cm-line':{ fontFamily:'var(--font-mono)' } }),
         EditorView.updateListener.of(v => { if (v.docChanged) scheduleDiff(); }),
         EditorView.domEventHandlers({ scroll: syncScrollFromLeft }),
       ],
@@ -519,12 +551,18 @@ function createEditors(leftDoc = '', rightDoc = '') {
         langR.of(langExt(rightName || leftName)),
         wrapR.of(opts.wordWrap ? EditorView.lineWrapping : []),
         decoField,
-        EditorView.theme({ '&':{ height:'100%', width:'100%' }, '.cm-scroller':{ overflow:'auto' } }),
+        EditorView.theme({ '&':{ height:'100%', width:'100%', fontFamily:'var(--font-mono)' }, '.cm-scroller':{ overflow:'auto', fontFamily:'var(--font-mono)' }, '.cm-content':{ fontFamily:'var(--font-mono)' }, '.cm-line':{ fontFamily:'var(--font-mono)' } }),
         EditorView.updateListener.of(v => { if (v.docChanged) scheduleDiff(); }),
         EditorView.domEventHandlers({ scroll: syncScrollFromRight }),
       ],
     }),
     parent: document.getElementById('editor-right'),
+  });
+
+  setupDiffEditorResizeObserver();
+  requestAnimationFrame(() => {
+    if (editorL) editorL.requestMeasure();
+    if (editorR) editorR.requestMeasure();
   });
 
   // Apply visual theme identifiers to editor containers

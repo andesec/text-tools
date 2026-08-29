@@ -687,10 +687,10 @@
 			return [
 				isDark ? oneDark : [],
 				EditorView.theme({
-					"&": { height: "100%", fontSize: "var(--editor-font-size)", backgroundColor: "var(--bg-surface)", color: "var(--text-primary)" },
+					"&": { height: "100%", fontSize: "var(--editor-font-size)", fontFamily: "var(--font-mono)", backgroundColor: "var(--bg-surface)", color: "var(--text-primary)" },
 					".cm-scroller": { overflow: "auto", fontFamily: "var(--font-mono)" },
 					".cm-content": { fontWeight: "400 !important", fontFamily: "var(--font-mono) !important" },
-					".cm-line": { fontWeight: "400 !important" },
+					".cm-line": { fontWeight: "400 !important", fontFamily: "var(--font-mono) !important" },
 					".cm-gutters": { backgroundColor: "var(--bg-surface)", borderRightColor: "var(--border-subtle)", color: "var(--text-tertiary)" },
 					".cm-cursor, .cm-dropCursor": { borderLeftColor: "var(--accent)", borderLeftWidth: "2px" },
 					"&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-selectionBackground": {
@@ -703,6 +703,34 @@
 				}, { dark: isDark })
 			];
 		}
+
+		let _jsvEditorResizeObserver = null;
+		function setupEditorResizeObserver() {
+			if (_jsvEditorResizeObserver) return;
+			if (typeof ResizeObserver === "function") {
+				_jsvEditorResizeObserver = new ResizeObserver(() => {
+					if (editor && editorContainer && !editorContainer.classList.contains("hidden")) {
+						editor.requestMeasure();
+					}
+				});
+				if (editorEl) _jsvEditorResizeObserver.observe(editorEl);
+				if (editorContainer) _jsvEditorResizeObserver.observe(editorContainer);
+			}
+		}
+
+		if (document.fonts && typeof document.fonts.ready?.then === "function") {
+			document.fonts.ready.then(() => {
+				if (editor) editor.requestMeasure();
+			});
+		}
+
+		window.addEventListener("focus", () => {
+			if (editor) editor.requestMeasure();
+		});
+
+		window.addEventListener("resize", () => {
+			if (editor) editor.requestMeasure();
+		});
 
 		// Initialize CodeMirror
 		function initEditor(initialValue = "", language = "javascript", readOnly = false) {
@@ -758,10 +786,10 @@
 				}]),
 				EditorView.editable.of(!readOnly),
 				EditorView.theme({
-					"&": { height: "100%", fontSize: "var(--editor-font-size)", backgroundColor: "var(--bg-surface)" },
+					"&": { height: "100%", fontSize: "var(--editor-font-size)", fontFamily: "var(--font-mono)", backgroundColor: "var(--bg-surface)" },
 					".cm-scroller": { overflow: "auto", fontFamily: "var(--font-mono)" },
 					".cm-content": { fontWeight: "400 !important", fontFamily: "var(--font-mono) !important" },
-					".cm-line": { fontWeight: "400 !important" },
+					".cm-line": { fontWeight: "400 !important", fontFamily: "var(--font-mono) !important" },
 					".ͼ1 .cm-keyword": { fontWeight: "500 !important" },
 					".ͼ1 .cm-variableName": { fontWeight: "400 !important" },
 					".ͼ1 .cm-typeName": { fontWeight: "500 !important" },
@@ -807,6 +835,11 @@
 				doc: initialValue,
 				extensions: extensions,
 				parent: editorEl
+			});
+
+			setupEditorResizeObserver();
+			requestAnimationFrame(() => {
+				if (editor) editor.requestMeasure();
 			});
 
 			if (!readOnly) {

@@ -662,6 +662,11 @@
       document.querySelectorAll('.workspace-iframe').forEach(el => {
         if (el.id === `iframe-${id}`) {
           el.classList.add('active');
+          try {
+            el.contentWindow?.dispatchEvent(new Event('resize'));
+          } catch (e) {
+            // ignore cross-origin
+          }
         } else {
           el.classList.remove('active');
         }

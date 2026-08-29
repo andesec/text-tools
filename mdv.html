@@ -2371,10 +2371,10 @@
 			return [
 				isDark ? oneDark : [],
 				EditorView.theme({
-					"&": { height: "100%", fontSize: "var(--editor-font-size)", backgroundColor: "var(--bg-surface)", color: "var(--text-primary)" },
+					"&": { height: "100%", fontSize: "var(--editor-font-size)", fontFamily: "var(--font-mono)", backgroundColor: "var(--bg-surface)", color: "var(--text-primary)" },
 					".cm-scroller": { overflow: "auto", fontFamily: "var(--font-mono)" },
 					".cm-content": { fontWeight: "400 !important", fontFamily: "var(--font-mono) !important" },
-					".cm-line": { fontWeight: "400 !important" },
+					".cm-line": { fontWeight: "400 !important", fontFamily: "var(--font-mono) !important" },
 					".cm-gutters": { backgroundColor: "var(--bg-surface)", borderRightColor: "var(--border-subtle)", color: "var(--text-tertiary)" },
 					".cm-cursor, .cm-dropCursor": { borderLeftColor: "var(--accent)", borderLeftWidth: "2px" },
 					"&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-selectionBackground": {
@@ -2387,6 +2387,34 @@
 				}, { dark: isDark })
 			];
 		}
+
+		let _editorResizeObserver = null;
+		function setupEditorResizeObserver() {
+			if (_editorResizeObserver) return;
+			if (typeof ResizeObserver === "function") {
+				_editorResizeObserver = new ResizeObserver(() => {
+					if (editor && isEditing && editorContainer && !editorContainer.classList.contains("hidden")) {
+						editor.requestMeasure();
+					}
+				});
+				if (editorEl) _editorResizeObserver.observe(editorEl);
+				if (editorContainer) _editorResizeObserver.observe(editorContainer);
+			}
+		}
+
+		if (document.fonts && typeof document.fonts.ready?.then === "function") {
+			document.fonts.ready.then(() => {
+				if (editor && isEditing) {
+					editor.requestMeasure();
+				}
+			});
+		}
+
+		window.addEventListener("focus", () => {
+			if (editor && isEditing) {
+				editor.requestMeasure();
+			}
+		});
 
 		// Initialize CodeMirror
 		function initEditor(initialValue = "") {
@@ -2496,6 +2524,13 @@
 				extensions: extensions,
 				parent: editorEl
 			});
+
+			setupEditorResizeObserver();
+			if (isEditing && editorContainer && !editorContainer.classList.contains("hidden")) {
+				requestAnimationFrame(() => {
+					if (editor) editor.requestMeasure();
+				});
+			}
 		}
 
 		function setHeadingFolded(heading, folded) {
@@ -3577,6 +3612,12 @@
 				toggleEditBtn.style.background = "var(--accent)";
 				toggleEditBtn.style.color = "#fff";
 				toggleEditBtn.style.borderColor = "var(--accent)";
+				if (editor) {
+					editor.requestMeasure();
+					requestAnimationFrame(() => {
+						if (editor) editor.requestMeasure();
+					});
+				}
 			} else {
 				contentArea.classList.remove("hidden");
 				editorContainer.classList.add("hidden");
