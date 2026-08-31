@@ -866,11 +866,7 @@
 			lineWrap = !lineWrap;
 			const btn = document.getElementById("wrap-toggle-btn");
 			if (btn) {
-				if (lineWrap) {
-					btn.classList.add("bg-[var(--accent)]", "text-white");
-				} else {
-					btn.classList.remove("bg-[var(--accent)]", "text-white");
-				}
+				btn.classList.toggle("active", lineWrap);
 			}
 			if (editor) {
 				const currentDoc = editor.state.doc.toString();
@@ -917,7 +913,7 @@
 		};
 
 		// Initialize wrap button state
-		document.getElementById("wrap-toggle-btn").classList.add("bg-blue-100", "dark:bg-blue-900/30", "text-blue-700", "dark:text-blue-300");
+		document.getElementById("wrap-toggle-btn").classList.add("active");
 
 		async function handleFileSelect(files) {
 			fileListContainer.innerHTML = "";

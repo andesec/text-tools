@@ -565,6 +565,17 @@
 			transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 		}
 
+		.prose.wrap-code pre,
+		.prose.wrap-code pre code {
+			white-space: pre-wrap !important;
+			word-break: break-word !important;
+			overflow-wrap: anywhere !important;
+		}
+
+		#outline-panel .sidebar-panel-header {
+			cursor: default;
+		}
+
 
 		/* ─── TTS Reader Styles ─────────────────────────────── */
 
@@ -1635,30 +1646,9 @@
 
 	<div class="flex-1 flex overflow-hidden">
 		<aside id="sidebar" class="w-72 app-sidebar flex flex-col shrink-0">
-			<!-- Documents Panel (collapsed by default) -->
-			<div id="documents-panel" class="sidebar-panel collapsed">
-				<div class="sidebar-panel-header" data-panel="documents">
-					<svg class="sidebar-panel-caret" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-					</svg>
-					<span class="sidebar-panel-title">Documents</span>
-				</div>
-				<div class="sidebar-panel-body">
-					<div id="file-list" class="flex-1 overflow-y-auto p-2 space-y-0.5">
-						<div class="text-[var(--text-tertiary)] text-xs italic p-8 text-center">Open files to begin.
-						</div>
-					</div>
-				</div>
-			</div>
-
-			<div class="sidebar-resizer" data-resizer="0"></div>
-
-			<!-- Outline Panel -->
+			<!-- 1. Outline Panel (Always Expanded) -->
 			<div id="outline-panel" class="sidebar-panel">
 				<div class="sidebar-panel-header" data-panel="outline">
-					<svg class="sidebar-panel-caret" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-					</svg>
 					<span class="sidebar-panel-title">Outline</span>
 				</div>
 				<div class="sidebar-panel-body">
@@ -1668,9 +1658,9 @@
 				</div>
 			</div>
 
-			<div class="sidebar-resizer" data-resizer="1"></div>
+			<div class="sidebar-resizer" data-resizer="0"></div>
 
-			<!-- Pictures Panel (collapsed by default) -->
+			<!-- 2. Pictures Panel (Collapsed) -->
 			<div id="images-panel" class="sidebar-panel collapsed">
 				<div class="sidebar-panel-header" data-panel="images">
 					<svg class="sidebar-panel-caret" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1695,10 +1685,28 @@
 				</div>
 			</div>
 
+			<div class="sidebar-resizer" data-resizer="1"></div>
+
+			<!-- 3. Documents Panel (Collapsed) -->
+			<div id="documents-panel" class="sidebar-panel collapsed">
+				<div class="sidebar-panel-header" data-panel="documents">
+					<svg class="sidebar-panel-caret" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+					</svg>
+					<span class="sidebar-panel-title">Documents</span>
+				</div>
+				<div class="sidebar-panel-body">
+					<div id="file-list" class="flex-1 overflow-y-auto p-2 space-y-0.5">
+						<div class="text-[var(--text-tertiary)] text-xs italic p-8 text-center">Open files to begin.
+						</div>
+					</div>
+				</div>
+			</div>
+
 			<div class="sidebar-resizer" data-resizer="2"></div>
 
-			<!-- Comments Panel -->
-			<div id="sidebar-comments-panel" class="sidebar-panel">
+			<!-- 4. Comments Panel (Collapsed) -->
+			<div id="sidebar-comments-panel" class="sidebar-panel collapsed">
 				<div class="sidebar-panel-header" data-panel="sidebar-comments">
 					<svg class="sidebar-panel-caret" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -2520,10 +2528,16 @@
 			}
 
 			editor = new EditorView({
-				doc: initialValue,
+				doc: currentDoc,
 				extensions: extensions,
 				parent: editorEl
 			});
+
+			if (currentSel) {
+				try {
+					editor.dispatch({ selection: currentSel });
+				} catch (e) {}
+			}
 
 			setupEditorResizeObserver();
 			if (isEditing && editorContainer && !editorContainer.classList.contains("hidden")) {
@@ -3397,11 +3411,10 @@
 			lineWrap = !lineWrap;
 			const btn = document.getElementById("wrap-toggle-btn");
 			if (btn) {
-				if (lineWrap) {
-					btn.classList.add("bg-[var(--accent)]", "text-white");
-				} else {
-					btn.classList.remove("bg-[var(--accent)]", "text-white");
-				}
+				btn.classList.toggle("active", lineWrap);
+			}
+			if (contentArea) {
+				contentArea.classList.toggle("wrap-code", lineWrap);
 			}
 			if (editor) {
 				const currentDoc = editor.state.doc.toString();
@@ -3412,7 +3425,10 @@
 		// Initialize wrap button state
 		const wrapBtn = document.getElementById("wrap-toggle-btn");
 		if (wrapBtn) {
-			wrapBtn.classList.add("bg-[var(--accent)]", "text-white");
+			wrapBtn.classList.toggle("active", lineWrap);
+		}
+		if (contentArea) {
+			contentArea.classList.toggle("wrap-code", lineWrap);
 		}
 
 		const toggleSidebar = () => {
@@ -3958,15 +3974,18 @@
 			const panels = Array.from(sidebarEl.querySelectorAll(".sidebar-panel"));
 			const resizers = Array.from(sidebarEl.querySelectorAll(".sidebar-resizer"));
 
-			// Toggle panel collapse
+			// Toggle panel collapse (Outline panel is always expanded)
 			panels.forEach(panel => {
+				if (panel.id === "outline-panel") return;
 				const header = panel.querySelector(".sidebar-panel-header");
-				header.addEventListener("click", (e) => {
-					const isCollapsed = panel.classList.toggle("collapsed");
-					if (isCollapsed) {
-						panel.style.flex = "";
-					}
-				});
+				if (header) {
+					header.addEventListener("click", (e) => {
+						const isCollapsed = panel.classList.toggle("collapsed");
+						if (isCollapsed) {
+							panel.style.flex = "";
+						}
+					});
+				}
 			});
 
 			// Resizer drag logic

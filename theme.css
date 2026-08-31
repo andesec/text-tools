@@ -4672,9 +4672,16 @@
   --code-number: #60a5fa;
   --code-boolean: #fbbf24;
   --code-null: #87878a;
-  --code-comment: #5c5c60;
+  --code-comment: #94a3b8;
   --code-function: #38bdf8;
   --code-property: #c084fc;
+  --code-punctuation: #94a3b8;
+  --code-operator: #38bdf8;
+  --code-tag: #f43f5e;
+  --code-attr-name: #fb923c;
+  --code-builtin: #a78bfa;
+  --code-class-name: #fbbf24;
+  --code-variable: #f1f5f9;
 
   /* ── Typography ── */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -4733,7 +4740,22 @@
 
     --code-bg: #f5f5f5;
     --code-inline-bg: #eeeeee;
-    --code-inline-text: #d97706;
+    --code-inline-text: #b45309;
+    --code-keyword: #6d28d9;
+    --code-string: #15803d;
+    --code-number: #1d4ed8;
+    --code-boolean: #b45309;
+    --code-null: #475569;
+    --code-comment: #64748b;
+    --code-function: #0369a1;
+    --code-property: #7c3aed;
+    --code-punctuation: #334155;
+    --code-operator: #0f766e;
+    --code-tag: #be123c;
+    --code-attr-name: #c2410c;
+    --code-builtin: #6d28d9;
+    --code-class-name: #a16207;
+    --code-variable: #0f172a;
 
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
     --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
@@ -5157,6 +5179,18 @@ footer {
   color: var(--text-primary);
 }
 
+.btn-icon.active {
+  background: var(--accent) !important;
+  border-color: var(--accent) !important;
+  color: rgb(255, 255, 255) !important;
+}
+
+.btn-icon.active:hover {
+  background: var(--accent-hover, var(--accent)) !important;
+  border-color: var(--accent-hover, var(--accent)) !important;
+  color: rgb(255, 255, 255) !important;
+}
+
 /* ── Dropdowns ── */
 .dropdown-menu {
   position: absolute;
@@ -5420,6 +5454,85 @@ body.sidebar-collapsed .sidebar-toggle-btn .icon-expand {
 
 .cm-scroller {
   overflow: auto !important;
+}
+
+/* ── Prism Syntax Highlighting Overrides ── */
+code[class*="language-"],
+pre[class*="language-"] {
+  color: var(--text-primary) !important;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata,
+.token.block-comment {
+  color: var(--code-comment) !important;
+  font-style: italic;
+}
+
+.token.punctuation {
+  color: var(--code-punctuation) !important;
+}
+
+.token.boolean {
+  color: var(--code-boolean) !important;
+  font-weight: 500;
+}
+
+.token.number {
+  color: var(--code-number) !important;
+}
+
+.token.property,
+.token.constant,
+.token.symbol {
+  color: var(--code-property) !important;
+}
+
+.token.tag,
+.token.deleted {
+  color: var(--code-tag) !important;
+}
+
+.token.selector,
+.token.string,
+.token.char,
+.token.inserted {
+  color: var(--code-string) !important;
+}
+
+.token.attr-name {
+  color: var(--code-attr-name) !important;
+}
+
+.token.operator,
+.token.entity,
+.token.url {
+  color: var(--code-operator) !important;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.keyword {
+  color: var(--code-keyword) !important;
+  font-weight: 500;
+}
+
+.token.function,
+.token.function-name {
+  color: var(--code-function) !important;
+}
+
+.token.class-name,
+.token.builtin {
+  color: var(--code-class-name) !important;
+}
+
+.token.regex,
+.token.important,
+.token.variable {
+  color: var(--code-variable) !important;
 }
 
 .sidebar-h-resizer {
