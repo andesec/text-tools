@@ -733,10 +733,16 @@
 		});
 
 		// Initialize CodeMirror
-		function initEditor(initialValue = "", language = "javascript", readOnly = false) {
-			let currentDoc = initialValue;
-			if (editor) {
+		function initEditor(initialValue, language = "javascript", readOnly = false) {
+			let currentDoc;
+			if (initialValue !== undefined && initialValue !== null) {
+				currentDoc = initialValue;
+			} else if (editor) {
 				currentDoc = editor.state.doc.toString();
+			} else {
+				currentDoc = "";
+			}
+			if (editor) {
 				editor.destroy();
 			}
 			const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;

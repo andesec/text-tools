@@ -1108,13 +1108,26 @@
 			border-radius: var(--radius-lg);
 			box-shadow: var(--shadow-xl);
 			overflow: hidden;
-			width: 95vw;
+			width: 90vw;
+			max-width: 90vw;
 			height: 90vh;
-			max-width: 1000px;
+			max-height: 90vh;
 		}
 
 		#mermaid-modal::backdrop {
-			background-color: rgb(10, 10, 11);
+			background: var(--modal-backdrop);
+		}
+
+		@media (max-width: 640px) {
+			#mermaid-modal {
+				width: 100vw;
+				max-width: 100vw;
+				height: 100vh;
+				max-height: 100vh;
+				border-radius: 0;
+				border: none;
+				margin: 0;
+			}
 		}
 
 		.mermaid-modal-container {
@@ -2425,12 +2438,21 @@
 		});
 
 		// Initialize CodeMirror
-		function initEditor(initialValue = "") {
-			let currentDoc = initialValue;
+		function initEditor(initialValue, preserveSelection = false) {
+			let currentDoc;
 			let currentSel = null;
-			if (editor) {
+			if (initialValue !== undefined && initialValue !== null) {
+				currentDoc = initialValue;
+			} else if (editor) {
 				currentDoc = editor.state.doc.toString();
-				currentSel = editor.state.selection;
+			} else {
+				currentDoc = "";
+			}
+
+			if (editor) {
+				if (preserveSelection) {
+					currentSel = editor.state.selection;
+				}
 				editor.destroy();
 			}
 
@@ -4538,25 +4560,14 @@
 			}, 50);
 		}
 
-		// Shared origin validation for the postMessage sync API. Computes the
-		// sender's usable origin, and (when msg.options.targetOrigin is set)
-		// verifies it matches — replying with an origin_mismatch error and
-		// returning null if not. Returns the parentOrigin string to use for
-		// syncTargetOrigin, or null if the caller should bail.
-		function _syncValidateOrigin(event, msg) {
-			let parentOrigin = event.origin;
-			if (!parentOrigin || parentOrigin === 'null' || parentOrigin === 'null://null') {
-				parentOrigin = '*';
-			}
-			if (msg.options?.targetOrigin && msg.options.targetOrigin !== '*' && parentOrigin !== '*' && msg.options.targetOrigin !== parentOrigin) {
-				syncPostMessage({
-					type: 'error',
-					code: 'origin_mismatch',
-					message: 'targetOrigin does not match the sender origin. Refusing to load.'
-				});
-				return null;
-			}
-			return parentOrigin;
+		// Shared origin resolution for the postMessage sync API. Default syncTargetOrigin
+		// to the sender's origin (or the explicit options.targetOrigin override),
+		// normalising event.origin values ("null"/"") into '*'.
+		function _syncResolveTargetOrigin(event, msg) {
+			if (msg.options?.targetOrigin) return msg.options.targetOrigin;
+			const origin = event.origin;
+			if (!origin || origin === 'null' || origin === 'null://null') return '*';
+			return origin;
 		}
 
 		// ── postMessage API: receive content from parent frame ─────────────
@@ -4565,9 +4576,7 @@
 			if (!msg || !msg.type) return;
 
 			if (msg.type === 'appendContent') {
-				const parentOrigin = _syncValidateOrigin(event, msg);
-				if (parentOrigin === null) return;
-				syncTargetOrigin = parentOrigin;
+				syncTargetOrigin = _syncResolveTargetOrigin(event, msg);
 
 				// Drop any pending contentChange: it holds a pre-stream snapshot
 				// that would otherwise land after streamEndAck with a higher
@@ -4611,9 +4620,7 @@
 			}
 
 			if (msg.type === 'streamEnd') {
-				const parentOrigin = _syncValidateOrigin(event, msg);
-				if (parentOrigin === null) return;
-				syncTargetOrigin = parentOrigin;
+				syncTargetOrigin = _syncResolveTargetOrigin(event, msg);
 
 				clearTimeout(syncDebounceTimer);
 				syncDebounceTimer = null;
@@ -4647,9 +4654,7 @@
 
 			if (msg.type === 'setViewMode') {
 				if (msg.mode !== 'code' && msg.mode !== 'render') return;
-				const parentOrigin = _syncValidateOrigin(event, msg);
-				if (parentOrigin === null) return;
-				syncTargetOrigin = parentOrigin;
+				syncTargetOrigin = _syncResolveTargetOrigin(event, msg);
 
 				isEditing = (msg.mode === 'code');
 				updateViewMode();
@@ -4662,9 +4667,7 @@
 			// ArrayBuffer (structured-cloneable); a Blob URL would be scoped to
 			// this origin and unreadable by the host.
 			if (msg.type === 'requestAssets') {
-				const parentOrigin = _syncValidateOrigin(event, msg);
-				if (parentOrigin === null) return;
-				syncTargetOrigin = parentOrigin;
+				syncTargetOrigin = _syncResolveTargetOrigin(event, msg);
 
 				if (!editor || !window.MdvAssets || typeof window.MdvAssets.buildAssetBundle !== 'function') {
 					syncPostMessage({
@@ -4715,7 +4718,7 @@
 				return;
 			}
 
-			if (msg.type !== 'loadContent') return;
+			if (msg.type !== 'loadContent' && msg.type !== 'load_content') return;
 
 			// Binary payload: mdv.html is a markdown editor and does not
 			// render PDFs. Surface a toast and bail.
@@ -4734,34 +4737,10 @@
 				return;
 			}
 
-			const text = typeof msg.text === 'string' ? msg.text : '';
-			const filename = typeof msg.filename === 'string' ? msg.filename : 'Untitled.md';
+			const text = typeof msg.text === 'string' ? msg.text : (typeof msg.content === 'string' ? msg.content : (typeof msg.markdown === 'string' ? msg.markdown : (typeof msg.data === 'string' ? msg.data : '')));
+			const filename = typeof msg.filename === 'string' ? msg.filename : (typeof msg.fileName === 'string' ? msg.fileName : (typeof msg.name === 'string' ? msg.name : 'Untitled.md'));
 
-			// Store the PARENT's origin for outbound messages. This is
-			// event.origin — the Origin header of the page that sent this
-			// loadContent. The `targetOrigin` option (if set) is validated
-			// against event.origin as a security constraint, then ignored
-			// for outbound routing. Using the option as the outbound target
-			// is a common mistake that causes the browser to silently drop
-			// contentChange / loadContentAck / titleChange messages when
-			// the host sets it to the iframe's own origin.
-			// event.origin can be the string "null" (when the sender is a
-			// file:// page or sandboxed iframe), the empty string, or null.
-			// None of those are valid postMessage targetOrigin values —
-			// window.parent.postMessage(payload, "null") throws.
-			let parentOrigin = event.origin;
-			if (!parentOrigin || parentOrigin === 'null' || parentOrigin === 'null://null') {
-				parentOrigin = '*';
-			}
-			if (msg.options?.targetOrigin && msg.options.targetOrigin !== '*' && parentOrigin !== '*' && msg.options.targetOrigin !== parentOrigin) {
-				syncPostMessage({
-					type: 'error',
-					code: 'origin_mismatch',
-					message: 'targetOrigin does not match the sender origin. Refusing to load.'
-				});
-				return;
-			}
-			syncTargetOrigin = parentOrigin;
+			syncTargetOrigin = _syncResolveTargetOrigin(event, msg);
 
 			// A plain loadContent always supersedes any in-progress stream.
 			_streaming = false;
@@ -4792,13 +4771,11 @@
 
 			// Switch to view mode if currently editing
 			if (window.isEditing) {
-				document.getElementById('toggle-edit-btn').click();
+				isEditing = false;
+				updateViewMode();
 			}
 
 			// Increment version and acknowledge back to sender.
-			// Use the parent's origin (event.origin) as the targetOrigin,
-			// not syncTargetOrigin — the loadContentAck goes to event.source
-			// (the parent), and must be addressed to the parent's origin.
 			let ackOrigin = event.origin;
 			if (!ackOrigin || ackOrigin === 'null' || ackOrigin === 'null://null') {
 				ackOrigin = '*';

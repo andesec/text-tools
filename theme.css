@@ -4714,6 +4714,9 @@
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.6);
   --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.7);
 
+  /* ── Modal / Overlays ── */
+  --modal-backdrop: rgba(0, 0, 0, 0.7);
+
   /* ── Transitions ── */
   --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-base: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -4761,6 +4764,7 @@
     --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
     --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.10);
     --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.12);
+    --modal-backdrop: rgba(0, 0, 0, 0.4);
     --accent-text: #5641d4;
 
     /* Muted fills are tinted backgrounds behind --text-primary. The dark-theme
