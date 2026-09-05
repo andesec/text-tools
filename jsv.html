@@ -399,7 +399,7 @@
 	<script src="json-to-markdown.js"></script>
 	<script src="json-tree.js"></script>
 	<script>
-		const { EditorView, basicSetup, javascript, json, foldGutter, foldKeymap, keymap, HighlightStyle, syntaxHighlighting, tags } = window.CM_JS;
+		const { EditorView, basicSetup, javascript, json, foldGutter, foldKeymap, foldService, keymap, HighlightStyle, syntaxHighlighting, tags } = window.CM_JS;
 		const fileListContainer = document.getElementById("file-list");
 		const editorContainer = document.getElementById("editor-container");
 		const treeContainer = document.getElementById("tree-container");
@@ -856,6 +856,76 @@
 			if (editor) editor.requestMeasure();
 		});
 
+		// High-performance bracket fold service to ensure all { and [ fold handles display reliably
+		const bracketFoldService = foldService ? foldService.of((state, lineStart, lineEnd) => {
+			const line = state.doc.lineAt(lineStart);
+			const text = line.text;
+
+			let bracketPos = -1;
+			let openChar = "";
+			let closeChar = "";
+			let inString = false;
+			let stringChar = "";
+
+			for (let i = 0; i < text.length; i++) {
+				const ch = text[i];
+				if (inString) {
+					if (ch === "\\") { i++; continue; }
+					if (ch === stringChar) { inString = false; }
+				} else {
+					if (ch === '"' || ch === "'" || ch === '`') {
+						inString = true;
+						stringChar = ch;
+					} else if (ch === "{" || ch === "[") {
+						bracketPos = line.from + i;
+						openChar = ch;
+						closeChar = ch === "{" ? "}" : "]";
+					}
+				}
+			}
+
+			if (bracketPos === -1) return null;
+
+			const docLength = state.doc.length;
+			let depth = 1;
+			inString = false;
+			stringChar = "";
+
+			const iter = state.doc.iterRange(bracketPos + 1, docLength);
+			let curPos = bracketPos + 1;
+
+			while (!iter.next().done) {
+				const chunk = iter.value;
+				if (!chunk) continue;
+				for (let j = 0; j < chunk.length; j++) {
+					const ch = chunk[j];
+					const pos = curPos + j;
+					if (inString) {
+						if (ch === "\\") { j++; continue; }
+						if (ch === stringChar) { inString = false; }
+					} else {
+						if (ch === '"' || ch === "'" || ch === '`') {
+							inString = true;
+							stringChar = ch;
+						} else if (ch === openChar) {
+							depth++;
+						} else if (ch === closeChar) {
+							depth--;
+							if (depth === 0) {
+								if (pos > lineEnd) {
+									return { from: bracketPos + 1, to: pos };
+								}
+								return null;
+							}
+						}
+					}
+				}
+				curPos += chunk.length;
+			}
+
+			return null;
+		}) : [];
+
 		// Initialize CodeMirror
 		function initEditor(initialValue, language = (isJsonFile() ? "json" : "javascript"), readOnly = false) {
 			let currentDoc;
@@ -874,6 +944,7 @@
 			const langExtension = isJson ? json() : javascript();
 			const extensions = [
 				basicSetup,
+				bracketFoldService,
 				langExtension,
 				...buildEditorThemeExtensions(isDark),
 				keymap.of(foldKeymap),
