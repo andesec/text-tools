@@ -390,7 +390,7 @@
 	<script src="json-to-markdown.js"></script>
 	<script src="json-tree.js"></script>
 	<script>
-		const { EditorView, basicSetup, javascript, json, oneDark, foldGutter, foldKeymap, keymap } = window.CM_JS;
+		const { EditorView, basicSetup, javascript, json, foldGutter, foldKeymap, keymap, HighlightStyle, syntaxHighlighting, tags } = window.CM_JS;
 		const fileListContainer = document.getElementById("file-list");
 		const editorContainer = document.getElementById("editor-container");
 		const treeContainer = document.getElementById("tree-container");
@@ -420,7 +420,7 @@
 					const text = normalizePastedText(await navigator.clipboard.readText());
 					if (text !== undefined && text !== null) {
 						if (!editor) {
-							initEditor(text, currentFileName?.endsWith(".json") ? "json" : "javascript");
+							initEditor(text, isJsonFile() ? "json" : "javascript");
 						} else {
 							const transaction = editor.state.update({
 								changes: { from: 0, to: editor.state.doc.length, insert: text },
@@ -683,15 +683,56 @@
 
 		loadJsvState();
 
+		function isJsonFile(name = currentFileName) {
+			return !name || name.toLowerCase().endsWith(".json");
+		}
+
+		const themeHighlightStyle = HighlightStyle.define([
+			{ tag: tags.keyword, color: "var(--code-keyword)" },
+			{ tag: tags.operatorKeyword, color: "var(--code-keyword)" },
+			{ tag: tags.propertyName, color: "var(--code-property)" },
+			{ tag: tags.definition(tags.propertyName), color: "var(--code-property)" },
+			{ tag: [tags.name, tags.deleted, tags.character, tags.macroName], color: "var(--code-property)" },
+			{ tag: [tags.function(tags.variableName), tags.function(tags.propertyName), tags.labelName], color: "var(--code-function)" },
+			{ tag: [tags.color, tags.constant(tags.name), tags.standard(tags.name)], color: "var(--code-number)" },
+			{ tag: [tags.definition(tags.name), tags.separator], color: "var(--code-punctuation)" },
+			{ tag: [tags.typeName, tags.className, tags.changed, tags.annotation, tags.modifier, tags.self, tags.namespace], color: "var(--code-class-name)" },
+			{ tag: tags.number, color: "var(--code-number)" },
+			{ tag: [tags.operator, tags.url, tags.escape, tags.regexp, tags.link, tags.special(tags.string)], color: "var(--code-operator)" },
+			{ tag: [tags.meta, tags.comment, tags.lineComment, tags.blockComment], color: "var(--code-comment)" },
+			{ tag: tags.strong, fontWeight: "bold" },
+			{ tag: tags.emphasis, fontStyle: "italic" },
+			{ tag: tags.strikethrough, textDecoration: "line-through" },
+			{ tag: tags.link, color: "var(--code-comment)", textDecoration: "underline" },
+			{ tag: tags.heading, fontWeight: "bold", color: "var(--code-property)" },
+			{ tag: [tags.atom, tags.bool, tags.special(tags.variableName)], color: "var(--code-boolean)" },
+			{ tag: tags.null, color: "var(--code-null)" },
+			{ tag: [tags.processingInstruction, tags.string, tags.inserted], color: "var(--code-string)" },
+			{ tag: [tags.bracket, tags.brace, tags.squareBracket, tags.punctuation], color: "var(--code-punctuation)" },
+			{ tag: tags.invalid, color: "var(--danger)" }
+		]);
+
 		function buildEditorThemeExtensions(isDark) {
 			return [
-				isDark ? oneDark : [],
+				syntaxHighlighting(themeHighlightStyle),
 				EditorView.theme({
-					"&": { height: "100%", fontSize: "var(--editor-font-size)", fontFamily: "var(--font-mono)", backgroundColor: "var(--bg-surface)", color: "var(--text-primary)" },
+					"&": {
+						height: "100%",
+						fontSize: "var(--editor-font-size)",
+						fontFamily: "var(--font-mono)",
+						backgroundColor: "var(--bg-surface)",
+						color: "var(--text-primary)"
+					},
 					".cm-scroller": { overflow: "auto", fontFamily: "var(--font-mono)" },
 					".cm-content": { fontWeight: "400 !important", fontFamily: "var(--font-mono) !important" },
 					".cm-line": { fontWeight: "400 !important", fontFamily: "var(--font-mono) !important" },
-					".cm-gutters": { backgroundColor: "var(--bg-surface)", borderRightColor: "var(--border-subtle)", color: "var(--text-tertiary)" },
+					".cm-gutters": {
+						backgroundColor: "var(--bg-surface)",
+						borderRightColor: "var(--border-subtle)",
+						color: "var(--text-tertiary)"
+					},
+					".cm-activeLineGutter": { backgroundColor: "var(--bg-surface-hover)" },
+					".cm-activeLine": { backgroundColor: "var(--bg-surface-hover)" },
 					".cm-cursor, .cm-dropCursor": { borderLeftColor: "var(--accent)", borderLeftWidth: "2px" },
 					"&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-selectionBackground": {
 						backgroundColor: isDark ? "rgb(79, 70, 229) !important" : "rgb(199, 210, 254) !important"
@@ -699,7 +740,9 @@
 					".cm-content ::selection": {
 						backgroundColor: isDark ? "rgb(79, 70, 229) !important" : "rgb(199, 210, 254) !important",
 						color: isDark ? "rgb(255, 255, 255) !important" : "rgb(15, 23, 42) !important"
-					}
+					},
+					".cm-panels": { backgroundColor: "var(--bg-surface-raised)", color: "var(--text-primary)" },
+					".cm-searchMatch": { backgroundColor: "var(--accent-muted)", outline: "1px solid var(--accent)" }
 				}, { dark: isDark })
 			];
 		}
@@ -733,7 +776,7 @@
 		});
 
 		// Initialize CodeMirror
-		function initEditor(initialValue, language = "javascript", readOnly = false) {
+		function initEditor(initialValue, language = (isJsonFile() ? "json" : "javascript"), readOnly = false) {
 			let currentDoc;
 			if (initialValue !== undefined && initialValue !== null) {
 				currentDoc = initialValue;
@@ -746,10 +789,11 @@
 				editor.destroy();
 			}
 			const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+			const isJson = language === "json" || (!language && isJsonFile());
+			const langExtension = isJson ? json() : javascript();
 			const extensions = [
 				basicSetup,
-				// Use javascript mode even for JSON to support raw/lenient editing and folding with raw newlines/quotes
-				javascript(),
+				langExtension,
 				...buildEditorThemeExtensions(isDark),
 				keymap.of(foldKeymap),
 				keymap.of([{
@@ -791,16 +835,6 @@
 					}
 				}]),
 				EditorView.editable.of(!readOnly),
-				EditorView.theme({
-					"&": { height: "100%", fontSize: "var(--editor-font-size)", fontFamily: "var(--font-mono)", backgroundColor: "var(--bg-surface)" },
-					".cm-scroller": { overflow: "auto", fontFamily: "var(--font-mono)" },
-					".cm-content": { fontWeight: "400 !important", fontFamily: "var(--font-mono) !important" },
-					".cm-line": { fontWeight: "400 !important", fontFamily: "var(--font-mono) !important" },
-					".ͼ1 .cm-keyword": { fontWeight: "500 !important" },
-					".ͼ1 .cm-variableName": { fontWeight: "400 !important" },
-					".ͼ1 .cm-typeName": { fontWeight: "500 !important" },
-					".cm-gutters": { backgroundColor: "var(--bg-surface)", borderRightColor: "var(--border-subtle)", color: "var(--text-tertiary)" }
-				}),
 				EditorView.domEventHandlers({
 					paste(event, view) {
 						const raw = event.clipboardData?.getData('text');
@@ -855,7 +889,7 @@
 
 		window.revertToSource = function () {
 			if (sourceJSON !== null) {
-				initEditor(sourceJSON, currentFileName?.endsWith(".json") ? "json" : "javascript", false);
+				initEditor(sourceJSON, isJsonFile() ? "json" : "javascript", false);
 				sourceJSON = null;
 				sourceBtn.classList.add("hidden");
 			}
@@ -864,7 +898,7 @@
 		window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
 			if (editor) {
 				const currentDoc = editor.state.doc.toString();
-				initEditor(currentDoc, currentFileName?.endsWith(".json") ? "json" : "javascript");
+				initEditor(currentDoc, isJsonFile() ? "json" : "javascript");
 			}
 		});
 
@@ -876,7 +910,7 @@
 			}
 			if (editor) {
 				const currentDoc = editor.state.doc.toString();
-				initEditor(currentDoc, currentFileName?.endsWith(".json") ? "json" : "javascript");
+				initEditor(currentDoc, isJsonFile() ? "json" : "javascript");
 			}
 		};
 
@@ -1800,7 +1834,7 @@
 				if (!editor) {
 					_syncLoadingContent = true;
 					if (typeof msg.filename === 'string') currentFileName = msg.filename;
-					initEditor(text, currentFileName?.toLowerCase().endsWith('.json') ? 'json' : 'javascript');
+					initEditor(text, isJsonFile() ? 'json' : 'javascript');
 					updateTabTitle();
 					_syncLoadingContent = false;
 					_streaming = true;

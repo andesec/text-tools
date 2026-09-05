@@ -77,7 +77,7 @@
 
 			if (index !== null) {
 				const indexSpan = document.createElement('span');
-				indexSpan.className = 'text-gray-400 mr-2 opacity-50';
+				indexSpan.className = 'json-index';
 				indexSpan.textContent = `[${index}]`;
 				content.appendChild(indexSpan);
 			}
@@ -102,7 +102,7 @@
 				content.appendChild(label);
 
 				const ellipsis = document.createElement('span');
-				ellipsis.className = 'collapsed-only text-gray-400 mx-1';
+				ellipsis.className = 'json-ellipsis collapsed-only';
 				ellipsis.textContent = '...';
 				content.appendChild(ellipsis);
 
@@ -137,8 +137,7 @@
 				node.appendChild(children);
 
 				const footer = document.createElement('div');
-				footer.className = 'expanded-only opacity-70';
-				footer.style.marginLeft = '0';
+				footer.className = 'json-bracket-closing expanded-only';
 				footer.textContent = closeBracket + (isLast ? '' : ',');
 				node.appendChild(footer);
 			} else {

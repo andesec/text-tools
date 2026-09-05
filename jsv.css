@@ -67,23 +67,37 @@
 }
 
 .json-type-string {
-	background: rgb(20, 45, 30);
+	background: var(--success-muted);
 	color: var(--code-string);
 }
 
 .json-type-number {
-	background: rgb(20, 35, 60);
+	background: var(--info-muted);
 	color: var(--code-number);
 }
 
 .json-type-boolean {
-	background: rgb(55, 45, 15);
+	background: var(--warning-muted);
 	color: var(--code-boolean);
 }
 
 .json-type-null {
-	background: rgb(35, 35, 40);
+	background: var(--bg-surface-hover);
 	color: var(--code-null);
+}
+
+.json-index {
+	color: var(--text-tertiary);
+	margin-right: 0.5rem;
+}
+
+.json-bracket-closing {
+	color: var(--text-secondary);
+}
+
+.json-ellipsis {
+	color: var(--text-tertiary);
+	margin: 0 0.25rem;
 }
 
 .json-meta {
