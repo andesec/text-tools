@@ -30,6 +30,10 @@
 			display: none !important;
 		}
 
+		body.iframe-mode #app-footer {
+			display: none !important;
+		}
+
 		/* Sidebar in iframe mode: always visible, animated collapse */
 		body.iframe-mode #sidebar {
 			display: flex !important;
@@ -382,6 +386,11 @@
 		</main>
 	</div>
 
+	<footer id="app-footer"
+		class="shrink-0 flex items-center justify-center gap-3 py-2 text-[11px] text-[var(--text-tertiary)] border-t border-[var(--border-default)] bg-[var(--bg-surface)]">
+		<span id="footer-file-info"></span>
+	</footer>
+
 	<div id="copy-toast" class="toast">Copied to clipboard!</div>
 
 	<script src="vendor/cm-js-bundle.js"></script>
@@ -649,37 +658,109 @@
 			} catch (e) { }
 		}
 
-		function updateTabTitle() {
-			const text = editor ? editor.state.doc.toString() : "";
-			let title = currentFileName || "JSON Viewer";
+		function extractStringValue(val) {
+			if (val === null || val === undefined) return null;
+			if (typeof val === 'string') {
+				const s = val.trim();
+				return s.length > 0 ? s : null;
+			}
+			if (typeof val === 'number' || typeof val === 'boolean') {
+				return String(val).trim();
+			}
+			if (typeof val === 'object') {
+				const objKeys = ['header', 'title', 'chapter', 'main', 'name', 'text', 'heading', 'label'];
+				for (const k of objKeys) {
+					if (typeof val[k] === 'string' && val[k].trim()) {
+						return val[k].trim();
+					}
+				}
+			}
+			return null;
+		}
 
+		function deriveJsonTitle(text) {
+			if (!text || typeof text !== 'string') return null;
+			const trimmed = text.trim();
+			if (!trimmed) return null;
+
+			const candidateKeys = ['header', 'title', 'chapter', 'main'];
+
+			// 1. Try standard JSON parse
+			let data = null;
 			try {
-				const trimmed = text.trim();
-				if (trimmed && (trimmed.startsWith("{") || trimmed.startsWith("["))) {
-					const data = JSON.parse(trimmed);
-					if (data && typeof data === 'object') {
-						let found = null;
-						if (data.title !== undefined) found = data.title;
-						else if (data.heading !== undefined) found = data.heading;
-						else if (data.main !== undefined) found = data.main;
+				data = JSON.parse(trimmed);
+			} catch (e) {
+				// 2. Try safeJsonParse from json-repair.js
+				try {
+					if (window.JsonRepair && typeof window.JsonRepair.safeJsonParse === 'function') {
+						data = window.JsonRepair.safeJsonParse(trimmed);
+					}
+				} catch (e2) { }
+			}
 
-						if (found !== null && found !== undefined) {
-							const valStr = typeof found === 'object' ? JSON.stringify(found) : String(found).trim();
-							if (valStr) {
-								title = valStr;
+			if (data && typeof data === 'object') {
+				const target = Array.isArray(data) ? data[0] : data;
+				if (target && typeof target === 'object') {
+					for (const key of candidateKeys) {
+						if (key in target) {
+							const extracted = extractStringValue(target[key]);
+							if (extracted) {
+								return extracted.length > 40 ? extracted.substring(0, 40) + '...' : extracted;
 							}
 						}
 					}
 				}
-			} catch (e) {
-				// Ignore parse errors
 			}
+
+			// 3. Fallback regex scan in exact sequence for in-progress typing / malformed syntax
+			for (const key of candidateKeys) {
+				const re = new RegExp(`["']?${key}["']?\\s*:\\s*["']?([^"',\r\n\\[\\]\\{\\}]+)["']?`, 'i');
+				const match = trimmed.match(re);
+				if (match && match[1]) {
+					const val = match[1].trim();
+					if (val) {
+						return val.length > 40 ? val.substring(0, 40) + '...' : val;
+					}
+				}
+			}
+
+			return null;
+		}
+
+		function updateTabTitle() {
+			const text = editor ? editor.state.doc.toString() : "";
+			const derived = deriveJsonTitle(text);
+			let title = derived || currentFileName || "scratchpad.json";
 
 			document.title = title;
 			if (window.parent && window.parent !== window) {
 				syncPostMessage({ type: 'titleChange', title: title, version: syncVersion });
 			}
 		}
+		window.updateTabTitle = updateTabTitle;
+
+		function formatSize(bytes) {
+			if (bytes < 1024) return bytes + ' B';
+			if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+			return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+		}
+
+		function updateFooterInfo() {
+			const el = document.getElementById('footer-file-info');
+			if (!el || !editor) return;
+			const text = editor.state.doc.toString();
+			const bytes = new TextEncoder().encode(text).length;
+			const charCount = text.length;
+			const fileName = currentFileName || 'scratchpad.json';
+
+			const parts = [];
+			parts.push(fileName);
+			parts.push(formatSize(bytes));
+			parts.push(charCount.toLocaleString() + ' char' + (charCount !== 1 ? 's' : ''));
+
+			el.textContent = parts.join(' · ');
+		}
+		window.updateFooterInfo = updateFooterInfo;
 
 		loadJsvState();
 
@@ -863,6 +944,7 @@
 						debouncedBuildTree(content);
 						saveJsvState();
 						updateTabTitle();
+						updateFooterInfo();
 					}
 				})
 			];
@@ -876,6 +958,9 @@
 				extensions: extensions,
 				parent: editorEl
 			});
+
+			updateTabTitle();
+			updateFooterInfo();
 
 			setupEditorResizeObserver();
 			requestAnimationFrame(() => {
@@ -1600,6 +1685,7 @@
 				instances[currentInstance].fileName = filename;
 			}
 			updateTabTitle();
+			updateFooterInfo();
 			saveJsvState();
 
 			const text = sourceJSON !== null ? sourceJSON : editor.state.doc.toString();
@@ -1751,6 +1837,7 @@
 						buildTree(normalizedImport);
 						saveJsvState();
 						updateTabTitle();
+						updateFooterInfo();
 						document.getElementById("instance-label").textContent = `JSON ${currentInstance + 1}`;
 						document.querySelectorAll(".instance-btn").forEach(btn => {
 							btn.classList.remove("bg-blue-100", "dark:bg-blue-900/30");
@@ -1798,6 +1885,7 @@
 				}, 50);
 			}
 			updateTabTitle();
+			updateFooterInfo();
 		})();
 
 		// ── postMessage API: receive content from parent frame ─────────────
@@ -1836,6 +1924,7 @@
 					if (typeof msg.filename === 'string') currentFileName = msg.filename;
 					initEditor(text, isJsonFile() ? 'json' : 'javascript');
 					updateTabTitle();
+					updateFooterInfo();
 					_syncLoadingContent = false;
 					_streaming = true;
 					return;
@@ -1855,6 +1944,8 @@
 						effects: EditorView.scrollIntoView(end + text.length)
 					});
 					_syncLoadingContent = false;
+					updateTabTitle();
+					updateFooterInfo();
 				}
 				return;
 			}
@@ -1869,6 +1960,7 @@
 				_streaming = false;
 				if (typeof msg.filename === 'string') currentFileName = msg.filename;
 				updateTabTitle();
+				updateFooterInfo();
 
 				// Chunks arrive verbatim, so the whole-document cleanup that
 				// loadContent applies (code-fence stripping, literal newlines)
@@ -1981,6 +2073,7 @@
 			const lang = isJson ? 'json' : 'javascript';
 			initEditor(cleanedText, lang);
 			updateTabTitle();
+			updateFooterInfo();
 			saveJsvState();
 
 			// Rebuild tree for JSON-shaped content; otherwise show the
