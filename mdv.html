@@ -83,6 +83,7 @@
 			line-height: 1.25;
 			margin-top: 1.5rem;
 			margin-bottom: 1rem;
+			scroll-margin-top: 1rem;
 		}
 
 		.prose h1 {
@@ -196,6 +197,34 @@
 
 		.prose a:hover {
 			text-decoration: underline;
+		}
+
+		/* ── Section Cross-Reference Links (§N, §N.M) ── */
+		.section-ref-link {
+			color: var(--link-color, var(--accent)) !important;
+			font-weight: 500;
+			text-decoration: underline;
+			text-decoration-style: dotted;
+			text-underline-offset: 3px;
+			cursor: pointer;
+			padding: 0 2px;
+			border-radius: var(--radius-sm, 3px);
+			transition: background-color var(--transition-fast, 150ms ease), color var(--transition-fast, 150ms ease);
+		}
+
+		.section-ref-link:hover {
+			color: var(--accent) !important;
+			background-color: var(--bg-surface-hover);
+			text-decoration-style: solid;
+		}
+
+		/* ── Section Jump Target Highlight Flash ── */
+		.section-target-highlight {
+			outline: 2px solid var(--accent);
+			outline-offset: 4px;
+			border-radius: var(--radius-sm, 4px);
+			background-color: var(--bg-surface-hover);
+			transition: outline-color var(--transition-normal, 300ms ease), background-color var(--transition-normal, 300ms ease);
 		}
 
 		/* ── Lists ── */
@@ -2608,6 +2637,36 @@
 		}
 		window.setHeadingFolded = setHeadingFolded;
 
+		function navigateToSectionHeading(targetHeading) {
+			if (!targetHeading) return;
+
+			// Unfold any folded ancestor headings
+			let el = targetHeading.previousElementSibling;
+			const targetLevel = parseInt(targetHeading.tagName.substring(1), 10) || 6;
+			while (el) {
+				if (/^H[1-6]$/.test(el.tagName)) {
+					const l = parseInt(el.tagName.substring(1), 10);
+					if (l < targetLevel && el.classList.contains('heading-folded')) {
+						setHeadingFolded(el, false);
+					}
+				}
+				el = el.previousElementSibling;
+			}
+			if (targetHeading.classList.contains('heading-folded')) {
+				setHeadingFolded(targetHeading, false);
+			}
+
+			targetHeading.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+			targetHeading.classList.remove('section-target-highlight');
+			void targetHeading.offsetWidth;
+			targetHeading.classList.add('section-target-highlight');
+			setTimeout(() => {
+				targetHeading.classList.remove('section-target-highlight');
+			}, 2000);
+		}
+		window.navigateToSectionHeading = navigateToSectionHeading;
+
 		function enhanceContent() {
 		window.enhanceContent = enhanceContent;
 			// ── GFM Alerts: transform > [!NOTE] blockquotes ──
@@ -2637,29 +2696,146 @@
 				bq.replaceWith(wrapper);
 			});
 
-			// ── Heading Anchor Links + Folding ──
+			// ── Heading Anchor Links + Folding + Section Map ──
+			const sectionHeadingMap = new Map();
 			contentArea.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(h => {
-				if (h.querySelector('.anchor')) return;
-				const id = h.textContent.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
-				h.id = id;
-				const a = document.createElement('a');
-				a.className = 'anchor';
-				a.href = '#' + id;
-				a.setAttribute('aria-hidden', 'true');
-				a.innerHTML = '<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M7.775 3.275a.75.75 0 0 1 1.06 0l1.25-1.25a2 2 0 1 1 2.83 2.83l-2.5 2.5a2 2 0 0 1-2.83 0 .75.75 0 0 0-1.06 1.06 3.5 3.5 0 0 0 4.95 0l2.5-2.5a3.5 3.5 0 0 0-4.95-4.95l-1.25 1.25a.75.75 0 0 0 0 1.06Z"/></svg>';
-				h.insertBefore(a, h.firstChild);
+				const isNew = !h.querySelector('.anchor');
+				const rawText = h.dataset.cleanHeadingText || h.textContent.trim();
+				if (isNew) {
+					h.dataset.cleanHeadingText = rawText;
+				}
 
-				const foldBtn = document.createElement('button');
-				foldBtn.className = 'heading-fold-toggle';
-				foldBtn.setAttribute('aria-label', 'Toggle section');
-				foldBtn.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>';
-				foldBtn.onclick = (e) => {
-					e.preventDefault();
-					e.stopPropagation();
-					setHeadingFolded(h, !h.classList.contains('heading-folded'));
-				};
-				h.insertBefore(foldBtn, h.firstChild);
+				// Extract section number if present
+				// Matches: "1. Motivation" -> "1", "3.1 iframe..." -> "3.1", "4.3.1..." -> "4.3.1", "Section 4: ..." -> "4", "§4..." -> "4"
+				const secMatch = rawText.match(/^(?:§\s*|Section\s+|Sec\.\s+)?(\d+(?:\.\d+)*[a-zA-Z]?)(?:\.|\b)/i);
+				if (secMatch) {
+					const secNumber = secMatch[1].replace(/\.+$/, '');
+					h.dataset.sectionNumber = secNumber;
+					if (!sectionHeadingMap.has(secNumber)) {
+						sectionHeadingMap.set(secNumber, h);
+					}
+				}
+
+				if (isNew) {
+					const id = rawText.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
+					h.id = id;
+					const a = document.createElement('a');
+					a.className = 'anchor';
+					a.href = '#' + id;
+					a.setAttribute('aria-hidden', 'true');
+					a.innerHTML = '<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M7.775 3.275a.75.75 0 0 1 1.06 0l1.25-1.25a2 2 0 1 1 2.83 2.83l-2.5 2.5a2 2 0 0 1-2.83 0 .75.75 0 0 0-1.06 1.06 3.5 3.5 0 0 0 4.95 0l2.5-2.5a3.5 3.5 0 0 0-4.95-4.95l-1.25 1.25a.75.75 0 0 0 0 1.06Z"/></svg>';
+					h.insertBefore(a, h.firstChild);
+
+					const foldBtn = document.createElement('button');
+					foldBtn.className = 'heading-fold-toggle';
+					foldBtn.setAttribute('aria-label', 'Toggle section');
+					foldBtn.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>';
+					foldBtn.onclick = (e) => {
+						e.preventDefault();
+						e.stopPropagation();
+						setHeadingFolded(h, !h.classList.contains('heading-folded'));
+					};
+					h.insertBefore(foldBtn, h.firstChild);
+				}
+
+				// Also index explicit id on heading (e.g. section-4, sec-4)
+				if (h.id) {
+					const idMatch = h.id.match(/^(?:section|sec)-?(\d+(?:\.\d+)*[a-zA-Z]?)$/i);
+					if (idMatch && !sectionHeadingMap.has(idMatch[1])) {
+						sectionHeadingMap.set(idMatch[1], h);
+					}
+				}
 			});
+
+			// ── Smart Section Cross-References: linkify (§N), (§N.M), §N to matching headings ──
+			if (sectionHeadingMap.size > 0) {
+				const walker = document.createTreeWalker(
+					contentArea,
+					NodeFilter.SHOW_TEXT,
+					{
+						acceptNode(node) {
+							if (!node.nodeValue || !node.nodeValue.includes('§')) {
+								return NodeFilter.FILTER_REJECT;
+							}
+							let p = node.parentElement;
+							while (p && p !== contentArea) {
+								const tag = p.tagName;
+								if (tag === 'A' || tag === 'PRE' || tag === 'CODE' || tag === 'BUTTON' ||
+									tag === 'SCRIPT' || tag === 'STYLE' || tag === 'SVG' || tag === 'MATH' ||
+									p.classList.contains('katex') ||
+									p.classList.contains('runnable-code-container') ||
+									p.classList.contains('anchor') ||
+									p.classList.contains('heading-fold-toggle') ||
+									p.classList.contains('mdv-fence-toolbar')) {
+									return NodeFilter.FILTER_REJECT;
+								}
+								p = p.parentElement;
+							}
+							return NodeFilter.FILTER_ACCEPT;
+						}
+					}
+				);
+
+				const nodesToProcess = [];
+				let currentNode;
+				while ((currentNode = walker.nextNode())) {
+					nodesToProcess.push(currentNode);
+				}
+
+				const secRefRegex = /(§{1,2})\s*(\d+(?:\.\d+)*[a-zA-Z]?)/g;
+
+				nodesToProcess.forEach(textNode => {
+					const text = textNode.nodeValue;
+					if (!text || !text.includes('§')) return;
+
+					secRefRegex.lastIndex = 0;
+					let lastIndex = 0;
+					let match;
+					let hasMatch = false;
+					const fragment = document.createDocumentFragment();
+
+					while ((match = secRefRegex.exec(text)) !== null) {
+						const fullMatch = match[0];
+						const rawSec = match[2];
+						const secKey = rawSec.replace(/\.+$/, '');
+						const targetHeading = sectionHeadingMap.get(secKey);
+
+						if (targetHeading) {
+							hasMatch = true;
+							if (match.index > lastIndex) {
+								fragment.appendChild(document.createTextNode(text.substring(lastIndex, match.index)));
+							}
+
+							const link = document.createElement('a');
+							link.className = 'section-ref-link';
+							link.href = '#' + (targetHeading.id || ('sec-' + secKey));
+							link.dataset.sectionRef = secKey;
+							link.textContent = fullMatch;
+
+							const headingTitle = targetHeading.dataset.cleanHeadingText || targetHeading.textContent.trim();
+							link.title = `Jump to ${fullMatch}: ${headingTitle}`;
+
+							link.addEventListener('click', (e) => {
+								e.preventDefault();
+								e.stopPropagation();
+								navigateToSectionHeading(targetHeading);
+							});
+
+							fragment.appendChild(link);
+							lastIndex = secRefRegex.lastIndex;
+						}
+					}
+
+					if (hasMatch) {
+						if (lastIndex < text.length) {
+							fragment.appendChild(document.createTextNode(text.substring(lastIndex)));
+						}
+						if (textNode.parentNode) {
+							textNode.parentNode.replaceChild(fragment, textNode);
+						}
+					}
+				});
+			}
 
 			// ── Runnable HTML Code Fences ──
 			const codeBlocks = contentArea.querySelectorAll('pre code.language-html');
@@ -2768,6 +2944,26 @@
 						<a href="${escapeHtml(src)}" target="_blank" rel="noopener noreferrer" class="mdv-image-url-link" title="${escapeHtml(src)}">${escapeHtml(src)}</a>
 					`;
 					container.appendChild(urlBar);
+				}
+			});
+		}
+
+		// Internal document anchor navigation (supports section links, TOC links, etc.)
+		if (contentArea) {
+			contentArea.addEventListener('click', (e) => {
+				const link = e.target.closest('a[href^="#"]');
+				if (!link || link.classList.contains('anchor') || link.classList.contains('section-ref-link')) return;
+				const href = link.getAttribute('href');
+				if (!href || href === '#') return;
+				const targetId = decodeURIComponent(href.slice(1));
+				const target = document.getElementById(targetId) || contentArea.querySelector(`[name="${CSS.escape(targetId)}"]`);
+				if (target) {
+					e.preventDefault();
+					if (/^H[1-6]$/.test(target.tagName)) {
+						navigateToSectionHeading(target);
+					} else {
+						target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+					}
 				}
 			});
 		}

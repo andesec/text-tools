@@ -5967,6 +5967,8 @@ body {
   justify-content: center;
   gap: 10px;
   text-align: center;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .app-header-row-center h1 {
@@ -5974,19 +5976,89 @@ body {
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
 }
 
 .app-header-logo-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 28px;
+  width: 28px;
+  height: 26px;
   border-radius: 6px;
   background: var(--accent);
-  color: #ffffff;
-  font-size: 1.125rem;
+  color: rgb(255, 255, 255);
+  font-size: 1rem;
   flex-shrink: 0;
+}
+
+.app-header-logo-badge i,
+.app-header-logo-badge .ph {
+  font-size: 1rem !important;
+  line-height: 1 !important;
+}
+
+@media (max-width: 767px) {
+  .app-header-row {
+    gap: 8px;
+    padding: 0 8px;
+  }
+  .app-header-row-center {
+    gap: 6px;
+  }
+  .app-header-row-center h1 {
+    font-size: 0.875rem !important;
+    letter-spacing: -0.01em;
+    white-space: nowrap !important;
+  }
+  .app-header-logo-badge {
+    width: 24px !important;
+    height: 22px !important;
+    border-radius: 5px !important;
+  }
+  .app-header-logo-badge i,
+  .app-header-logo-badge .ph {
+    font-size: 0.8125rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-header-row-center {
+    gap: 5px;
+  }
+  .app-header-row-center h1 {
+    font-size: 0.8125rem !important;
+  }
+  .app-header-logo-badge {
+    width: 22px !important;
+    height: 20px !important;
+    border-radius: 4px !important;
+  }
+  .app-header-logo-badge i,
+  .app-header-logo-badge .ph {
+    font-size: 0.75rem !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .app-header-row-center {
+    gap: 4px;
+  }
+  .app-header-row-center h1 {
+    font-size: 0.75rem !important;
+  }
+  .app-header-logo-badge {
+    width: 18px !important;
+    height: 18px !important;
+    border-radius: 3px !important;
+  }
+  .app-header-logo-badge i,
+  .app-header-logo-badge .ph {
+    font-size: 0.625rem !important;
+  }
 }
 
 /* ── Sub-Toolbar Pinned & Scrollable System (Row 2) ── */
@@ -6654,6 +6726,34 @@ code:not(pre code),
   font-family: var(--font-mono);
   font-size: 0.88em;
   white-space: break-spaces;
+}
+
+/* ── Section Cross-Reference Links (§N, §N.M) ── */
+.section-ref-link {
+  color: var(--link-color, var(--accent)) !important;
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  padding: 0 2px;
+  border-radius: var(--radius-sm, 3px);
+  transition: background-color var(--transition-fast, 150ms ease), color var(--transition-fast, 150ms ease);
+}
+
+.section-ref-link:hover {
+  color: var(--accent) !important;
+  background-color: var(--bg-surface-hover);
+  text-decoration-style: solid;
+}
+
+/* ── Section Jump Target Highlight Flash ── */
+.section-target-highlight {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: var(--radius-sm, 4px);
+  background-color: var(--bg-surface-hover);
+  transition: outline-color var(--transition-normal, 300ms ease), background-color var(--transition-normal, 300ms ease);
 }
 
 /* ── CodeMirror Overrides ── */
