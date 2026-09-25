@@ -13,6 +13,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="theme.css">
+  <script src="theme.js"></script>
   <style>
     body {
       margin: 0;
@@ -628,8 +629,13 @@
         <h1 class="text-base sm:text-lg font-bold tracking-tight text-[var(--text-primary)]">Supersonic TTS</h1>
       </div>
 
-      <!-- Right Edge: Hardware Acceleration Badge -->
+      <!-- Right Edge: Theme & Hardware Acceleration Badge -->
       <div class="flex items-center gap-1.5 justify-end">
+        <div class="theme-dropdown-wrapper">
+          <button class="theme-toggle-btn btn-icon" title="Change theme" aria-label="Change theme">
+            <i class="ph ph-palette text-base"></i>
+          </button>
+        </div>
         <div class="hardware-badge">
           <div class="hardware-dot" id="hardware-status-dot"></div>
           <span id="hardware-status-text">Detecting Acceleration...</span>

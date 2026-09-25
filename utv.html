@@ -15,6 +15,7 @@
 	<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="vendor/tailwind.min.css">
 	<link rel="stylesheet" href="theme.css">
+	<script src="theme.js"></script>
 	<style>
 		body {
 			background-color: var(--bg-root);
@@ -45,8 +46,13 @@
 				<h1 class="text-base sm:text-lg font-bold tracking-tight text-[var(--text-primary)]">Base64 & URI</h1>
 			</div>
 
-			<!-- Right Edge: Quick Actions -->
+			<!-- Right Edge: Theme & Quick Actions -->
 			<div class="flex items-center gap-1.5 justify-end">
+				<div class="theme-dropdown-wrapper">
+					<button class="theme-toggle-btn btn-icon" title="Change theme" aria-label="Change theme">
+						<i class="ph ph-palette text-base"></i>
+					</button>
+				</div>
 				<button onclick="clearText('input'); clearText('output')" class="btn btn-sm" title="Clear all input and output fields">
 					<i class="ph ph-trash text-base"></i>
 					<span class="btn-text">Clear All</span>

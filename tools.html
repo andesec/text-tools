@@ -11,7 +11,18 @@
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="icon" href="favicon.ico">
   <link rel="stylesheet" href="theme.css">
+  <script src="theme.js"></script>
   <style>
+    .top-actions {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      z-index: 50;
+    }
+
     body {
       font-family: var(--font-sans);
       background: var(--bg-root);
@@ -147,6 +158,13 @@
 </head>
 
 <body>
+  <div class="top-actions">
+    <div class="theme-dropdown-wrapper">
+      <button class="theme-toggle-btn btn-icon" title="Change theme" aria-label="Change theme">
+        <i class="ph ph-palette text-base"></i>
+      </button>
+    </div>
+  </div>
   <div class="container">
     <div class="hero-brand">
       <img src="logo.png" alt="Dylen Logo" class="hero-brand-logo" width="52" height="52">

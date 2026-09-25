@@ -19,6 +19,7 @@
 	<script src="vendor/purify.min.js"></script>
 	<link rel="stylesheet" href="theme.css">
 	<link rel="stylesheet" href="jsv.css">
+	<script src="theme.js"></script>
 
 	<style>
 		/* ── Iframe Embed Mode ──────────────────────────────── */
@@ -172,6 +173,13 @@
 							Copy Formatted
 						</button>
 					</div>
+				</div>
+
+				<div class="theme-dropdown-wrapper shrink-0">
+					<button class="btn-icon theme-toggle-btn" title="Theme Settings" aria-label="Theme Settings" type="button" aria-haspopup="menu" aria-expanded="false">
+						<i class="ph ph-palette text-base"></i>
+					</button>
+					<div class="theme-dropdown-menu" role="menu"></div>
 				</div>
 			</div>
 		</div>
@@ -793,6 +801,13 @@
 			{ tag: tags.invalid, color: "var(--danger)" }
 		]);
 
+		function isDarkMode() {
+			const mode = document.documentElement.getAttribute('data-mode');
+			if (mode === 'dark') return true;
+			if (mode === 'light') return false;
+			return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+		}
+
 		function buildEditorThemeExtensions(isDark) {
 			return [
 				syntaxHighlighting(themeHighlightStyle),
@@ -801,14 +816,14 @@
 						height: "100%",
 						fontSize: "var(--editor-font-size)",
 						fontFamily: "var(--font-mono)",
-						backgroundColor: "var(--bg-surface)",
+						backgroundColor: "var(--bg-content, var(--bg-root))",
 						color: "var(--text-primary)"
 					},
 					".cm-scroller": { overflow: "auto", fontFamily: "var(--font-mono)" },
 					".cm-content": { fontWeight: "400 !important", fontFamily: "var(--font-mono) !important" },
 					".cm-line": { fontWeight: "400 !important", fontFamily: "var(--font-mono) !important" },
 					".cm-gutters": {
-						backgroundColor: "var(--bg-surface)",
+						backgroundColor: "var(--bg-content, var(--bg-root))",
 						borderRightColor: "var(--border-subtle)",
 						color: "var(--text-tertiary)"
 					},
@@ -939,7 +954,7 @@
 			if (editor) {
 				editor.destroy();
 			}
-			const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+			const isDark = isDarkMode();
 			const isJson = language === "json" || (!language && isJsonFile());
 			const langExtension = isJson ? json() : javascript();
 			const extensions = [
@@ -1051,12 +1066,14 @@
 			}
 		};
 
-		window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+		function onJsvThemeUpdate() {
 			if (editor) {
 				const currentDoc = editor.state.doc.toString();
 				initEditor(currentDoc, isJsonFile() ? "json" : "javascript");
 			}
-		});
+		}
+		window.addEventListener("themechange", onJsvThemeUpdate);
+		window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", onJsvThemeUpdate);
 
 		window.toggleWrap = function () {
 			lineWrap = !lineWrap;

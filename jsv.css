@@ -165,12 +165,18 @@
 }
 
 /* ── Mobile sidebar ── */
-.mobile-sidebar-active #sidebar {
-	display: flex !important;
-	position: fixed;
-	inset: 0;
-	z-index: 60;
-	width: 100%;
+@media (max-width: 767px) {
+	.mobile-sidebar-active #sidebar {
+		display: flex !important;
+		position: absolute !important;
+		top: 0 !important;
+		bottom: 0 !important;
+		left: 0 !important;
+		right: 0 !important;
+		z-index: 60 !important;
+		width: 100% !important;
+		height: 100% !important;
+	}
 }
 
 /* ── Editor container ── */

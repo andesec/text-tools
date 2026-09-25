@@ -29,6 +29,7 @@
 	<script src="vendor/mermaid.min.js"></script>
 	<link rel="stylesheet" href="mdv-comments.css">
 	<link rel="stylesheet" href="theme.css">
+	<script src="theme.js"></script>
 
 	<style>
 		:root {
@@ -266,12 +267,13 @@
 		/* ── Code ── */
 		.prose :not(pre)>code,
 		.prose tt {
-			background-color: var(--code-inline-bg);
-			padding: 0.2em 0.4em;
-			border-radius: 6px;
+			background-color: var(--code-inline-bg) !important;
+			color: var(--code-inline-text) !important;
+			border: 1px solid var(--border-subtle, var(--border-default));
+			padding: 0.15em 0.4em;
+			border-radius: var(--radius-sm, 4px);
 			font-family: var(--font-mono);
-			font-size: 0.85em;
-			color: var(--code-inline-text);
+			font-size: 0.88em;
 			white-space: break-spaces;
 		}
 
@@ -304,17 +306,29 @@
 			font-size: 0.9em;
 			font-variant: tabular-nums;
 			-webkit-overflow-scrolling: touch;
+			border: 1px solid var(--border-default);
+			background-color: var(--bg-surface);
+			margin: 1.25rem 0;
 		}
 
 		.prose th {
-			background-color: var(--bg-surface-hover);
+			background-color: var(--bg-surface-raised);
+			color: var(--text-primary);
+			font-weight: 600;
 			text-align: left;
+			border: 1px solid var(--border-default);
+			padding: 8px 14px;
 		}
 
 		.prose th,
 		.prose td {
 			border: 1px solid var(--border-default);
-			padding: 6px 13px;
+			padding: 8px 14px;
+		}
+
+		.prose td {
+			color: var(--text-primary);
+			background-color: var(--bg-surface);
 		}
 
 		.prose tr {
@@ -322,8 +336,13 @@
 			border-top: 1px solid var(--border-default);
 		}
 
-		.prose tr:nth-child(2n) {
+		.prose tr:nth-child(2n),
+		.prose tr:nth-child(2n) td {
 			background-color: var(--bg-surface-hover);
+		}
+
+		.prose tr:hover td {
+			background-color: var(--bg-surface-raised);
 		}
 
 		.prose table img {
@@ -487,18 +506,13 @@
 			font-size: 1.1em;
 		}
 
-		@media (prefers-color-scheme: light) {
-			.prose tr {
-				background-color: #ffffff;
-			}
+		.prose .footnotes li:target {
+			background-color: var(--bg-surface-hover);
+		}
 
-			.prose tr:nth-child(2n) {
-				background-color: #f6f8fa;
-			}
-
-			.prose .footnotes li:target {
-				background-color: #f6f8fa;
-			}
+		#content,
+		#editor-container {
+			background-color: var(--bg-content, var(--bg-root)) !important;
 		}
 
 		.outline-item {
@@ -516,12 +530,18 @@
 			color: white !important;
 		}
 
-		.mobile-sidebar-active #sidebar {
-			display: flex !important;
-			position: fixed;
-			inset: 0;
-			z-index: 60;
-			width: 100%;
+		@media (max-width: 767px) {
+			.mobile-sidebar-active #sidebar {
+				display: flex !important;
+				position: absolute !important;
+				top: 0 !important;
+				bottom: 0 !important;
+				left: 0 !important;
+				right: 0 !important;
+				z-index: 60 !important;
+				width: 100% !important;
+				height: 100% !important;
+			}
 		}
 
 		#editor-container {
@@ -1533,7 +1553,7 @@
 					</div>
 				</div>
 
-				<div class="save-dropdown-wrapper shrink-0" id="save-dropdown-wrapper" style="z-index: 90;">
+				<div class="save-dropdown-wrapper shrink-0 z-[90]" id="save-dropdown-wrapper">
 					<button id="save-main-btn" class="save-main-btn btn btn-primary btn-sm">
 						<i class="ph ph-floppy-disk text-base"></i>
 						<span class="btn-text">Save</span>
@@ -1587,6 +1607,13 @@
 							Copy with Quotes
 						</button>
 					</div>
+				</div>
+
+				<div class="theme-dropdown-wrapper shrink-0">
+					<button class="btn-icon theme-toggle-btn" title="Theme Settings" aria-label="Theme Settings" type="button" aria-haspopup="menu" aria-expanded="false">
+						<i class="ph ph-palette text-base"></i>
+					</button>
+					<div class="theme-dropdown-menu" role="menu"></div>
 				</div>
 			</div>
 		</div>
@@ -1657,7 +1684,7 @@
 	</header>
 
 
-	<div class="flex-1 flex overflow-hidden">
+	<div class="flex-1 flex overflow-hidden relative">
 		<aside id="sidebar" class="w-72 app-sidebar flex flex-col shrink-0">
 			<!-- 1. Outline Panel (Always Expanded) -->
 			<div id="outline-panel" class="sidebar-panel">
@@ -1736,12 +1763,12 @@
 		</aside>
 
 		<main class="flex-1 overflow-hidden bg-[var(--bg-root)] relative">
-			<div id="editor-container" class="w-full h-full bg-[var(--bg-surface)] px-0 sm:px-4 py-1 sm:py-4">
+			<div id="editor-container" class="w-full h-full bg-[var(--bg-content)] px-0 sm:px-4 py-1 sm:py-4">
 				<div id="editor" class="h-full border border-[var(--border-default)] rounded-lg overflow-hidden">
 				</div>
 			</div>
 			<article id="content"
-				class="prose dark:prose-invert hidden bg-[var(--bg-surface)] p-4 sm:p-8 md:p-16 h-full border-x border-transparent sm:border-[var(--border-default)] overflow-y-auto overflow-x-hidden w-full">
+				class="prose dark:prose-invert hidden bg-[var(--bg-content)] p-4 sm:p-8 md:p-16 h-full border-x border-transparent sm:border-[var(--border-default)] overflow-y-auto overflow-x-hidden w-full">
 			</article>
 		</main>
 	</div>
@@ -2014,7 +2041,7 @@
 			};
 
 			// Initialize CodeMirror inside Panel 2 (Editor)
-			const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+			const isDark = isDarkMode();
 			innerEditor = new EditorView({
 				doc: initialCode,
 				extensions: [
@@ -2022,11 +2049,11 @@
 					markdown(),
 					isDark ? oneDark : [],
 					EditorView.theme({
-						"&": { height: "100%", fontSize: "var(--editor-font-size)", backgroundColor: "var(--bg-surface)" },
+						"&": { height: "100%", fontSize: "var(--editor-font-size)", backgroundColor: "var(--bg-content, var(--bg-root))", color: "var(--text-primary)" },
 						".cm-scroller": { overflow: "auto", fontFamily: "var(--font-mono)" },
 						".cm-content": { fontWeight: "400 !important", fontFamily: "var(--font-mono) !important" },
 						".cm-line": { fontWeight: "400 !important" },
-						".cm-gutters": { backgroundColor: "var(--bg-surface)", borderRightColor: "var(--border-subtle)", color: "var(--text-tertiary)" }
+						".cm-gutters": { backgroundColor: "var(--bg-content, var(--bg-root))", borderRightColor: "var(--border-subtle)", color: "var(--text-tertiary)" }
 					}),
 					EditorView.lineWrapping,
 					EditorView.updateListener.of((update) => {
@@ -2183,7 +2210,7 @@
 
 				if (tabIdx === 0 && !editorInitialised) {
 					editorInitialised = true;
-					const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+					const isDark = isDarkMode();
 					innerEditor = new EditorView({
 						doc: codeEl.textContent,
 						extensions: [
@@ -2191,11 +2218,11 @@
 							markdown(),
 							isDark ? oneDark : [],
 							EditorView.theme({
-								"&": { height: "100%", fontSize: "var(--editor-font-size)", backgroundColor: "var(--bg-surface)" },
+								"&": { height: "100%", fontSize: "var(--editor-font-size)", backgroundColor: "var(--bg-content, var(--bg-root))", color: "var(--text-primary)" },
 								".cm-scroller": { overflow: "auto", fontFamily: "var(--font-mono)" },
 								".cm-content": { fontWeight: "400 !important", fontFamily: "var(--font-mono) !important" },
 								".cm-line": { fontWeight: "400 !important" },
-								".cm-gutters": { backgroundColor: "var(--bg-surface)", borderRightColor: "var(--border-subtle)", color: "var(--text-tertiary)" }
+								".cm-gutters": { backgroundColor: "var(--bg-content, var(--bg-root))", borderRightColor: "var(--border-subtle)", color: "var(--text-tertiary)" }
 							}),
 							EditorView.lineWrapping,
 							EditorView.updateListener.of((update) => {
@@ -2392,11 +2419,11 @@
 			return [
 				isDark ? oneDark : [],
 				EditorView.theme({
-					"&": { height: "100%", fontSize: "var(--editor-font-size)", fontFamily: "var(--font-mono)", backgroundColor: "var(--bg-surface)", color: "var(--text-primary)" },
+					"&": { height: "100%", fontSize: "var(--editor-font-size)", fontFamily: "var(--font-mono)", backgroundColor: "var(--bg-content, var(--bg-root))", color: "var(--text-primary)" },
 					".cm-scroller": { overflow: "auto", fontFamily: "var(--font-mono)" },
 					".cm-content": { fontWeight: "400 !important", fontFamily: "var(--font-mono) !important" },
 					".cm-line": { fontWeight: "400 !important", fontFamily: "var(--font-mono) !important" },
-					".cm-gutters": { backgroundColor: "var(--bg-surface)", borderRightColor: "var(--border-subtle)", color: "var(--text-tertiary)" },
+					".cm-gutters": { backgroundColor: "var(--bg-content, var(--bg-root))", borderRightColor: "var(--border-subtle)", color: "var(--text-tertiary)" },
 					".cm-cursor, .cm-dropCursor": { borderLeftColor: "var(--accent)", borderLeftWidth: "2px" },
 					"&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-selectionBackground": {
 						backgroundColor: isDark ? "rgb(79, 70, 229) !important" : "rgb(199, 210, 254) !important"
@@ -2456,7 +2483,7 @@
 				editor.destroy();
 			}
 
-			const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+			const isDark = isDarkMode();
 			const extensions = [
 				basicSetup,
 				markdown(),
@@ -2745,8 +2772,15 @@
 			});
 		}
 
+		function isDarkMode() {
+			const mode = document.documentElement.getAttribute('data-mode');
+			if (mode === 'dark') return true;
+			if (mode === 'light') return false;
+			return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+		}
+
 		function getMermaidTheme() {
-			return window.matchMedia("(prefers-color-scheme: dark)").matches ? 'dark' : 'default';
+			return isDarkMode() ? 'dark' : 'default';
 		}
 
 		function initMermaid() {
@@ -2759,13 +2793,19 @@
 				theme: getMermaidTheme(),
 				securityLevel: 'strict'
 			});
-			window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
+
+			const onThemeUpdate = () => {
 				mermaid.initialize({ theme: getMermaidTheme() });
 				updatePreview();
 				if (editor) {
-					initEditor(editor.state.doc.toString());
+					initEditor(editor.state.doc.toString(), true);
 				}
-			});
+			};
+
+			window.addEventListener("themechange", onThemeUpdate);
+			if (window.matchMedia) {
+				window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", onThemeUpdate);
+			}
 		}
 
 		async function renderMermaidDiagrams() {

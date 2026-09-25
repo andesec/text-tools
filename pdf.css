@@ -4,12 +4,12 @@
    Mirrors the mdv/jsv app-shell pattern.
    ============================================ */
 
-/* Override accent to red for this tool (theme.css default is purple) */
-:root {
-    --accent: #ef4444;
-    --accent-hover: #dc2626;
-    --accent-muted: rgba(239, 68, 68, 0.15);
-    --accent-text: #f87171;
+/* Default accent for PDF Explorer when no specific color-theme is set */
+:root:not([data-color-theme]) {
+    --accent: rgb(239, 68, 68);
+    --accent-hover: rgb(220, 38, 38);
+    --accent-muted: rgb(45, 20, 20);
+    --accent-text: rgb(248, 113, 113);
 }
 
 /* ── Iframe Embed Mode ──────────────────────────────── */

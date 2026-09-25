@@ -4,20 +4,20 @@
    app-header + sidebar + main layout
    ============================================ */
 
-/* Override accent to blue for this tool (theme.css default is purple) */
-:root {
-    --accent: #0ea5e9;
-    --accent-hover: #0284c7;
+/* Default accent for PDF -> Markdown when no specific color-theme is set */
+:root:not([data-color-theme]) {
+    --accent: rgb(14, 165, 233);
+    --accent-hover: rgb(2, 132, 199);
     --accent-muted: rgb(14, 40, 52);
-    --accent-text: #38bdf8;
+    --accent-text: rgb(56, 189, 248);
 }
 
 @media (prefers-color-scheme: light) {
-    :root {
-        --accent: #0284c7;
-        --accent-hover: #0369a1;
-        --accent-muted: #e0f2fe;
-        --accent-text: #0369a1;
+    :root:not([data-color-theme]) {
+        --accent: rgb(2, 132, 199);
+        --accent-hover: rgb(3, 105, 161);
+        --accent-muted: rgb(224, 242, 254);
+        --accent-text: rgb(3, 105, 161);
     }
 }
 
@@ -43,6 +43,7 @@ body {
     min-height: 0;
     height: calc(100vh - 48px);
     overflow: hidden;
+    position: relative;
 }
 
 #settings-sidebar {
@@ -745,18 +746,10 @@ body {
 /* ── Mobile Sidebar Overlay ── */
 #mobile-sidebar-backdrop {
     display: none;
-    position: fixed;
+    position: absolute;
     inset: 0;
-    background: rgba(0, 0, 0, 0.65);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    z-index: 90;
-}
-
-@media (prefers-color-scheme: light) {
-    #mobile-sidebar-backdrop {
-        background: rgba(0, 0, 0, 0.45);
-    }
+    background: var(--modal-backdrop);
+    z-index: 35;
 }
 
 /* ── Utility class ── */
@@ -768,14 +761,14 @@ body {
 @media (max-width: 768px) {
     #settings-sidebar {
         display: none;
-        position: fixed;
+        position: absolute;
         inset: 0;
-        z-index: 100;
+        z-index: 40;
         width: 100%;
-        max-width: 320px;
+        max-width: 100%;
         background: var(--bg-surface);
-        border-right: 1px solid var(--border-default);
-        box-shadow: var(--shadow-xl);
+        border-right: none;
+        box-shadow: none;
     }
 
     #settings-sidebar.visible {

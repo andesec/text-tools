@@ -4,12 +4,18 @@
    Mirrors the mdv/jsv app-shell pattern.
    ============================================ */
 
-/* Override accent to teal for this tool (theme.css default is purple) */
-:root {
-    --accent: #0d9488;
-    --accent-hover: #0f766e;
-    --accent-muted: rgba(13, 148, 136, 0.15);
-    --accent-text: #2dd4bf;
+/* Default accent for EDU when no specific color-theme is set */
+:root:not([data-color-theme]) {
+    --accent: rgb(13, 148, 136);
+    --accent-hover: rgb(15, 118, 110);
+    --accent-muted: rgb(15, 45, 40);
+    --accent-text: rgb(45, 212, 191);
+}
+
+.btn-jsv {
+    background: linear-gradient(to bottom right, rgb(234, 179, 8), rgb(234, 88, 12));
+    color: rgb(255, 255, 255);
+    border-color: transparent;
 }
 
 /* ── Iframe Embed Mode ──────────────────────────────── */

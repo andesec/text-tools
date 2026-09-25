@@ -21,6 +21,7 @@
     <script src="vendor/jszip.min.js"></script>
     <link rel="stylesheet" href="theme.css">
     <link rel="stylesheet" href="pdf2md.css">
+    <script src="theme.js"></script>
 </head>
 
 <body>
@@ -42,8 +43,13 @@
                 <h1 class="text-base sm:text-lg font-bold tracking-tight text-[var(--text-primary)]">PDF → Markdown</h1>
             </div>
 
-            <!-- Right Edge: New PDF Button -->
+            <!-- Right Edge: Theme & New PDF Button -->
             <div class="flex items-center gap-1.5 justify-end">
+                <div class="theme-dropdown-wrapper">
+                    <button class="theme-toggle-btn btn-icon" title="Change theme" aria-label="Change theme">
+                        <i class="ph ph-palette text-base"></i>
+                    </button>
+                </div>
                 <button id="new-pdf-btn" class="btn btn-sm hidden" title="Start over with a new PDF">
                     <i class="ph ph-plus text-base"></i>
                     <span class="btn-text">New PDF</span>

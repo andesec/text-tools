@@ -16,6 +16,7 @@
 		href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
 		rel="stylesheet">
 	<link rel="stylesheet" href="theme.css">
+	<script src="theme.js"></script>
 	<style>
 		html,
 		body {
@@ -43,7 +44,6 @@
 			position: sticky;
 			top: 0;
 			z-index: 50;
-			backdrop-filter: blur(8px);
 		}
 
 		.docs-header h1 {
@@ -70,8 +70,14 @@
 			letter-spacing: 0.04em;
 		}
 
-		.docs-header .home-link {
+		.docs-header-actions {
 			margin-left: auto;
+			display: flex;
+			align-items: center;
+			gap: var(--space-2);
+		}
+
+		.docs-header .home-link {
 			color: var(--text-secondary);
 			text-decoration: none;
 			font-size: 0.85rem;
@@ -579,7 +585,14 @@
 		</a>
 		<h1>Dylen&nbsp;Text&nbsp;Tools — Embedding&nbsp;API</h1>
 		<span class="badge">v1.1</span>
-		<a href="index.html" class="home-link">All tools</a>
+		<div class="docs-header-actions">
+			<div class="theme-dropdown-wrapper">
+				<button class="theme-toggle-btn btn-icon" title="Change theme" aria-label="Change theme">
+					<i class="ph ph-palette text-base"></i>
+				</button>
+			</div>
+			<a href="index.html" class="home-link">All tools</a>
+		</div>
 	</header>
 
 	<div class="docs-shell">

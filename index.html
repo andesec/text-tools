@@ -11,6 +11,7 @@
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="icon" href="favicon.ico">
   <link rel="stylesheet" href="theme.css">
+  <script src="theme.js"></script>
   <style>
     body {
       font-family: var(--font-sans);
@@ -43,10 +44,17 @@
       object-fit: contain;
     }
 
-    .top-toggle {
+    .top-actions {
       position: fixed;
       top: 1rem;
       right: 1rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      z-index: 50;
+    }
+
+    .top-toggle {
       display: inline-flex;
       align-items: center;
       gap: 0.6rem;
@@ -171,10 +179,17 @@
 </head>
 
 <body>
-  <label class="top-toggle">
-    <input type="checkbox" id="workspaceRedirectToggle">
-    AOW
-  </label>
+  <div class="top-actions">
+    <div class="theme-dropdown-wrapper">
+      <button class="theme-toggle-btn btn-icon" title="Change theme" aria-label="Change theme">
+        <i class="ph ph-palette text-base"></i>
+      </button>
+    </div>
+    <label class="top-toggle">
+      <input type="checkbox" id="workspaceRedirectToggle">
+      AOW
+    </label>
+  </div>
   <div class="container">
     <div class="hero-brand">
       <img src="logo.png" alt="Dylen Logo" class="hero-brand-logo" width="56" height="56">
